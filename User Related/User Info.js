@@ -1,5 +1,8 @@
 //Advanced User Info 
 //Under GBF 
+
+//I am fully aware that the status can be done using a loop, this is old code to be honest and I don't feel like updating it, when I do I'll also update this code
+
                         //Getting the user from slash command options
                         const user = interaction.options.getUser("user") || interaction.user;
                         //I won't explain the code it's too big L
