@@ -30,3 +30,5 @@
         await interaction.reply({
             embeds: [lockedDown]
         });
+
+//To make it an unlock all, simply change deny in line 16 to allow
