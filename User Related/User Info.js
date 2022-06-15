@@ -2,7 +2,7 @@
 //Under GBF 
                         //Getting the user from slash command options
                         const user = interaction.options.getUser("user") || interaction.user;
-                        
+                        //I won't explain the code it's too big L
                         const GuildMember = interaction.guild.members.cache.get(user.id);
 
                         const UserCreated = Math.round(user.createdTimestamp / 1000)
