@@ -1,4 +1,6 @@
 # Discord.JS Bot Commands
+## Status 
+> Incomplete
 ## What is this repo about?
 This contains a wide range of commands and snippets that will aid you in your discord bot development 
 > The code is written in JavaScript
