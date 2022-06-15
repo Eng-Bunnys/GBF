@@ -15,8 +15,8 @@ await everyoneRole.setPermissions(everyoneRole.permissions.remove(Permissions.FL
         let targetRoleId 
         //If the role exists or does not exist
         if (roleId) {
-            displayRole = `<@&${targetRole.id}>`;
-            targetRoleId = targetRole.id;
+            displayRole = `<@&${roleId.id}>`;
+            targetRoleId = roleId.id;
         } else {
             displayRole = "@everyone";
             targetRoleId = interaction.guild.id
