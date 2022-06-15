@@ -19,7 +19,7 @@
         //Creating an embed to send to the user 
         const lockedDown = new MessageEmbed()
             .setTitle(`${emojis.SUCCESS} Success`)
-            .setDescription(`Locked down all channels in ${guild.name}\n\n⚠ The channels will have to be **manually** unlocked ⚠`)
+            .setDescription(`Locked down all channels in ${guild.name}\n\n⚠ It is recommended to **manually** unlock the channels ⚠`)
             .setColor(colours.DEFAULT)
             .setTimestamp()
             .setFooter({
