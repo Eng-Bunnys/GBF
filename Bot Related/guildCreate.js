@@ -27,7 +27,7 @@ const guildChannels = (guild) => {
 }
 
 module.exports = (client) => {
-    //Guild Create event : this triggers when a bot joins a server : https://discord.js.org/#/docs/discord.js/stable/class/Client
+    //Guild Create event : this triggers when a bot joins a server : https://discord.js.org/#/docs/discord.js/stable/class/Client?scrollTo=e-guildCreate
     client.on("guildCreate", async (guild) => {
         //Getting a channel in the server
         const channel = guildChannels(guild)
