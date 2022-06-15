@@ -65,21 +65,31 @@ module.exports = (client) => {
             if (logsChannel && logsChannel.viewable && logsChannel.permissionsFor(channel.guild.me).has(Permissions.FLAGS.SEND_MESSAGES)) {
                 //Getting the UNIX timestamp that the channel was created at, you can also just use Date.now() / 1000 other than all of that but oh well
                 const UnixTimer = `<t:${Math.round(new Date(channel.createdTimestamp) / 1000)}:F>`
-                 //This is here because not every channel has the same properties 
+                 //This is here because not every channel has the same properties, so I use this to display those channel specific types
                 let ExtraFeatures
-                
+                 //Checking if the type is a text or news
                 if (channel.type === "GUILD_TEXT" || channel.type === "GUILD_NEWS") {
                     let DisplayNSFW
+                    //Checking if the channel is NSFW 
                     if (channel.nsfw === true) DisplayNSFW = "True"
                     else if (channel.nsfw === false) DisplayNSFW = "False"
+                    //That little if else statement can be removed by a simple function
+                    //Function:
+                    function capitalize(string) {
+                         return string.replace(/_/g, ' ').toLowerCase().replace(/\b(\w)/g, char => char.toUpperCase())
+                        }
+                    //This function will be intergrated like this: ${capitalize((channel.nsfw).toString())
                     ExtraFeatures = `**Age Restricted:** ${DisplayNSFW}\n**Slowmode:** ${channelSlowMode(channel)}`
+                    //Checking if the channel is a voice channel
                 } else if (channel.type === 'GUILD_VOICE' || channel.type === 'GUILD_STAGE_VOICE') {
-                    let ChannelBitrateReadable = (channel.bitrate / 1000)
+                    let ChannelBitrateReadable = (channel.bitrate / 1000) //channel.bitrate gives the value in thousands so we divide by 1000 to make it just like how discord does it
                     let ChannelUserLimitReadable
                     if (channel.userLimit === 0) ChannelUserLimitReadable = "No Limit"
                     else ChannelUserLimitReadable = channel.userLimit
                     ExtraFeatures = `**Bitrate:** ${ChannelBitrateReadable} kbps\n**User Limit:** ${ChannelUserLimitReadable.toLocaleString()}`
                 } else {
+                    //There is a better way than this, check if there are any specific features, if there are add that field later on in the code
+                    //If there there aren't don't add anything
                     ExtraFeatures = "No Channel Specific Features"
                 }
 
@@ -116,7 +126,7 @@ module.exports = (client) => {
                         text: `${channel.guild.name} logging powered by GBF™`,
                         iconURL: client.user.avatarURL()
                     })
-
+                //Creating a webhook to send the message
                 const WebHook = await logsChannel.createWebhook(`${client.user.username} Logging 🚓`, {
                     avatar: client.user.displayAvatarURL({
                         dynamic: true
@@ -127,10 +137,12 @@ module.exports = (client) => {
                     await WebHook.send({
                         embeds: [ChannelCreatedEmbed]
                     }).then(() => {
+                        //Deleting the webhook
                         setTimeout(() => WebHook.delete().catch(err => console.log(err)), 3000)
                     })
 
                 } catch (err) {
+                    //If an error occured
                     const ErrorEmbed = new MessageEmbed()
                         .setTitle("That wasn't supposed to happen")
                         .setColor(colours.ERRORRED)
