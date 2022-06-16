@@ -1,4 +1,6 @@
-                      //Creating buttons for the bot invite link, support server, top.gg and patreon      
+                      //Creating buttons for the bot invite link, support server, top.gg and patreon   
+                      let code = "PUT YOUR INVITE CODE HERE"
+                      let name = "Suffix of the patreon link"
                       const Links = new MessageActionRow()
                             .addComponents(new MessageButton()
                                 .setLabel('Bot Invite link')
@@ -26,7 +28,7 @@
                             );
                         //Creating the invite links
                         const mainembed = new MessageEmbed()
-                            .setTitle(`${emojis.VERIFY} GBF Links`)
+                            .setTitle(`${emojis.VERIFY} ${client.user.username} Links`)
                             .addFields({
                                 name: 'Invite me to your server!',
                                 value: (`- [Bot invite link](${`https://discord.com/api/oauth2/authorize?client_id=${client.user.id}&permissions=1642787765494&scope=bot%20applications.commands`})`),
