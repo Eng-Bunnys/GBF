@@ -1,3 +1,4 @@
+![Discord.JS Logo](https://opencollective-production.s3.us-west-1.amazonaws.com/3155c0c0-412d-11ec-8d2d-053636eb5d04.png)
 # Discord.JS Bot Commands
 ## Status 
 > Incomplete
