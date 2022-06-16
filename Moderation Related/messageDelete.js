@@ -115,7 +115,7 @@ module.exports = (client) => {
                     return console.log(`Error while running messageDelete: ${err}`)
                 }
 
-            } else return;
-        } else return;
+            } else return; //returning if the guild setting is set to false
+        } else return; //returning if the channel is not viewable/bot cannot send messages to it/does not exist
     })
 }
