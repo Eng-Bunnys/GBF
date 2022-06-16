@@ -7,3 +7,5 @@ All are super simple
 - Bot Invite Links
 - [Bot Guild Join](https://discord.js.org/#/docs/discord.js/stable/class/Client?scrollTo=e-guildCreate)
 - [Bot Guild Leave](https://discord.js.org/#/docs/discord.js/stable/class/Client?scrollTo=e-guildDelete)
+
+> Complete 
