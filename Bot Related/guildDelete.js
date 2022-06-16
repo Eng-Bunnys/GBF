@@ -1,7 +1,7 @@
 const {
     MessageEmbed,
     Permissions
-} = require("discord.js")
+} = require("discord.js");
 
 const colours = require('../GBFColor.json');
 const emojis = require('../GBFEmojis.json');
