@@ -123,7 +123,7 @@
             return interaction.reply({
                 embeds: [UserKicked]
             })
-        //If GuildMember does not exist
+        //If GuildMember does not exist/returns null 
         } else return interaction.reply({
             content: `⚠ That user is not in ${interaction.guild.name} ⚠`
         })
