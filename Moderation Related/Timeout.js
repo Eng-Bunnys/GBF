@@ -90,8 +90,32 @@
             embeds: [noMember],
             ephemeral: true
         })
+
+           const userHasAdmin = new MessageEmbed()
+            .setTitle(`${emojis.ERROR} You can't do that`)
+            .setDescription(`The user's permissions are too high for me to mute them.`)
+            .setColor(colours.ERRORRED)
+            .setFooter({
+                text: `${interaction.guild.name} logging powered by GBF`,
+                iconURL: interaction.guild.iconURL()
+            })
+            .setTimestamp()
+         //Checking if the user has Admin
+        if (GuildMember.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) return interaction.reply({
+            embeds: [userHasAdmin],
+            ephemeral: true
+        })
+
         //Muting the user
-        await GuildMember.timeout(timeoutTime, muteReason);
+        try {
+            await GuildMember.timeout(timeoutTime, muteReason);
+        } catch (err) {
+            console.log(err)
+            return interaction.reply({
+                embeds: [userHasAdmin],
+                ephemeral: true
+            })
+        }
 
         const userMuted = new MessageEmbed()
             .setTitle(`${emojis.SUCCESS} Success`)
