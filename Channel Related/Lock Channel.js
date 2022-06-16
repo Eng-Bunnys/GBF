@@ -23,7 +23,6 @@
                         //Checking if the channel type is a GUILD_TEXT
                         //https://discord.js.org/#/docs/discord.js/stable/typedef/ChannelType
                         if (targetChannel.type === 'GUILD_TEXT') {
-
                             const ChannelAlreadyUnlocked = new MessageEmbed()
                                 .setTitle(`${emojis.ERROR} You can't do that`)
                                 .setDescription(`The provided channel is already locked for ${displayRole}`)
@@ -60,7 +59,6 @@
                             })
                           //Same process but with a voice channel
                         } else if (targetChannel.type === 'GUILD_VOICE') {
-
                             const ChannelAlreadyUnlocked = new MessageEmbed()
                                 .setTitle(`${emojis.ERROR} You can't do that`)
                                 .setDescription(`The provided channel is already locked for ${displayRole}`)
