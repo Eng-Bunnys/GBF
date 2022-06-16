@@ -13,3 +13,8 @@ client.emit('channelCreate', interaction.channel);
          return interaction.reply({
           content: `${emojis.VERIFY} Simulated Channel Create`
  })
+//Channel Delete
+client.emit('channelDelete', interaction.channel);
+         return interaction.reply({
+          content: `${emojis.VERIFY} Simulated Channel Delete`
+ })
