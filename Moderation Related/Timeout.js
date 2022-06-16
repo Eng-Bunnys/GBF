@@ -1,32 +1,4 @@
-const {
-    MessageEmbed,
-    MessageActionRow,
-    MessageButton,
-    Permissions,
-} = require("discord.js");
-const SlashCommand = require("../../utils/slashCommands");
-
-const {
-    MessageSplit
-} = require("../../utils/engine");
-
-const {
-    redBright
-} = require('chalk');
-
-const title = require("../../gbfembedmessages.json");
-const colours = require("../../GBFColor.json");
-const emojis = require("../../GBFEmojis.json");
-
-module.exports = class MuteCommand extends SlashCommand {
-    constructor(client) {
-        super(client, {
-            name: "mute",
-            category: "Moderation",
-            description: "Timeout a user for a specified amount of time.",
-            usage: "/mute <user> <time>",
-            examples: "/mute @Bunnys 5m",
-
+//The options for slash
             options: [{
                 name: "user",
                 description: "The user that you want to mute",
@@ -59,31 +31,17 @@ module.exports = class MuteCommand extends SlashCommand {
                 required: false
             }],
 
-            devOnly: false,
-            userPermission: ["ADMINISTRATOR"],
-            botPermission: ["ADMINISTRATOR"],
-            cooldown: 0,
-            development: true,
-            Partner: false,
-        });
-    }
-
-    async execute({
-        client,
-        interaction
-    }) {
-
         const target = interaction.options.getUser("user");
         const specifiedTime = interaction.options.getInteger("duration");
         const specifiedUnit = interaction.options.getString("unit");
         const muteReason = interaction.options.getString("reason") || "No reason given";
-
+        //This is here to convert the entered time into miliseconds
         let unitUpdater;
 
         if (specifiedUnit === "m") unitUpdater = 60000;
         if (specifiedUnit === "h") unitUpdater = 3600000;
         if (specifiedUnit === "d") unitUpdater = 86400000;
-
+        //Validation embeds
         const tooLong = new MessageEmbed()
             .setTitle(`${emojis.ERROR} You can't do that`)
             .setDescription(`The time you specified is too long, you can't mute for more than 10 days.`)
@@ -105,17 +63,17 @@ module.exports = class MuteCommand extends SlashCommand {
             .setTimestamp()
 
         const timeoutTime = specifiedTime * unitUpdater;
-
+        //If the time specified is larger than 10 days
         if (timeoutTime > 864000000) return interaction.reply({
             embeds: [tooLong],
             ephemeral: true
         }); 
-
+        //If the time specified is less than one minute
         if (timeoutTime < 60000) return interaction.reply({
             embeds: [tooShort],
             ephemeral: true
         });
-
+         //Fetching the user
         const GuildMember = interaction.guild.members.cache.get(target.id);
 
         const noMember = new MessageEmbed()
@@ -127,12 +85,12 @@ module.exports = class MuteCommand extends SlashCommand {
                 iconURL: interaction.guild.iconURL()
             })
             .setTimestamp()
-
+         //If the user was not found
         if (!GuildMember) return interaction.reply({
             embeds: [noMember],
             ephemeral: true
         })
-
+        //Muting the user
         await GuildMember.timeout(timeoutTime, muteReason);
 
         const userMuted = new MessageEmbed()
@@ -154,7 +112,7 @@ module.exports = class MuteCommand extends SlashCommand {
                 iconURL: interaction.guild.iconURL()
             })
             .setTimestamp()
-
+        //Sending a confirmation message
         return interaction.reply({
             embeds: [userMuted]
         })
