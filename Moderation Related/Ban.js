@@ -1,15 +1,16 @@
+       //Getting the info
         const target = interaction.options.getUser("user");
         const banReason = interaction.options.getString("reason") || "No reason provided";
         const deleteDays = interaction.options.getNumber("days") || 0;
         const banDM = interaction.options.getBoolean("dm") || false;
-
+        //Fetching the user
         const ServerMember = interaction.guild.members.cache.get(target.id);
 
         const UserAlreadyBanned = new MessageEmbed()
             .setTitle(`${emojis.ERROR} I can't do that`)
             .setColor(colours.ERRORRED)
             .setDescription(`${target.username} is already banned`);
-
+        //Checking if hte user is already banned, more info in Unban.js
         const fetchBans = await interaction.guild?.bans.fetch();
         if (fetchBans) {
             const bannedUser = fetchBans.get(target.id);
@@ -19,7 +20,7 @@
                     ephemeral: true,
                 });
         }
-
+        //If the member exists and is a guild member
         if (ServerMember) {
             let messageDeleteDays
             if (deleteDays > 7) messageDeleteDays = 7;
@@ -37,13 +38,13 @@
                     text: `Requested by ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
-
+            //If the user is trying to ban themselves
             if (moderator.id == target.id)
                 return interaction.reply({
                     embeds: [SelfBan],
                     ephemeral: true,
                 });
-
+            
             const BotBan = new MessageEmbed()
                 .setTitle(`${emojis.ERROR} You can't do that`)
                 .setDescription(`I can't ban myself...`)
@@ -53,7 +54,7 @@
                     text: `Requested by ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
-
+            //If the user is trying to ban the bot
             if (target.id === client.user.id)
                 return interaction.reply({
                     embeds: [BotBan],
@@ -69,13 +70,13 @@
                     text: `Requested by ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
-
+             //If the target is an admin
             if (ServerMember.permissions.has("ADMINISTRATOR"))
                 return interaction.reply({
                     embeds: [UnableToBan],
                     ephemeral: true,
                 });
-
+            //Checking role hierachy to avoid stupid errors 
             const targetPosition = ServerMember.roles.highest.position;
             const authorPosition = interaction.member.roles.highest.position;
             const botPosition = interaction.guild.me.roles.highest.position;
@@ -157,6 +158,7 @@
                 });
 
             if (DMBool === false) {
+                 //Banning the user and not sending a DM
                 await interaction.guild.members.ban(target.id, {
                     reason: banReason,
                     days: messageDeleteDays
@@ -166,6 +168,7 @@
                     embeds: [UserBannedSuccess]
                 })
             } else {
+                //Attempting to send a DM to the user then banning them
                 try {
                     const YouveBeenBanned = new MessageEmbed()
                         .setTitle(`You've been banned from ${interaction.guild.name}`)
@@ -194,6 +197,7 @@
                 })
             }
         } else {
+             //If the user is not a guild member, we can still ban them
             await interaction.guild.members.ban(target.id, {
                 reason: banReason
             });
