@@ -6,7 +6,7 @@
         console.log(guildStatus)
 
 /*
-Output
+Output example
 [
   'idle',    'online',
   'offline', 'offline',
