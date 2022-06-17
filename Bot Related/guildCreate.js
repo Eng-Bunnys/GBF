@@ -1,16 +1,5 @@
-const {
-    MessageEmbed,
-    Permissions
-} = require("discord.js")l
-
-const colours = require('../GBFColor.json')
-
-const {
-    redBright,
-} = require('chalk');
-
 const PREFIX = '/'
-
+//This is function used to get a channel in the server, we mainly look for one with the name "general" but if we can't find it we find a random one
 const guildChannels = (guild) => {
     let channel;
     if (guild.channels.cache.has(guild.id)) {
