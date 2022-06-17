@@ -18,3 +18,8 @@ client.emit('channelDelete', interaction.channel);
          return interaction.reply({
           content: `${emojis.VERIFY} Simulated Channel Delete`
  })
+//Bot Join
+client.emit('guildCreate', interaction.guild);
+         return interaction.reply({
+          content: `${emojis.VERIFY} Simulated Guild Create`
+ })
