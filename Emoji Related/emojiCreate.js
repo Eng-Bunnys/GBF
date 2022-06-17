@@ -22,18 +22,20 @@ module.exports = (client) => {
                     limit: 1,
                     type: 'EMOJI_CREATE',
                 });
-
+                //Getting the first entry
                 const emojiLog = fetchedLogs.entries.first();
-
+                //Getting the user who created the emoji from audit logs
                 const {
                     executor
                 } = emojiLog;
                 const EmojiCreator = executor.tag
-                const CreatedAt = `<t:${Math.floor(new Date(emoji.createdTimestamp) / 1000)}:F>`
+                const CreatedAt = `<t:${Math.floor(new Date(emoji.createdTimestamp) / 1000)}:F>` //Getting the time when the emoji was created
                 let finalLink
                 const id = emoji.id
+                //The default link to a discord emoji
                 let baseLink = `https://cdn.discordapp.com/emojis/${id}`
                 const name = emoji.name
+                //Support for animated emojis
                 if (emoji.animated === true) {
                     finalLink = `<a:${name}:${emoji.id}>`
                     link = baseLink + ".gif"
@@ -41,7 +43,7 @@ module.exports = (client) => {
                     finalLink = `<:${name}:${emoji.id}>`
                     link = baseLink + ".png"
                 }
-
+                //The embed that dispalys all of the information
                 const EmojiInfoEmbed = new MessageEmbed()
                     .setTitle(`${emoji} A new emoji has been added to ${emoji.guild.name}`)
                     .setColor(colours.DEFAULT)
@@ -75,7 +77,7 @@ module.exports = (client) => {
                         text: `${emoji.guild.name} logging powered by GBF™`,
                         iconURL: client.user.avatarURL()
                     })
-
+                //Making a button that takes you to the emoji's URL
                 const EmojiLinkB = new MessageButton()
                     .setStyle('LINK')
                     .setEmoji(emoji)
@@ -83,7 +85,7 @@ module.exports = (client) => {
                     .setLabel(emoji.name)
 
                 const EmojiLinkR = new MessageActionRow().addComponents(EmojiLinkB)
-
+                //Creating a webhook to send the message with
                 const WebHook = await logsChannel.createWebhook(`${client.user.username} Logging 🚓`, {
                     avatar: client.user.displayAvatarURL({
                         dynamic: true
@@ -95,9 +97,11 @@ module.exports = (client) => {
                         embeds: [EmojiInfoEmbed],
                         components: [EmojiLinkR]
                     }).then(() => {
+                        //Deleting the webhook to avoid reaching the channel limit (10)
                         setTimeout(() => WebHook.delete().catch(err => console.log(err)), 3000)
                     })
                 } catch (err) {
+                    //If an error occured
                     const ErrorEmbed = new MessageEmbed()
                         .setTitle("That wasn't supposed to happen")
                         .setColor(colours.ERRORRED)
