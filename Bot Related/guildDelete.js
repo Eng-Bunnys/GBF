@@ -1,16 +1,3 @@
-const {
-    MessageEmbed,
-    Permissions
-} = require("discord.js");
-
-const colours = require('../GBFColor.json');
-const emojis = require('../GBFEmojis.json');
-
-const {
-    redBright,
-} = require('chalk');
-
-
 module.exports = (client) => {
     //Guild delete event : Emitted when a server is deleted/bot is kicked from it : https://discord.js.org/#/docs/discord.js/stable/class/Client?scrollTo=e-guildDelete
     client.on("guildDelete", async (guild) => {
