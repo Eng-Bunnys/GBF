@@ -20,4 +20,7 @@ Example: If you want to look for a `Lockdown` command, you'll have to check the 
 ### Why?
 I'm just making it for fun and with hopes of inspiring or helping out people who are creating a discord bot
 
+### Note
+Some of this code is used by GBF
+
 Made by Bunnys 
