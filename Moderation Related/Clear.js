@@ -1,15 +1,15 @@
+    //The options that we're going to use : https://discord.js.org/#/docs/main/stable/typedef/ApplicationCommandOption
+     options: [{
+        name: "amount",
+        description: "The number of messages that you want to delete",
+        type: "INTEGER",
+        minValue: 1,
+        maxValue: 99,
+        required: true
+      }],
     //Getting the number of messages the user wantts to delete
     let count = interaction.options.getInteger("amount");
-    
-    const InvalidNumber = new MessageEmbed()
-      .setTitle(`${emojis.ERROR} I can't do that`)
-      .setDescription(`Please provide a valid integer between 1 and 100`)
-      .setColor(colours.ERRORRED)
-    //If the user specified a negative number or 0
-    if (count <= 0) return interaction.reply({
-      embeds: [InvalidNumber],
-      ephemeral: true
-    })
+
 
     let text
     //Telling the user that the bot can only delete 100 messages in one go, if higher than 100 auto set the limit to 100
