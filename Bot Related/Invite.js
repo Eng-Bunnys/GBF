@@ -18,7 +18,7 @@
                                 .setLabel('Top.gg')
                                 .setStyle('LINK')
                                 .setEmoji('<:tog:882279600506433607>')
-                                .setURL(`https://top.gg/bot/795361755223556116/vote`),
+                                .setURL(`https://top.gg/bot/${client.user.id}/vote`),
                             )
                             .addComponents(new MessageButton()
                                 .setLabel('Patreon')
