@@ -10,13 +10,6 @@
     //Getting the number of messages the user wantts to delete
     let count = interaction.options.getInteger("amount");
 
-
-    let text
-    //Telling the user that the bot can only delete 100 messages in one go, if higher than 100 auto set the limit to 100
-    if (count > 100) {
-      count = 100;
-      text = `I can only delete up to 100 messages in one go`
-    } else text = `Requested by: ${interaction.user.username}`
     //Fetching the messages
     //You can add other options here like from user, etc : https://discord.js.org/#/docs/discord.js/stable/class/MessageManager?scrollTo=fetch
     const messages = await interaction.channel.messages.fetch({
@@ -40,3 +33,7 @@
     })
     //Deleting the reply 
     setTimeout(() => interaction.deleteReply(), 5000);
+
+/*
+Thanks to @EvolutionX-10 for helping out with the minValue & maxValue
+*/
