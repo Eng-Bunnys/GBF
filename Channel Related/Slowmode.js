@@ -51,13 +51,12 @@ options: [{
                 name: "channel",
                 description: "The channel that you want to enable slowmode on",
                 type: "CHANNEL",
+                channelTypes: ["GUILD_TEXT", "GUILD_NEWS"],
                 required: false
             }],
     
         const targetChannel = interaction.options.getChannel("channel") || interaction.channel;
         const slowmodeSetting = interaction.options.getString("slowmode");
-        //Checking if the channel type is a text or a news channel
-        if (targetChannel.type === "GUILD_TEXT" || targetChannel.type === "GUILD_NEWS") {
 
             const SuccessEmbed = new MessageEmbed()
                 .setTitle(`${emojis.VERIFY} Done!`)
@@ -133,19 +132,3 @@ options: [{
                     ephemeral: true
                 })
             }
-        } else {
-            //If the channel is not a text or news channel
-            const NotValid = new MessageEmbed()
-                .setTitle(`${emojis.ERROR} You can't do that`)
-                .setDescription(`Looks like the channel that you specified isn't a \`Text\` or \`News\``)
-                .setColor(colours.ERRORRED)
-                .setFooter({
-                    text: `${interaction.guild.name} Moderation powered by GBF™`,
-                    iconURL: interaction.guild.iconURL()
-                })
-
-            return interaction.reply({
-                embeds: [NotValid],
-                ephemeral: true
-            })
-        }
