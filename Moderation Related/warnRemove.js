@@ -1,5 +1,5 @@
                         //Getting data from the database that's related to the server
-                        let warnDocs = await WarnSchema.findOne({
+                        let warnDocs = await WarnSchema.find({
                             guildId: interaction.guild.id
                         });
 
@@ -72,9 +72,6 @@
                             console.error("Error:", e)
                         })
 
-                        let totalWarnsDisplay
-                        if ((warnDocs.warns - 1) === -1) totalWarnsDisplay = `0`;
-                        else totalWarnsDisplay = `${(warnDocs.warns - 1).toLocaleString()}`;
                         //Sending the user the confirmation message
                         const systemSuccess = new MessageEmbed()
                             .setTitle(`${emojis.VERIFY} Warning removed`)
