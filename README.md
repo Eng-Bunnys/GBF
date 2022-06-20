@@ -20,7 +20,15 @@ Example: If you want to look for a `Lockdown` command, you'll have to check the 
 ### Why?
 I'm just making it for fun and with hopes of inspiring or helping out people who are creating a discord bot
 
-### Note
-Some of this code is used by GBF
+### Road Map
+
+- Add a `Channel Info` command 
+- Add the `channelUpdate` event
+- Add `Fun Related` commands
+- Add `Meme Related` commands
+- Add `Logging Related Setup` commands
+- Add `Logging Related Events` events
+- Add a `Customizable Ticket System`
+- Add more commands to `User Related`
 
 Made by Bunnys 
