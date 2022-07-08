@@ -1,4 +1,4 @@
-//The options for slash
+            //The options for slash
             options: [{
                 name: "user",
                 description: "The user that you want to mute",
