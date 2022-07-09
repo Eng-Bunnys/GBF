@@ -1,4 +1,5 @@
-                             //Getting the user from the cache, you can also use .fetch(), or if you're not using a non-author you can use interaction.member
+                               //If you want to see what this will provide click here: https://cdn.discordapp.com/attachments/932756227295948910/995445600675971082/unknown.png
+                              //Getting the user from the cache, you can also use .fetch(), or if you're not using a non-author you can use interaction.member
                              //The user needs to be a GuildMember type so we can access the prescence : https://discord.js.org/#/docs/discord.js/stable/class/GuildMember
                              const GuildMember = interaction.guild.members.cache.get(user.id);
                              //Once you console log member.presence.activities it will give an array so we check it's length and loop through them all
