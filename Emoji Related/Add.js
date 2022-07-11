@@ -41,11 +41,9 @@
                                 .setColor(colours.ERRORRED)
                                 .setTimestamp()
                             //Telling the user about the error then deleting the deferReply
-                            await interaction.followUp({
-                                embeds: [errorWhileAdding],
-                                ephemeral: true
+                             return interaction.editReply({
+                                embeds: [errorWhileAdding]
                             })
-                            return interaction.deleteReply();
                         }
                         //Creating the embed with information about the emoji
                         const emojiEmbed = new MessageEmbed()
