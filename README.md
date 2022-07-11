@@ -17,6 +17,10 @@ It is **not** recommended to just copy paste code without having an understandin
 Commands are split into categories and features.
 Example: If you want to look for a `Lockdown` command, you'll have to check the `Channel Related` folder.
 
+## FYI:
+The `GBF` file contains *most* of GBF's source code
+Want to add GBF? [Click me](https://discord.com/api/oauth2/authorize?client_id=795361755223556116&permissions=1642788809975&scope=bot%20applications.commands)
+
 ### Why?
 I'm just making it for fun and with hopes of inspiring or helping out people who are creating a discord bot
 
