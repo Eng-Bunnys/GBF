@@ -3,9 +3,7 @@ const SlashCommand = require('../../utils/slashCommands');
 const deverloperID = require('./adminIDs.json');
 
 const {
-    MessageEmbed,
-    MessageActionRow,
-    MessageButton
+    MessageEmbed
 } = require('discord.js');
 
 const colours = require('../../GBFColor.json');
