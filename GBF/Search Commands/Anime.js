@@ -63,7 +63,7 @@
                             embeds: [malEmbed],
                             components: [buttonRow]
                         }).catch(err => {
-                            console.log(err + `Anime search command`)
+                            console.log(`Anime Command Error: ${err.message}`)
                             return interaction.reply({
                                 content: `I can't find ${search}, try to use it's real name if your using an abbreviation`,
                                 ephemeral: true
