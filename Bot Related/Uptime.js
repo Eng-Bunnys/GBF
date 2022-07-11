@@ -1,6 +1,15 @@
                  //We use this package since moment.js got deprecated
                  const duration = require('humanize-duration');                      
                   //Getting the uptime in human readable time
+                  //Instead of using a package, you can use this
+                  /*
+      return {
+        days: Math.floor(ms / 86400000),
+        hours: Math.floor(ms / 3600000) % 24,
+        minutes: Math.floor(ms / 60000) % 60,
+        seconds: Math.floor(ms / 1000) % 60
+    };
+                  */
                   let uptime = duration(client.uptime, {
                             units: ["y", "mo", "w", "d", "h", "m", "s"],
                             round: true
