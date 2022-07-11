@@ -2,19 +2,11 @@
                         const emojiName = interaction.options.getString("name");
                         const emojiURL = interaction.options.getString("emoji-url");
                         //Regex to check that if the URL set is a valid image URL or not
-                        const URLRegex = /[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/ig
-                        const ImageChecker = /\.(jpg|jpeg|png|gif|webp)$/
-                    
-                        const InvalidEmoji = new MessageEmbed() 
-                            .setTitle(`${emojis.ERROR} Invalid Input`)
-                            .setDescription(`The data you provided in the emoji-url field is invalid!\nPlease make sure it's a valid image URL\n\`\`\`diff\n- https://tenor.com/view/skillissue-skill-issue-gif-22125481\n+ https://c.tenor.com/uGN34orccIEAAAAC/skillissue-skill.gif\`\`\``)
-                            .setColor(colours.ERRORRED)
-                            .setTimestamp()
-                        //If the URL is invalid
-                        if (!URLRegex.test(emojiURL) || !ImageChecker.test(emojiURL)) return interaction.reply({
-                            embeds: [InvalidEmoji],
-                            ephemeral: true
-                        })
+                        const emojiRegex = RegExp("/https?:\/\//gi/\.(png|jpg|jpeg|webp)$/gi")
+
+                        let emojiCheck;
+
+                        emojiCheck = emojiRegex.test(emojiURL) ? emojiRegex.exec(emojiURL)[1] : emojiURL;
 
                         const TooLong = new MessageEmbed()
                             .setTitle(titles.ERROR)
@@ -32,7 +24,7 @@
                         let addedEmoji;
                         //Attempting to add the emoji
                         try { 
-                             addedEmoji = await interaction.guild.emojis.create(emojiURL, emojiName);
+                             addedEmoji = await interaction.guild.emojis.create(emojiCheck, emojiName);
                         } catch (err) {
                             //If an error occured 
                             const errorWhileAdding = new MessageEmbed()
