@@ -96,6 +96,11 @@
             addedTime = (GuildMember.communicationDisabledUntil - Date.now()) + timeoutTime;
         } else addedTime = timeoutTime;
 
+        if (addedTime > 864000000) return interaction.reply({
+            embeds: [tooLong],
+            ephemeral: true
+        });
+
         const userHasAdmin = new MessageEmbed()
             .setTitle(`${emojis.ERROR} You can't do that`)
             .setDescription(`The user's permissions are too high for me to mute them.`)
