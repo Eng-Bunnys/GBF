@@ -90,6 +90,12 @@
             ephemeral: true
         })
 
+        let addedTime;
+
+        if (GuildMember.isCommunicationDisabled() === true) {
+            addedTime = (GuildMember.communicationDisabledUntil - Date.now()) + timeoutTime;
+        } else addedTime = timeoutTime;
+
         const userHasAdmin = new MessageEmbed()
             .setTitle(`${emojis.ERROR} You can't do that`)
             .setDescription(`The user's permissions are too high for me to mute them.`)
@@ -106,7 +112,7 @@
         })
 
         try {
-            await GuildMember.timeout(timeoutTime, muteReason);
+            await GuildMember.timeout(addedTime, muteReason);
         } catch (err) {
             console.log(err)
             return interaction.reply({
@@ -115,7 +121,7 @@
             })
         }
         const userMuted = new MessageEmbed()
-            .setTitle(`${emojis.SUCCESS} Success`)
+            .setTitle(`${emojis.VERIFY} Success`)
             .setDescription(`${target.tag} has been muted`)
             .setColor(colours.DEFAULT)
             .addFields({
