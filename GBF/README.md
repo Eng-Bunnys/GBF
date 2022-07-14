@@ -1,4 +1,5 @@
 ![GBF Logo](https://cdn.discordapp.com/attachments/932756227295948910/997239177794031687/GBF_Logo_Beta.png)
+------------------------
 *Most* of GBF's source code
 
 ## FYI
