@@ -1,5 +1,5 @@
 # GBF Source Code
-   ![GBF Logo](https://cdn.discordapp.com/attachments/932756227295948910/997240715258101840/GBF_Bot_Logo.png)
+  ![GBF Logo](https://cdn.discordapp.com/attachments/932756227295948910/997240715258101840/GBF_Bot_Logo.png)
 ------------------------
 *Most* of GBF's source code
 
