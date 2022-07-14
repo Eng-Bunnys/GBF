@@ -4,7 +4,7 @@
 > Incomplete
 ## What is this repo about?
 This contains a wide range of commands and snippets that will aid you in your discord bot development 
-> The code is written in JavaScript
+> The code is written in JavaScript but there are plans to move everything to TypeScript
 
 ## Is there a command hander?
 As of today, no. I have plans on adding a command handler but that's for the future.
