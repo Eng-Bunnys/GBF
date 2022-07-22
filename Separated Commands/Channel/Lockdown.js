@@ -1,4 +1,9 @@
-       //Just so I don't have to add interaction.guild everwhere
+         /*
+         Issues:
+         1. Rate Limit could be reached since it loops through all of the channels and changes every single one
+         2. If you reverse it it will give everyone permission to send in every channel meaning admin channels might be flooded
+         */
+        //Just so I don't have to add interaction.guild everwhere
         const guild = interaction.guild;
         //Getting all of the "TEXT" channels in the guild, this is here so we can avoid an errors relating to the "Locking"
         const textChannels = guild.channels.cache.filter(channel => channel.type === "GUILD_TEXT");
