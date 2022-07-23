@@ -11,6 +11,7 @@ class GBFHandler {
   }
   readFiles() {
     const files = getAllFiles(this.commandsDir);
+    const validations = this.getValidations("syntax");
 
     for (const file of files) {
       const commandObject = require(file);
@@ -20,12 +21,16 @@ class GBFHandler {
 
       const command = new Command(commandName, commandObject);
 
+      for (const validation of validations) {
+        validation(command);
+      }
+
       this.commands.set(command.commandName, command);
     }
   }
 
   messageListener(client) {
-    const validations = getAllFiles(path.join(__dirname, "./validations/run time")).map((filePath) => require(filePath));
+    const validations = this.getValidations("run time");
     const prefix = "!"
     client.on("messageCreate", (message) => {
       if (!message.content.startsWith(prefix)) return;
@@ -53,6 +58,10 @@ class GBFHandler {
       callback(usage);
     });
 
+  }
+  getValidations(folder) {
+    const validations = getAllFiles(path.join(__dirname, `./validations/${folder}`)).map((filePath) => require(filePath));
+    return validations;
   }
 }
 module.exports = GBFHandler;
