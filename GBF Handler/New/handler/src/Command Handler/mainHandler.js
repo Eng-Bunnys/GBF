@@ -25,7 +25,7 @@ class GBFHandler {
   }
 
   messageListener(client) {
-    const validations = getAllFiles(path.join(__dirname, "./validations")).map((filePath) => require(filePath));
+    const validations = getAllFiles(path.join(__dirname, "./validations/run time")).map((filePath) => require(filePath));
     const prefix = "!"
     client.on("messageCreate", (message) => {
       if (!message.content.startsWith(prefix)) return;
