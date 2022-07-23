@@ -13,6 +13,7 @@ client.on("ready", () => {
 
 new GBFHandler({
   client,
+  mongoURI: process.env.MONGO_URI,
   commandsDir: path.join(__dirname, "commands"),
 })
 
