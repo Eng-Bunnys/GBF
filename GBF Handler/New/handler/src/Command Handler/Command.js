@@ -5,10 +5,7 @@ class Command {
         this.verifySyntax();
     }
 
-    verifySyntax() {
-        if (!this.commandObject.callback)
-        throw new Error(`A callback function is required to run ${this.commandName}`);
-    }
+    verifySyntax() {}
 
     get commandName() {
         return this._commandName;
