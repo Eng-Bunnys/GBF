@@ -1,4 +1,6 @@
 const getAllFiles = require("../../utils/getFiles");
+const Command = require("./Command");
+const path = require('path');
 
 class GBFHandler {
   commands = new Map();
@@ -16,35 +18,41 @@ class GBFHandler {
       let commandName = file.split(/[/\\]/);
       commandName = commandName.pop().split(".")[0];
 
-      if (!commandObject.callback)
-        throw new Error(`${commandName} does not have a callback function.`);
+      const command = new Command(commandName, commandObject);
 
-      this.commands.set(commandName.toLowerCase(), commandObject);
-
-      //console.log(this.commands)
+      this.commands.set(command.commandName, command);
     }
   }
 
   messageListener(client) {
+    const validations = getAllFiles(path.join(__dirname, "./validations")).map((filePath) => require(filePath));
+    const prefix = "!"
     client.on("messageCreate", (message) => {
-      if (!message.content.startsWith("!")) return;
+      if (!message.content.startsWith(prefix)) return;
 
       const args = message.content.split(/\s+/);
-      const commandName = args.shift().substring(1).toLowerCase();
+      const commandName = args.shift().substring(prefix.length).toLowerCase();
 
-      const commandObject = this.commands.get(commandName);
+      const command = this.commands.get(commandName);
 
-      if (!commandObject) return;
+      if (!command) return;
 
-      const { callback } = commandObject;
+      const {
+        callback
+      } = command.commandObject;
 
-      callback({
+      const usage = {
         message,
         args,
         text: args.join(" "),
-      });
+      }
+
+      for (const validation of validations) {
+        if (!validation(command, usage, prefix)) return;
+      }
+      callback(usage);
     });
-    
+
   }
 }
 module.exports = GBFHandler;
