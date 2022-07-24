@@ -4,13 +4,14 @@ const path = require('path');
 
 class GBFHandler {
   commands = new Map();
-  constructor(commandsDir, client) {
-    this.commandsDir = commandsDir;
+  constructor(instance, commandsDir, client) {
+    this._instance = instance;
+    this._commandsDir = commandsDir;
     this.readFiles();
     this.messageListener(client);
   }
   readFiles() {
-    const files = getAllFiles(this.commandsDir);
+    const files = getAllFiles(this._commandsDir);
     const validations = this.getValidations("syntax");
 
     for (const file of files) {
@@ -19,7 +20,7 @@ class GBFHandler {
       let commandName = file.split(/[/\\]/);
       commandName = commandName.pop().split(".")[0];
 
-      const command = new Command(commandName, commandObject);
+      const command = new Command(this._instance, commandName, commandObject);
 
       for (const validation of validations) {
         validation(command);
@@ -50,6 +51,7 @@ class GBFHandler {
         message,
         args,
         text: args.join(" "),
+        guild: message.guild,
       }
 
       for (const validation of validations) {
