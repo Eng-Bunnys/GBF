@@ -1,11 +1,9 @@
 class Command {
-    constructor(commandName, commandObject) {
+    constructor(instance, commandName, commandObject) {
+        this._instance = instance;
         this._commandName = commandName.toLowerCase();
         this._commandObject = commandObject;
-        this.verifySyntax();
     }
-
-    verifySyntax() {}
 
     get commandName() {
         return this._commandName;
@@ -13,6 +11,10 @@ class Command {
 
     get commandObject() {
         return this._commandObject;
+    }
+
+    get instance() {
+        return this._instance;
     }
 
 }
