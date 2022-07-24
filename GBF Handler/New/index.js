@@ -1,10 +1,10 @@
 const GBFHandler = require("./handler/src");
-const { Client, Intents } = require("discord.js");
+const { Client, IntentsBitField } = require("discord.js");
 const path = require("path");
 require("dotenv/config");
 
 const client = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]
+  intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages],
 });
 
 client.on("ready", () => {
@@ -15,6 +15,6 @@ new GBFHandler({
   client,
   mongoURI: process.env.MONGO_URI,
   commandsDir: path.join(__dirname, "commands"),
-})
+});
 
 client.login(process.env.TOKEN);
