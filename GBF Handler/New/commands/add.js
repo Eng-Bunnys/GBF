@@ -2,6 +2,7 @@ module.exports = {
   minArgs: 2, //def: 0
   maxArgs: 3, //def: no limit -1
   correctSyntax: `{PREFIX}add <num> <num 2>`,
+  testOnly: true,
   callback: ({
     message,
     args
