@@ -4,7 +4,7 @@
                         const avatarUserButton = new MessageButton()
                             .setStyle('LINK')
                             .setLabel(`Public Avatar link`)
-                            .setURL(`${mentionedUser.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 })}`)
+                            .setURL(`${mentionedUser.displayAvatarURL({ dynamic: true, size: 1024 })}`)
                         //Creating an embed that shows the data
                         const avatarEmbed = new MessageEmbed()
                             .setTitle(`${mentionedUser.tag}'s avatar`)
@@ -14,8 +14,7 @@
                                 text: `Requested By: ${interaction.user.tag}`,
                                 iconURL: `${interaction.user.displayAvatarURL()}`
                             })
-                            .setImage(mentionedUser.displayAvatarURL({
-                                format: 'png',
+                            .setImage(mentionedUser.displayAvatarURL({  
                                 dynamic: true,
                                 size: 1024
                             }))
