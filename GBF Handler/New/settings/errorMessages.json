@@ -1,4 +1,0 @@
-{
-    "MIN_ARGS": "You must provide at least **{ARG}** arguments\n{SYNTAX}",
-    "MAX_ARGS": "You can only provide **{ARG}** arguments\n{SYNTAX}"
-}
