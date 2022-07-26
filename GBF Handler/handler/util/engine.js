@@ -20,6 +20,19 @@ function getAllFiles(path) {
   return commandFiles;
 }
 
+/**
+ * Function to set a timeout
+ * Can be used in loops
+ * @param {number} ms - Time to wait in milliseconds
+ * @return {promise}
+
+ * @example await delay(5000)
+ */
+ function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
   getAllFiles,
+  delay
 };
