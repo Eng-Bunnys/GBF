@@ -1,4 +1,6 @@
-const getAllFiles = require("../util/engine");
+const {
+  getAllFiles
+} = require("../util/engine");
 const Command = require("./Command");
 
 const path = require("path");
@@ -22,9 +24,9 @@ class GBFHandler {
 
       console.log(commandObject);
 
-     // const commandName = commandObject.name.toLowerCase(); 
+      // const commandName = commandObject.name.toLowerCase();
 
-     let commandName = file.split(/[/\\]/).pop().split(".")[0];
+      let commandName = file.split(/[/\\]/).pop().split(".")[0];
 
       const command = new Command(this._instance, commandName, commandObject);
 
@@ -58,8 +60,7 @@ class GBFHandler {
       };
 
       for (const validation of validations) {
-        console.log(validation(command, usage, prefix));
-        if (!validation(command, usage, prefix)) continue;
+        if (!validation(command, usage, prefix)) return;
       }
 
       const { callback } = command.commandObject;
@@ -70,7 +71,12 @@ class GBFHandler {
   getValidations(folder) {
     const validations = getAllFiles(
       path.join(__dirname, `./validations/${folder}`)
-    ).map((filePath) => require(filePath));
+    ).sort((a, b) => {
+        const aNum = a.split(/[/\\]/).pop().split(".")[0];
+        const bNum = b.split(/[/\\]/).pop().split(".")[0];
+        return aNum - bNum;
+      })
+      .map((filePath) => require(filePath));
     return validations;
   }
 }
