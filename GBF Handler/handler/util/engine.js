@@ -1,9 +1,9 @@
-const fs = require('fs');
+const fs = require("fs");
 
-const getAllFiles = (path) => {
+function getAllFiles(path) {
   const files = fs.readdirSync(path, {
     withFileTypes: true,
-  })
+  });
   let commandFiles = [];
 
   for (const file of files) {
@@ -20,4 +20,6 @@ const getAllFiles = (path) => {
   return commandFiles;
 }
 
-module.exports = getAllFiles;
+module.exports = {
+  getAllFiles,
+};
