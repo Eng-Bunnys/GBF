@@ -21,12 +21,12 @@ class GBFHandler {
 
     for (let file of files) {
       const commandObject = require(file);
-
       console.log(commandObject);
+      let fileName = file.split(/[/\\]/).pop();//.split(".")[0];
 
-      // const commandName = commandObject.name.toLowerCase();
+      if (!commandObject.name) throw new Error(`You need to specify a name for the command in file "${fileName}"`); 
 
-      let commandName = file.split(/[/\\]/).pop().split(".")[0];
+      let commandName = commandObject.name.toLowerCase();
 
       const command = new Command(this._instance, commandName, commandObject);
 
