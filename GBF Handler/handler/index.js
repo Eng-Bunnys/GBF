@@ -1,4 +1,4 @@
-const CommandHandler = require('./main/LegacyHandler');
+const CommandHandler = require('./main/MainHandler');
 
 const mongoose = require('mongoose');
 
