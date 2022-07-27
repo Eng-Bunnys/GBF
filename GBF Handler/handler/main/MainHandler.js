@@ -1,9 +1,8 @@
-const {
-  getAllFiles
-} = require("../util/engine");
+const { getAllFiles } = require("../util/engine");
 const Command = require("./Command");
 
 const path = require("path");
+const GBFSlash = require("./SlashCommands");
 
 class GBFHandler {
   commands = new Map();
@@ -11,6 +10,8 @@ class GBFHandler {
   constructor(instance, commandsDir, client) {
     this._instance = instance;
     this._commandsDir = commandsDir;
+    this._slashCommands = new GBFSlash(client);
+
     this.readFiles();
     this.messageListener(client);
   }
@@ -22,9 +23,12 @@ class GBFHandler {
     for (let file of files) {
       const commandObject = require(file);
       console.log(commandObject);
-      let fileName = file.split(/[/\\]/).pop();//.split(".")[0];
+      let fileName = file.split(/[/\\]/).pop(); //.split(".")[0];
 
-      if (!commandObject.name) throw new Error(`You need to specify a name for the command in file "${fileName}"`); 
+      if (!commandObject.name)
+        throw new Error(
+          `You need to specify a name for the command in file "${fileName}"`
+        );
 
       let commandName = commandObject.name.toLowerCase();
 
@@ -34,7 +38,24 @@ class GBFHandler {
         validation(command);
       }
 
+      const { description, options = [], type, testOnly } = commandObject
+
       this.commands.set(command.commandName, command);
+
+      if (type === 'SLASH' || type === 'BOTH') {
+        if (testOnly) {
+          for (const guildId of this._instance.testServers) {
+            this._slashCommands.create(
+              command.commandName,
+              description,
+              options,
+              guildId
+            )
+          }
+        } else {
+          this._slashCommands.create(command.commandName, description, options);
+        }
+      }
     }
   }
 
@@ -71,7 +92,8 @@ class GBFHandler {
   getValidations(folder) {
     const validations = getAllFiles(
       path.join(__dirname, `./validations/${folder}`)
-    ).sort((a, b) => {
+    )
+      .sort((a, b) => {
         const aNum = a.split(/[/\\]/).pop().split(".")[0];
         const bNum = b.split(/[/\\]/).pop().split(".")[0];
         return aNum - bNum;
