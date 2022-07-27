@@ -1,5 +1,5 @@
 module.exports = {
-  //name: "add",
+  name: "add",
   minArgs: 2, //default: 0
   maxArgs: 3, //default: -1 (infinite)
   correctSyntax: "Correct syntax: {PREFIX}add <num 1> <num 2> <etc>",
