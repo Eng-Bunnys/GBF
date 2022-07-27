@@ -1,11 +1,18 @@
 module.exports = {
-  name: "add",
-  minArgs: 2, //default: 0
-  maxArgs: 3, //default: -1 (infinite)
-  correctSyntax: "Correct syntax: {PREFIX}add <num 1> <num 2> <etc>",
+  name: "test", //Will always be lowercase, this feature is here to avoid slash command errors
+  description: "Adds two numbers together", //Command description, required for slash commands
+  /**
+   * LEGACY
+   * SLASH
+   * BOTH
+   */
+  type: "LEGACY", //LEGACY : Prefix Commands, SLASH : Slash Commands, BOTH : Both types
+  minArgs: 2, //default: 0 [No support slash rn]
+  maxArgs: 3, //default: -1 (infinite) [No support slash rn]
+  correctSyntax: "Correct syntax: {PREFIX}add <num 1> <num 2> <etc>", //[No support slash rn]
 
   testOnly: true, //boolean (default: false)
-
+  //We will change this to use interaction once a slash listener is made
   callback: ({ message, args }) => {
     let sum = 0;
 
