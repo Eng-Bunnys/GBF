@@ -7,29 +7,31 @@ class GBFSlash {
     let commands;
 
     if (guildId) {
-      const fetchedGuild = await this._client.guilds.fetch(guildId);
-      commands = fetchedGuild.commands;
+      const guild = await this._client.guilds.fetch(guildId);
+      commands = guild.commands;
     } else {
       commands = this._client.application.commands;
     }
 
     await commands.fetch();
+
     return commands;
   }
 
   async create(name, description, options, guildId) {
     const commands = await this.getCommands(guildId);
 
-    const existingCommands = commands.cache.find((cmd) => cmd.name === name);
-
-    if (existingCommands) return; //Update slash command coming soon
+    const existingCommand = commands.cache.find((cmd) => cmd.name === name);
+    if (existingCommand) {
+      return console.log(`Command "${name}" because it already exists`);
+    }
 
     await commands.create({
-        name,
-        description,
-        options,
+      name,
+      description,
+      options,
     })
-
   }
 }
+
 module.exports = GBFSlash;
