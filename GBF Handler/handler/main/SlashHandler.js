@@ -30,7 +30,19 @@ class GBFSlash {
       name,
       description,
       options,
-    })
+    });
+  }
+
+  async delete(commandName, guildId) {
+    const commands = await this.getCommands(guildId);
+
+    const existingCommand = commands.cache.find(
+      (cmd) => cmd.name === commandName
+    );
+
+    if (!existingCommand) return;
+
+    await existingCommand.delete();
   }
 }
 
