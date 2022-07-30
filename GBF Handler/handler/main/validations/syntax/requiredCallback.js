@@ -1,5 +1,4 @@
 module.exports = (command) => {
-  console.log(`Checking callbacks`)
   const { commandObject, commandName } = command;
 
   if (!commandObject.callback)
