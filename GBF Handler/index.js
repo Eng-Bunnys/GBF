@@ -14,13 +14,14 @@ const client = new Client({
 
 client.on("ready", () => {
   console.log(`${client?.user.tag} is now online`);
-});
 
-new GBFHandler({
-  client,
-  commandsDir: path.join(__dirname, "commands"),
-  mongoURI: process.env.MONGO_URI,
-  testServers: ["GUILD ID GOES HERE", "CAN SUPPORT MULTIPLE GUILDS"]
+  new GBFHandler({
+    client,
+    commandsDir: path.join(__dirname, "commands"),
+    mongoURI: process.env.MONGO_URI,
+    testServers: ["439890528583286784"]
+  });
+
 });
 
 client.login(process.env.TOKEN);
