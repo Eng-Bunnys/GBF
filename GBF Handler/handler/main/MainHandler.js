@@ -39,11 +39,27 @@ class GBFHandler {
 
       const command = new Command(this._instance, commandName, commandObject);
 
+      const { description, options = [], type, testOnly, disabled: del } = commandObject;
+
+      if (del) {
+        if (type === "SLASH" || type === "BOTH") {
+          if (testOnly) {
+            for (const guildId of this._instance.testServers) {
+              this._slashCommands.delete(
+                command.commandName,
+                guildId
+              );
+            }
+          } else {
+            this._slashCommands.delete(command.commandName);
+          }
+        }
+        continue;
+      }
+
       for (const validation of validations) {
         validation(command);
       }
-
-      const { description, options = [], type, testOnly } = commandObject;
 
       this._commands.set(command.commandName, command);
 
