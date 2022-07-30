@@ -1,5 +1,4 @@
 module.exports = (command) => {
-  console.log(`Checking if test servers have been set`);
   const { instance, commandName, commandObject } = command;
 
   if (commandObject.testOnly !== true || instance.testServers.length) return;
