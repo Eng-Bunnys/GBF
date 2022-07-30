@@ -4,9 +4,10 @@ module.exports = {
   type: "BOTH", //LEGACY, SLASH, BOTH
   minArgs: 2, //default: 0
   maxArgs: 3, //default: -1 (infinite)
-  correctSyntax: "Correct syntax: {PREFIX}add <num 1> <num 2> <etc>",
+  correctSyntax: "Correct syntax: {PREFIX}add <num 1> <num 2>",
 
   testOnly: true, //boolean (default: false) || development only
+  disabled: false, //This will delete/disable the command if true (default: false) so it won't show in slash or legacy 
 
   callback: ({ interaction, message, args }) => {
     let sum = 0;
