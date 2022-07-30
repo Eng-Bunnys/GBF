@@ -1,6 +1,5 @@
 const errMsgs = require("../../../../settings/errorMessages.json");
 module.exports = (command, usage, prefix) => {
-  console.log(`Argument count check running`);
   const { minArgs = 0, maxArgs = -1, correctSyntax } = command.commandObject;
   const { length } = usage.args;
 
