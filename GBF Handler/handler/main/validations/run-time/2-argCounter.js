@@ -11,8 +11,10 @@ module.exports = (command, usage, prefix) => {
 
   if (length < minArgs) {
     const lowerText = `${errMsgs.MIN_ARGS.replace("{ArgCount}", minArgs)
-      .replace("{ARGS}", expectedArgs)
-      .replace("{Syntax}", correctSyntax.replace("{PREFIX}", prefix))}`;
+    .replace(
+      "{Syntax}",
+      correctSyntax.replace("{PREFIX}", prefix).replace("{ARGS}", expectedArgs)
+    )}`;
 
     if (message)
       message.reply({
@@ -29,8 +31,10 @@ module.exports = (command, usage, prefix) => {
 
   if (length > maxArgs && maxArgs !== -1) {
     const higherText = `${errMsgs.MAX_ARGS.replace("{ArgCount}", maxArgs)
-      .replace("{ARGS}", expectedArgs)
-      .replace("{Syntax}", correctSyntax.replace("{PREFIX}", prefix))}`;
+    .replace(
+      "{Syntax}",
+      correctSyntax.replace("{PREFIX}", prefix).replace("{ARGS}", expectedArgs)
+    )}`;
 
     if (message)
       message.reply({
