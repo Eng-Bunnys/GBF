@@ -1,4 +1,4 @@
-const { Client, IntentsBitField } = require("discord.js");
+const { Client, IntentsBitField, Partials} = require("discord.js");
 const path = require("path");
 require("dotenv/config");
 
@@ -9,7 +9,9 @@ const client = new Client({
     IntentsBitField.Flags.MessageContent,
     IntentsBitField.Flags.GuildMessages,
     IntentsBitField.Flags.Guilds,
+    IntentsBitField.Flags.DirectMessages
   ],
+  partials: [Partials.Channel]
 });
 
 client.on("ready", () => {
