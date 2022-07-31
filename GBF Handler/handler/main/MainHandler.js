@@ -39,16 +39,13 @@ class GBFHandler {
 
       const command = new Command(this._instance, commandName, commandObject);
 
-      const { description, options = [], type, testOnly, disabled: del } = commandObject;
+      const { description, type, testOnly, disabled: del } = commandObject;
 
       if (del) {
         if (type === "SLASH" || type === "BOTH") {
           if (testOnly) {
             for (const guildId of this._instance.testServers) {
-              this._slashCommands.delete(
-                command.commandName,
-                guildId
-              );
+              this._slashCommands.delete(command.commandName, guildId);
             }
           } else {
             this._slashCommands.delete(command.commandName);
@@ -64,6 +61,8 @@ class GBFHandler {
       this._commands.set(command.commandName, command);
 
       if (type === "SLASH" || type === "BOTH") {
+        const options = commandObject.options || this._slashCommands.creatOptions(commandObject);
+
         if (testOnly) {
           for (const guildId of this._instance.testServers) {
             this._slashCommands.create(
@@ -105,39 +104,36 @@ class GBFHandler {
 
   messageListener(client) {
     client.on("messageCreate", async (message) => {
-      const { content } = message;
+      
+      if (!message.content.startsWith(this._prefix))  return;
 
-      if (!content.startsWith(this._prefix)) {
-        return;
-      }
-
-      const args = content.split(/\s+/);
+      const args = message.content.split(/\s+/);
       const commandName = args
         .shift()
         .substring(this._prefix.length)
         .toLowerCase();
 
       const response = await this.runCommand(commandName, args, message);
-      if (response)  message.reply(response).catch(() => {});
+      if (response) message.reply(response).catch(() => {});
     });
   }
 
   interactionListener(client) {
-    client.on('interactionCreate', async (interaction) => {
+    client.on("interactionCreate", async (interaction) => {
       if (interaction.type !== InteractionType.ApplicationCommand) return;
 
-      const args = ['5', '10']
+      const args = interaction.options.data.map(({ value }) => {
+        return String(value);
+      });
 
       const response = await this.runCommand(
         interaction.commandName,
         args,
         null,
         interaction
-      )
-      if (response) {
-        interaction.reply(response).catch(() => {})
-      }
-    })
+      );
+      if (response) interaction.reply(response).catch(() => {});
+    });
   }
 
   getValidations(folder) {
