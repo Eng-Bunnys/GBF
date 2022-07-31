@@ -20,11 +20,39 @@ class GBFSlash {
     return commands;
   }
 
+  differentOptions(options, existingOptions) {
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      const existing = existingOptions[i];
+
+      if (
+        option.name !== existing.name ||
+        option.type !== existing.type ||
+        option.description !== existing.description
+      )
+        return true;
+    }
+    return false;
+  }
+
   async create(name, description, options, guildId) {
     const commands = await this.getCommands(guildId);
 
     const existingCommand = commands.cache.find((cmd) => cmd.name === name);
-    if (existingCommand) return console.log(`Ignoring the command "${name}" because it already exists`);
+    if (existingCommand) {
+      const { description: existingDescription, options: existingOptions } =
+        existingCommand;
+
+      if (
+        description !== existingDescription ||
+        options.length !== existingOptions.length ||
+        this.differentOptions(options, existingOptions)
+      )
+        await commands.edit(existingCommand.id, {
+          description,
+          options,
+        });
+    }
 
     await commands.create({
       name,
@@ -48,21 +76,21 @@ class GBFSlash {
   creatOptions({ expectedArgs = "", minArgs = 0 }) {
     const options = [];
     if (expectedArgs) {
-      const split = expectedArgs.substring(1, expectedArgs.length - 1)
-      .split(/[>\]] [<\[]/);
+      const split = expectedArgs
+        .substring(1, expectedArgs.length - 1)
+        .split(/[>\]] [<\[]/);
 
       for (let i = 0; i < split.length; i++) {
         const arg = split[i];
         options.push({
-          name: arg.toLowerCase().replace(/\s+/g, '-'),
+          name: arg.toLowerCase().replace(/\s+/g, "-"),
           description: arg,
           type: ApplicationCommandOptionType.String,
           required: i < minArgs,
-        })
+        });
       }
-      console.log(options);
     }
-     return options;
+    return options;
   }
 }
 
