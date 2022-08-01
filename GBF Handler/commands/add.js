@@ -45,7 +45,12 @@ module.exports = {
   
   disabled: false, //This will delete/disable the command if true (default: false) so it won't show in slash or legacy
 
-  callback: ({ interaction, message, args }) => {
+  //This will run the command once, good for API requests/fetching data from a DB, this will run the command once it registers 
+  init: async (client, instance) => {
+    console.log(`Hello World`);
+  },
+
+  callback: async ({ interaction, message, args }) => {
     let sum = 0;
 
     for (const arg of args) sum += parseInt(arg);
