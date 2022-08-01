@@ -1,4 +1,4 @@
-const GBFHandler = require("./main/MainHandler");
+const GBFHandler = require("./main/GBFHandler");
 
 const mongoose = require("mongoose");
 
