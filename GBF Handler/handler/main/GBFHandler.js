@@ -61,7 +61,9 @@ class GBFHandler {
       this._commands.set(command.commandName, command);
 
       if (type === "SLASH" || type === "BOTH") {
-        const options = commandObject.options || this._slashCommands.creatOptions(commandObject);
+        const options =
+          commandObject.options ||
+          this._slashCommands.creatOptions(commandObject);
 
         if (testOnly) {
           for (const guildId of this._instance.testServers) {
@@ -106,8 +108,8 @@ class GBFHandler {
 
   messageListener(client) {
     client.on("messageCreate", async (message) => {
-      
-      if (!message.content.startsWith(this._prefix))  return;
+      if (message.author.bot || message.channel.type === "DM") return;
+      if (!message.content.startsWith(this._prefix)) return;
 
       const args = message.content.split(/\s+/);
       const commandName = args
@@ -122,6 +124,7 @@ class GBFHandler {
 
   interactionListener(client) {
     client.on("interactionCreate", async (interaction) => {
+      if (interaction.channel.type === "DM") return;
       if (interaction.type !== InteractionType.ApplicationCommand) return;
 
       const args = interaction.options.data.map(({ value }) => {
