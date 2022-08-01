@@ -1,30 +1,39 @@
-const CommandHandler = require('./main/MainHandler');
+const GBFHandler = require("./main/MainHandler");
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 class GBF {
-  constructor({ client, mongoURI, commandsDir, testServers = [] }) {
-    if (!client) throw new Error('You must provide a client instance in the handler setup.')
+  constructor({
+    client,
+    mongoURI,
+    commandsDir,
+    testServers = [],
+    botOwners = [],
+  }) {
+    if (!client)
+      throw new Error(
+        "You must provide a client instance in the handler setup."
+      );
 
     this._testServers = testServers;
+    this._botOwners = botOwners;
 
-    if (mongoURI) {
-      this.mongoConnect(mongoURI)
-    }
+    if (mongoURI) this.mongoConnect(mongoURI);
 
-    if (commandsDir) {
-      new CommandHandler(this, commandsDir, client);
-    }
+    if (commandsDir) new GBFHandler(this, commandsDir, client);
   }
 
   get testServers() {
-    return this._testServers
+    return this._testServers;
   }
 
+  get botOwners() {
+    return this._botOwners;
+  }
   mongoConnect(mongoURI) {
     mongoose.connect(mongoURI, {
       keepAlive: true,
-    })
+    });
   }
 }
 
