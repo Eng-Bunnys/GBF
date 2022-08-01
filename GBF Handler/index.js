@@ -1,4 +1,4 @@
-const { Client, IntentsBitField, Partials} = require("discord.js");
+const { Client, IntentsBitField} = require("discord.js");
 const path = require("path");
 require("dotenv/config");
 
@@ -9,9 +9,7 @@ const client = new Client({
     IntentsBitField.Flags.MessageContent,
     IntentsBitField.Flags.GuildMessages,
     IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.DirectMessages
-  ],
-  partials: [Partials.Channel]
+  ]
 });
 
 client.on("ready", () => {
@@ -21,7 +19,8 @@ client.on("ready", () => {
     client,
     commandsDir: path.join(__dirname, "commands"),
     mongoURI: process.env.MONGO_URI,
-    testServers: ["439890528583286784"]
+    testServers: ["439890528583286784"],
+    botOwners: ["333644367539470337"]
   });
 
 });
