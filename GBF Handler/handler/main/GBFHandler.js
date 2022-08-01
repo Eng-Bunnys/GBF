@@ -93,6 +93,8 @@ class GBFHandler {
       args,
       text: args.join(" "),
       guild: message ? message.guild : interaction.guild,
+      user: message ? message.author : interaction.user,
+      member: message ? message.member : interaction.member,
     };
 
     for (const validation of this._validations) {
