@@ -12,6 +12,7 @@ class GBFHandler {
   _prefix = "!";
 
   constructor(instance, commandsDir, client) {
+    this._client = client;
     this._instance = instance;
     this._commandsDir = commandsDir;
     this._slashCommands = new GBFSlash(client);
@@ -21,7 +22,7 @@ class GBFHandler {
     this.interactionListener(client);
   }
 
-  readFiles() {
+  async readFiles() {
     const files = getAllFiles(this._commandsDir);
     const validations = this.getValidations("syntax");
 
@@ -39,7 +40,14 @@ class GBFHandler {
 
       const command = new Command(this._instance, commandName, commandObject);
 
-      const { description, type, testOnly, disabled: del, aliases = [] } = commandObject;
+      const {
+        description,
+        type,
+        testOnly,
+        disabled: del,
+        aliases = [],
+        init = () => {},
+      } = commandObject;
 
       if (del) {
         if (type === "SLASH" || type === "BOTH") {
@@ -54,10 +62,12 @@ class GBFHandler {
 
       for (const validation of validations) validation(command);
 
+      await init(this._client, this._instance);
+
       const names = [command.commandName, ...aliases];
 
       for (const name of names) this._commands.set(name, command);
-      
+
       if (type === "SLASH" || type === "BOTH") {
         const options =
           commandObject.options ||
@@ -79,10 +89,7 @@ class GBFHandler {
     }
   }
 
-  async runCommand(commandName, args, message, interaction) {
-    const command = this._commands.get(commandName);
-    if (!command) return;
-
+  async runCommand(command, args, message, interaction) {
     const { callback, type } = command.commandObject;
 
     if (message && type === "SLASH") return;
@@ -115,8 +122,16 @@ class GBFHandler {
         .substring(this._prefix.length)
         .toLowerCase();
 
-      const response = await this.runCommand(commandName, args, message);
-      if (response) message.reply(response).catch(() => {});
+      const command = this._commands.get(commandName);
+      if (!command) return;
+
+      const { reply } = command.commandObject;
+
+      const response = await this.runCommand(command, args, message);
+      if (!response) return;
+
+      if (reply) message.reply(response).catch(() => {});
+      else message.channel.send(response).catch(() => {});
     });
   }
 
@@ -129,8 +144,11 @@ class GBFHandler {
         return String(value);
       });
 
+      const command = this._commands.get(interaction.commandName);
+      if (!command) return;
+
       const response = await this.runCommand(
-        interaction.commandName,
+       command,
         args,
         null,
         interaction
