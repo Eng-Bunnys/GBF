@@ -2,7 +2,8 @@ const { ApplicationCommandOptionType } = require("discord.js");
 
 module.exports = {
   name: "add", //Will always be lowercase, this feature is here to avoid slash command errors
-  description: "Adds two numbers together!",
+  aliases: ['calc'], //These are the names that will trigger the **legacy** command, if the name is too long the user can use whatever is inside of the aliases array and it will run the command like normal
+  description: "Adds two numbers together!", //The command description, used for slash commands
   type: "BOTH", //LEGACY, SLASH, BOTH
 
   minArgs: 2, //default: 0
