@@ -5,7 +5,8 @@ module.exports = {
   aliases: ['calc'], //These are the names that will trigger the **legacy** command, if the name is too long the user can use whatever is inside of the aliases array and it will run the command like normal
   description: "Adds two numbers together!", //The command description, used for slash commands
   type: "BOTH", //LEGACY, SLASH, BOTH
-
+  reply: false, //If true the bot will reply to the user if false it will be a channel.send (Legacy only)
+  //The reply feature only works with the *return "string" feature, if you handle replies yourself it won't work
   minArgs: 2, //default: 0
   maxArgs: 2, //default: -1 (infinite)
 
@@ -47,7 +48,7 @@ module.exports = {
 
   //This will run the command once, good for API requests/fetching data from a DB, this will run the command once it registers 
   init: async (client, instance) => {
-    console.log(`Hello World`);
+   // console.log(`Hello World`);
   },
 
   callback: async ({ interaction, message, args }) => {
@@ -55,17 +56,17 @@ module.exports = {
 
     for (const arg of args) sum += parseInt(arg);
 
-    if (message) {
-      message.reply({
-        content: `Message: The sum is ${sum}`,
-      });
-    } else {
-      interaction.reply({
-        content: `Interaction: The sum is ${sum}`,
-      });
-    }
+    // if (message) {
+    //   message.reply({
+    //     content: `Message: The sum is ${sum}`,
+    //   });
+    // } else {
+    //   interaction.reply({
+    //     content: `Interaction: The sum is ${sum}`,
+    //   });
+    // }
 
-    // return `The sum is ${sum}`; //This makes it so the handler handles the return and we don't have to
+     return `The sum is ${sum}`; //This makes it so the handler handles the return and we don't have to
     //check if it's a message or interaction, you don't even have to define them
   },
 };
