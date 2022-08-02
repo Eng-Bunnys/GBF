@@ -1,5 +1,3 @@
-import { MessageEmbed, TextChannel } from "discord.js";
-
   client.on("messageDelete", async (message) => {
     if (
       message.author?.bot ||
@@ -9,7 +7,7 @@ import { MessageEmbed, TextChannel } from "discord.js";
     )
       return;
 
-    let logsChannel = (await message.guild?.channels.cache.find((channel) =>
+    let logsChannel = (message.guild?.channels.cache.find((channel) =>
       channel.name.toLowerCase().includes("logs")
     )) as TextChannel;
 
