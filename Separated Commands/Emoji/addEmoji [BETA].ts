@@ -1,3 +1,4 @@
+  //The code has not been fully tested yet, once the full thing is testetd and complete the [BETA] tag will be removed
   options: [
     {
       name: "emoji-name",
