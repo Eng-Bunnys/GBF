@@ -9,6 +9,12 @@
 # 
 - GBF Commands under [Seperated Commands](https://github.com/DepressedBunnys/Discord.JS-Bot-Commands/tree/main/Separated%20Commands)
 ➜ These are GBF's commands updated and explained, when getting code it's recommended to get it from here, this contains all of GBF's commands but they're updated to be easily added to your project and there's notes explaining everything going on
+#
+- GBF Events under [Seperated Events](https://github.com/DepressedBunnys/Discord.JS-Bot-Commands/tree/main/Seperated%20Events)
+➜ These are GBF's events updated and explained, when getting code it's recommended to get it from here, this contains all of GBF's commands but they're updated to be easily added to your project and there's notes explaining everything going on
+
+### Warning
+Notes explaining everything are found in the **js** versions, the **ts** versions do not contain notes explaining what is going on since I won't explain everything twice
 
 ## More Information will be added here once available
 
