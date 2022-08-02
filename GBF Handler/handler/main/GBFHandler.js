@@ -125,7 +125,9 @@ class GBFHandler {
       const command = this._commands.get(commandName);
       if (!command) return;
 
-      const { reply } = command.commandObject;
+      const { reply, deferReply } = command.commandObject;
+
+      if (deferReply) message.channel.sendTyping();
 
       const response = await this.runCommand(command, args, message);
       if (!response) return;
@@ -147,13 +149,23 @@ class GBFHandler {
       const command = this._commands.get(interaction.commandName);
       if (!command) return;
 
+      const { deferReply } = command.commandObject;
+
+      if (deferReply) await interaction.deferReply({
+        ephemeral: deferReply === 'ephemeral'
+      });
+
       const response = await this.runCommand(
        command,
         args,
         null,
         interaction
       );
-      if (response) interaction.reply(response).catch(() => {});
+      if (!response) return;
+
+      if (deferReply) interaction.editReply(response).catch(() => {});
+      else interaction.reply(response).catch(() => {});
+      
     });
   }
 
