@@ -1,4 +1,6 @@
-const { ApplicationCommandOptionType } = require("discord.js");
+const {
+  ApplicationCommandOptionType
+} = require("discord.js");
 
 module.exports = {
   name: "add", //Will always be lowercase, this feature is here to avoid slash command errors
@@ -6,6 +8,9 @@ module.exports = {
   description: "Adds two numbers together!", //The command description, used for slash commands
   type: "BOTH", //LEGACY, SLASH, BOTH
   reply: false, //If true the bot will reply to the user if false it will be a channel.send (Legacy only)
+  deferReply: 'ephemeral', //default (false), the bot will send the (bot is thinking) message, this is used for commands that take a while to run
+  //You can also have "ephemeral" in the deferReply option that will make every response an ephemeral response (Slash only)
+
   //The reply feature only works with the *return "string" feature, if you handle replies yourself it won't work
   minArgs: 2, //default: 0
   maxArgs: 2, //default: -1 (infinite)
@@ -26,8 +31,7 @@ module.exports = {
   */
 
   //The options used in the **slash** command
-  options: [
-    {
+  options: [{
       name: "first-number",
       description: "The first number to add",
       type: ApplicationCommandOptionType.Number,
@@ -43,15 +47,19 @@ module.exports = {
 
   testOnly: false, //boolean (default: false) || development only, will only work in test servers
   devOnly: true, //boolean (default: false) || will only work with bot owners
-  
+
   disabled: false, //This will delete/disable the command if true (default: false) so it won't show in slash or legacy
 
   //This will run the command once, good for API requests/fetching data from a DB, this will run the command once it registers 
   init: async (client, instance) => {
-   // console.log(`Hello World`);
+    // console.log(`Hello World`);
   },
 
-  callback: async ({ interaction, message, args }) => {
+  callback: async ({
+    interaction,
+    message,
+    args
+  }) => {
     let sum = 0;
 
     for (const arg of args) sum += parseInt(arg);
@@ -65,8 +73,10 @@ module.exports = {
     //     content: `Interaction: The sum is ${sum}`,
     //   });
     // }
+    //Makes the function wait 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-     return `The sum is ${sum}`; //This makes it so the handler handles the return and we don't have to
+    return `The sum is ${sum}`; //This makes it so the handler handles the return and we don't have to
     //check if it's a message or interaction, you don't even have to define them
   },
 };
