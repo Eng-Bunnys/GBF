@@ -1,3 +1,39 @@
+  import {
+     Constants,
+     MessageEmbed,
+     MessageButton,
+     MessageActionRow,
+   } from "discord.js";
+
+//I've put the embeds in another file to be able to update them easily
+export const missingOptions = new MessageEmbed()
+  .setTitle(`<:error:822091680605011978> Invalid Input`)
+  .setDescription(
+    `You must specify at least \`emoji-url\` or \`emoji-attachment\`.`
+  )
+  .setColor("#FF0000");
+
+export const invalidURL = new MessageEmbed()
+  .setTitle(`<:error:822091680605011978> Invalid URL`)
+  .setDescription(
+    `The URL provided has been flagged as an invalid image URL\n⤷Make sure the URL fits the following format: \`https://example.com/image.png\``
+  )
+  .setColor("#FF0000");
+
+export const invalidAttachmentType = new MessageEmbed()
+  .setTitle(`<:error:822091680605011978> Invalid Attachment`)
+  .setDescription(
+    `The attachment provided is not a valid image file\n⤷The attachment must be a valid image file (\`jpg\`, \`png\`, \`gif\` , etc.)`
+  )
+  .setColor("#FF0000");
+
+export const attachmentTooBig = new MessageEmbed()
+  .setTitle(`<:error:822091680605011978> Image Size Too Big`)
+  .setDescription(
+    `The attachment provided is too big\n⤷The maximum image size is 256kb`
+  )
+  .setColor("#FF0000");
+
   options: [
     {
       name: "emoji-name",
