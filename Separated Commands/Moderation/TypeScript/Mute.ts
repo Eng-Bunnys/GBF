@@ -43,14 +43,21 @@
     },
   ],
 
-    const targetMember = interaction.options.getMember(
-      "target",
-      true
-    ) as GuildMember;
+    const inputtedUser = interaction.options.getUser("target", true);
     const durationNumber = interaction.options.getNumber("duration", true);
     const durationUnit = interaction.options.getString("unit", true);
     const muteReason =
       interaction.options.getString("reason") || "No reason provided";
+
+    const targetMember = interaction.guild?.members.cache.get(
+      inputtedUser.id
+    ) as GuildMember;
+
+    if (!targetMember)
+      return interaction.reply({
+        content: `The user specified is not in ${interaction.guild?.name}`,
+        ephemeral: true,
+      });
 
     const unmetPerms = new MessageEmbed()
       .setTitle(titles.USER_ERROR)
@@ -99,13 +106,13 @@
 
     let muteDuration: number;
 
-      switch (durationUnit) {
-        case 's': muteDuration = 1000 * durationNumber; break;
-        case 'm': muteDuration = 1000 * 60 * durationNumber; break;
-        case 'h': muteDuration = 1000 * 60 * 60 * durationNumber; break;
-        case 'd': muteDuration = 1000 * 60 * 60 * 24 * durationNumber; break;
-        default : muteDuration = durationNumber; break;
-      }
+    switch (durationUnit) {
+      case 's': muteDuration = 1000 * durationNumber; break;
+      case 'm': muteDuration = 1000 * 60 * durationNumber; break;
+      case 'h': muteDuration = 1000 * 60 * 60 * durationNumber; break;
+      case 'd': muteDuration = 1000 * 60 * 60 * 24 * durationNumber; break;
+      default : muteDuration = durationNumber; break;
+    }
 
     const muteTooBig = new MessageEmbed()
       .setTitle(titles.USER_ERROR)
