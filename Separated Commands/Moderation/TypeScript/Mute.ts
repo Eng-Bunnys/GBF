@@ -99,13 +99,13 @@
 
     let muteDuration: number;
 
-    if (durationUnit === "s") muteDuration = 1000 * durationNumber;
-    else if (durationUnit === "m") muteDuration = 1000 * 60 * durationNumber;
-    else if (durationUnit === "h")
-      muteDuration = 1000 * 60 * 60 * durationNumber;
-    else if (durationUnit === "d")
-      muteDuration = 1000 * 60 * 60 * 24 * durationNumber;
-    else muteDuration = durationNumber;
+      switch (durationUnit) {
+        case 's': muteDuration = 1000 * durationNumber; break;
+        case 'm': muteDuration = 1000 * 60 * durationNumber; break;
+        case 'h': muteDuration = 1000 * 60 * 60 * durationNumber; break;
+        case 'd': muteDuration = 1000 * 60 * 60 * 24 * durationNumber; break;
+        default : muteDuration = durationNumber; break;
+      }
 
     const muteTooBig = new MessageEmbed()
       .setTitle(titles.USER_ERROR)
