@@ -3,6 +3,8 @@ const DIG = require("discord-image-generation");
 //You could also do 
 const { LisaPresentation } = require('discord-image-generation');
 //I didn't do this here since all of the meme commands are in one file (subCommand) but if you're just going to use this, use the import shown above
+//This is the better way of making embeds since it's less file size
+const { ImageGenerating } = require("../../utils/GBFEmbeds");
 //The user input
 args: [
   {
@@ -12,20 +14,8 @@ args: [
     required: true,
   },
 ],
- //Defering the reply so in the case of the bot taking long to generate the image and send it, it doesn't give an error to the user
-await interaction.deferReply({
-    fetchReply: true,
-  });
 //Loading screen 
-const ImageGenerating = new MessageEmbed()
-  .setTitle(`Generating image... <a:Loading:971730094169141248>`)
-  .setColor(colours.DEFAULT)
-  .setDescription(
-    `This may take up to 2 minutes (Average 10s) depending on quality and server load`
-  )
-  .setTimestamp();
-//Editing the deferReply to the loading screen
-await interaction.editReply({
+await interaction.reply({
   embeds: [ImageGenerating],
 });
 //The user option
