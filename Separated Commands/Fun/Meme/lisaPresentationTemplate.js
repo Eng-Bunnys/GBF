@@ -1,61 +1,59 @@
-//The package we're using, you could of-course make it yourself it's simple image manipulation using canvas
+//The package that we're using
 const DIG = require("discord-image-generation");
-//You could also do 
-const { LisaPresentation } = require('discord-image-generation');
-//I didn't do this here since all of the meme commands are in one file (subCommand) but if you're just going to use this, use the import shown above
-//This is the better way of making embeds since it's less file size
-const { ImageGenerating } = require("../../utils/GBFEmbeds");
-//The user input
-args: [
-  {
-    name: "text",
-    description: "The text that you want to display",
-    type: "STRING",
-    required: true,
-  },
-],
-//Loading screen 
-await interaction.reply({
-  embeds: [ImageGenerating],
-});
-//The user option
-const text = interaction.options.getString("text");
-//Checking if the user added text that is too big to avoid errors
-if (text.length > 290) {
-  return interaction.reply({
-    content: "Over the character limit! Character limit is 290.",
-    ephemeral: true,
-  });
-}
-//Creating the message attachment 
-let image = await new DIG.LisaPresentation().getImage(text);
-let attach = new MessageAttachment(image, "presentation.png");
-//Sending the user the image and removing the embed
-return interaction
-  .editReply({
-    files: [attach],
-    embeds: [],
+
+const {
+  MessageEmbed,
+  Constants,
+  MessageAttachment
+} = require("discord.js");
+//The message that will be sent while the image generates, you can replace this with *bot is thinking* (deferReply) but I prefer this to give the user a better idea on what's going on
+//We can also later edit this incase of an error 
+const loadingScreen = new MessageEmbed()
+  .setTitle(`Generating image... <a:Loading:971730094169141248>`)
+  .setColor(colours.DEFAULT)
+  .setDescription(
+    `Image generation time depends on image size and server load, please be patient.`
+  )
+  .setFooter({
+    text: `GBF Meme Generator`,
   })
-  //Incase of an error 
-  .catch((err) => {
-    const APIError = new MessageEmbed()
-      .setTitle(titles.ERROR)
-      .setDescription(
-        `An error in the API occured, I've already reported it to my developers!\nPlease try again later.\n\nError:\`\`\`js\n${err}\`\`\``
-      )
-      .setColor(colours.ERRORRED)
-      .addFields({
-        name: "FYI:",
-        value: `\`User aborted the request\` error just means that the bot is under load`,
-      })
-      .setFooter({
-        text: `We apologize for the inconvenience`,
-        iconURL: client.user.displayAvatarURL(),
-      });
-    console.log(`Error with Meme command [LISA]\n${err}`);
-    
-    return interaction.followUp({
-      embeds: [APIError],
-      ephemeral: true,
-    });
-  });
+  .setTimestamp();
+//The slash command options
+args: [{
+    name: "text",
+    description: "The text that you want to put in the meme",
+    type: Constants.ApplicationCommandOptionTypes.STRING,
+    minLength: 5,
+    maxLength: 290,
+    required: true,
+},],
+//The user input
+const userInput = interaction.options.getString("text");
+//Sending the user the loading embed while the image generates
+await interaction.reply({
+  embeds: [loadingScreen],
+});
+//Generating the image 
+const generatedImage = await new DIG.LisaPresentation().getImage(
+  userInput
+);
+const finalImage = new MessageAttachment(
+  generatedImage,
+  "lisaPresentation.png"
+);
+//Sending the image once generated
+return interaction.editReply({
+  files: [finalImage],
+  embeds: [],
+}).catch(err => { //If an error occurs we edit the embed and console log the error
+    console.log(`Error in the LISA Meme command: ${err}`);
+    loadingScreen.setTitle(titles.ERROR)
+    .setDescription(`An API error occured, I've already reported it to my developers!\nPlease try again later.\nError:\n\n\`\`\`js\n${err}\`\`\``)
+    .setColor(colours.ERRORRED);
+    await interaction.editReply({
+        content: `This message will be deleted in 10 seconds.`,
+        embeds: [loadingScreen]
+    })
+    //Deleting the embed
+    setTimeout(() => { return interaction.deleteReply() } , 10000);
+})
