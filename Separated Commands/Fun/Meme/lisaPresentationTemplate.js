@@ -29,6 +29,8 @@ args: [{
 },],
 //The user input
 const userInput = interaction.options.getString("text");
+//For TypeScript you simple do
+const userInput = interaction.options.getString("text", true);
 //Sending the user the loading embed while the image generates
 await interaction.reply({
   embeds: [loadingScreen],
