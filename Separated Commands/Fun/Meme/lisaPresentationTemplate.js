@@ -45,7 +45,7 @@ const finalImage = new MessageAttachment(
 return interaction.editReply({
   files: [finalImage],
   embeds: [],
-}).catch(err => { //If an error occurs we edit the embed and console log the error
+}).catch((async (err) => { //If an error occurs we edit the embed and console log the error
     console.log(`Error in the LISA Meme command: ${err}`);
     loadingScreen.setTitle(titles.ERROR)
     .setDescription(`An API error occured, I've already reported it to my developers!\nPlease try again later.\nError:\n\n\`\`\`js\n${err}\`\`\``)
