@@ -1,0 +1,66 @@
+SueLuz development map: Criminal
+
+User meets David Jakowski, leader of the x club
+David introduces player to Jay Walker, the brains of the group
+
+First mission:
+
+The Mojave Job
+
+Player has to prove themselves, so Jay plans a heist on the Great Mojave Bank, small cut of 15k, 150RP
+No prep required
+David and user rob the bank
+=> Enter the bank
+=> Choose the right bag
+=> Hack the door's keypad
+=> Leave + 15k cut
+=> Unlock Erwin Patrick Job
+
+Erwin Patrick Job
+
+Player meets with Denis Mueller, who gives him the brief of Erwin was kidnapped by a Chinese group in SayBay, and it's their job 
+to get him out
+
+Prep:
+
+Code:
+=> Go to a motel where part of the gang is at
+=> Hack the door, or kill one of the 3 gang members, one of which has the key
+=> Enter 
+=> Find the code
+=> Leave
+
+Masks and outfits:
+=> Hijack a supply truck going to Y clothing store name
+=> Dress as the suppliers
+=> Rob the clothing store for money, masks and clothing
+=> Flee the cops
+
+Get away car:
+=> Jay sends player of list of 3 cars
+1- Radiance (15k purchase)/Easy 
+2- Centurion (50k purcahse)/Medium 
+3- Bullet (100k purchase)/ Hard
+
+1 => User finds car in a parking garage and steals it
+2 => User hijacks the car, changes liscence plate (250)
+3 => User steals car from Chinese gang, resprays it, changes liscence plate (500)
+
+Heist:
+
+User and Denis go to the motel where Mr Patrick are
+User and Denis have to find a weapon, and kill 4 guards in a certain order
+User and Denis user the code that they found to enter the room
+User and Denis find Erwin
+Denis takes Erwin and flees
+User can:
+1- Leave
+2- Loot
+
+1- User leaves and gets 150k, 1000 RP
+2- User loots, chance of fighting more guards, 5 total staches hidden, user can take as many, leaves gets 200k, 1200 RP
+
+User gets weapon that they took
+Prompt to go to shop
+Pompt to buy a safehouse to start heists
+Prompt to hire one crew member
