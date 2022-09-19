@@ -288,11 +288,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               const badUsername = new MessageEmbed()
                 .setTitle(`${emojis.ERROR} You can't do that`)
                 .setDescription(
-                  `The username entered has been flagged by our system as inappropriate.`
+                  `The username entered has been flagged by our system as inappropriate, please choose another name.`
                 )
                 .setColor(colours.ERRORRED)
                 .setFooter({
-                  text: `GBF Security and safety`,
+                  text: `GBF Security and safety | If you think this is a mistake please contact support`,
                 })
                 .setTimestamp();
 
@@ -301,7 +301,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   embeds: [badUsername],
                   ephemeral: true,
                 });
-                
+
               const newUserAccount = new userSchema({
                 userId: interaction.user.id,
                 userName: accountName,
@@ -315,11 +315,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               const welcomeMessage = new MessageEmbed()
                 .setTitle(`${emojis.TRACER} Welcome to DunkelLuz`)
                 .setDescription(
-                  `Account has been successfully created.\n\nUnlocked basic DunkelLuz features, to unlock the story missions and side features you must complete the tutorial: \`/intro\``
+                  `Account has been successfully created.\n\nUnlocked basic DunkelLuz features, to unlock the story missions and side features you must complete the tutorial: \`/intro\`\n\nIt is recommended to keep your account details in a safe place since they can be used to retrieve progress in-case you lost your discord account`
                 )
                 .addFields({
                   name: `Details:`,
-                  value: `Username: ${accountName}\nPassword: ${accountPassword}`,
+                  value: `Username: ${accountName}\nPassword: ${accountPassword}\n\n⚠️ The account username is case-insensitive but the account password is case-sensitive ⚠️`,
                 })
                 .setColor(colours.DEFAULT)
                 .setFooter({
