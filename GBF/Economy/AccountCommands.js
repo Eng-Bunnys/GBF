@@ -31,7 +31,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               type: "STRING",
               minLength: 6,
               maxLength: 16,
-              required: true,
+              required: true
             },
             {
               name: "password",
@@ -40,8 +40,8 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               type: "STRING",
               minLength: 8,
               maxLength: 32,
-              required: true,
-            },
+              required: true
+            }
           ],
           execute: async ({ client, interaction }) => {
             const accountName = interaction.options.getString("username");
@@ -49,7 +49,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
 
             const userData = await userSchema.findOne({
               userNameInsensitive: accountName.toLowerCase(),
-              accountPassword: accountPassword,
+              accountPassword: accountPassword
             });
 
             const alreadyLoggedIn = new MessageEmbed()
@@ -58,158 +58,159 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               .setColor(colours.ERRORRED)
               .setTimestamp()
               .setFooter({
-                text: `DunkelLuz`,
+                text: `DunkelLuz`
               });
 
             if (userData && userData.userId === interaction.user.id)
               return interaction.reply({
                 embeds: [alreadyLoggedIn],
-                ephemeral: true,
+                ephemeral: true
               });
 
-            if (
-              userData &&
-              userData.userId !== null &&
-              Date.parse(userData.lastTransfer) + 3 * 7 * 24 * 60 * 60 * 1000 >
-                Date.now()
-            ) {
-              const newOwner = interaction.user;
+            const threeWeeksFromNow = Math.floor(
+              (Date.now() + 3 * 7 * 24 * 60 * 60 * 1000) / 1000
+            );
+            if (userData) {
+              const cooldownTimer =
+                Date.parse(userData.lastTransfer) + 3 * 7 * 24 * 60 * 60 * 1000;
 
-              const existingAccount = new MessageEmbed()
-                .setTitle(`${emojis.REMPEACE} Account Transfer`)
-                .setDescription(
-                  `By transferring \`${userData.userName}\` to ${newOwner.tag}, the account will be logged out from everywhere except here and you will have to wait **3 weeks** to log onto another account.`
-                )
-                .setColor(colours.DEFAULT)
-                .setTimestamp();
+              if (userData.userId !== null) {
+                const newOwner = interaction.user;
 
-              const onCooldown = new MessageEmbed()
-                .setTitle(`${emojis.ERROR} Not Yet!`)
-                .setDescription(
-                  `You can log into this account in **<t:${Math.floor(
-                    userData.lastTransfer / 1000 + 3 * 7 * 24 * 60 * 60
-                  )}:f>**`
-                )
-                .setColor(colours.ERRORRED)
-                .setTimestamp();
+                const existingAccount = new MessageEmbed()
+                  .setTitle(`${emojis.REMPEACE} Account Transfer`)
+                  .setDescription(
+                    `By transferring \`${userData.userName}\` to ${newOwner.tag}, the account will be logged out from everywhere except here and you will have to wait **3 weeks** (<t:${threeWeeksFromNow}:R>) to log onto another account.`
+                  )
+                  .setColor(colours.DEFAULT)
+                  .setTimestamp();
 
-              if (
-                Date.parse(userData.lastTransfer) +
-                  3 * 7 * 24 * 60 * 60 * 1000 <
-                Date.now()
-              )
-                return interaction.reply({
-                  embeds: [onCooldown],
-                  ephemeral: true,
-                });
-              else {
-                const transferButtons = new MessageActionRow().addComponents([
-                  new MessageButton()
-                    .setCustomId(`confirmTransfer`)
-                    .setStyle("SUCCESS")
-                    .setEmoji(emojis.VERIFY)
-                    .setLabel(`Transfer`),
-                  new MessageButton()
-                    .setCustomId(`denyTransfer`)
-                    .setStyle("DANGER")
-                    .setEmoji(emojis.ERROR)
-                    .setLabel(`Cancel`),
-                ]);
+                const onCooldown = new MessageEmbed()
+                  .setTitle(`${emojis.ERROR} Not Yet!`)
+                  .setDescription(
+                    `You cannot log into this account until **<t:${Math.floor(
+                      userData.lastTransfer / 1000 + 3 * 7 * 24 * 60 * 60
+                    )}:f>**\n\nYou can create a new account or log onto an existing account that doesn't have a cooldown.`
+                  )
+                  .setColor(colours.ERRORRED)
+                  .setTimestamp();
 
-                const transferButtonsD = new MessageActionRow().addComponents([
-                  new MessageButton()
-                    .setCustomId(`confirmTransferD`)
-                    .setStyle("SUCCESS")
-                    .setEmoji(emojis.VERIFY)
-                    .setDisabled(true)
-                    .setLabel(`Transfer`),
-                  new MessageButton()
-                    .setCustomId(`denyTransferD`)
-                    .setStyle("DANGER")
-                    .setEmoji(emojis.ERROR)
-                    .setDisabled(true)
-                    .setLabel(`Cancel`),
-                ]);
+                if (cooldownTimer > Date.now()) {
+                  return interaction.reply({
+                    embeds: [onCooldown],
+                    ephemeral: true
+                  });
+                } else {
+                  const transferButtons = new MessageActionRow().addComponents([
+                    new MessageButton()
+                      .setCustomId(`confirmTransfer`)
+                      .setStyle("SUCCESS")
+                      .setEmoji(emojis.VERIFY)
+                      .setLabel(`Transfer`),
+                    new MessageButton()
+                      .setCustomId(`denyTransfer`)
+                      .setStyle("DANGER")
+                      .setEmoji(emojis.ERROR)
+                      .setLabel(`Cancel`)
+                  ]);
 
-                await interaction.reply({
-                  embeds: [existingAccount],
-                  components: [transferButtons],
-                  ephemeral: true,
-                });
+                  const transferButtonsD = new MessageActionRow().addComponents(
+                    [
+                      new MessageButton()
+                        .setCustomId(`confirmTransferD`)
+                        .setStyle("SUCCESS")
+                        .setEmoji(emojis.VERIFY)
+                        .setDisabled(true)
+                        .setLabel(`Transfer`),
+                      new MessageButton()
+                        .setCustomId(`denyTransferD`)
+                        .setStyle("DANGER")
+                        .setEmoji(emojis.ERROR)
+                        .setDisabled(true)
+                        .setLabel(`Cancel`)
+                    ]
+                  );
 
-                const filter = (i) => {
-                  return i.user.id === interaction.user.id;
-                };
-
-                const collector =
-                  interaction.channel.createMessageComponentCollector({
-                    filter,
-                    time: 300000,
+                  await interaction.reply({
+                    embeds: [existingAccount],
+                    components: [transferButtons],
+                    ephemeral: true
                   });
 
-                collector.on("collect", async (i) => {
-                  await i.deferUpdate();
-                  await delay(750);
+                  const filter = (i) => {
+                    return i.user.id === interaction.user.id;
+                  };
 
-                  const denyTransferEmbed = new MessageEmbed()
-                    .setTitle(`${emojis.ERROR} Transfer Cancelled`)
-                    .setDescription(`Reason: User Cancelled Transfer`)
-                    .setColor(colours.ERRORRED)
-                    .setFooter({
-                      text: `DunekelLuz | Account Transfer`,
-                    })
-                    .setTimestamp();
-
-                  if (i.customId === "denyTransfer") {
-                    await collector.stop();
-                    return interaction.editReply({
-                      embeds: [denyTransferEmbed],
-                    });
-                  }
-
-                  if (i.customId === "confirmTransfer") {
-                    await interaction.editReply({
-                      embeds: [],
-                      content: `Logging out from all logged in devices...`,
-                      ephemeral: true,
+                  const collector =
+                    interaction.channel.createMessageComponentCollector({
+                      filter,
+                      time: 300000
                     });
 
-                    const oldOwner = await userSchema.findOne({
-                      userId: userData.userId,
-                    });
+                  collector.on("collect", async (i) => {
+                    await i.deferUpdate();
+                    await delay(750);
 
-                    if (!oldOwner) {
+                    const denyTransferEmbed = new MessageEmbed()
+                      .setTitle(`${emojis.ERROR} Transfer Cancelled`)
+                      .setDescription(`Reason: User Cancelled Transfer`)
+                      .setColor(colours.ERRORRED)
+                      .setFooter({
+                        text: `DunekelLuz | Account Transfer`
+                      })
+                      .setTimestamp();
+
+                    if (i.customId === "denyTransfer") {
                       await collector.stop();
                       return interaction.editReply({
-                        content: `I couldn't find the old owner, process aborted.`,
+                        embeds: [denyTransferEmbed]
                       });
                     }
 
-                    const oldAccount = await userSchema.findOne({
-                      userId: interaction.user.id,
-                    });
-
-                    if (oldAccount)
-                      await oldAccount.updateOne({
-                        userId: null,
+                    if (i.customId === "confirmTransfer") {
+                      await interaction.editReply({
+                        embeds: [],
+                        content: `Logging out from all logged in devices...`,
+                        ephemeral: true
                       });
 
-                    await oldOwner.updateOne({
-                      userId: interaction.user.id,
-                    });
+                      const oldOwner = await userSchema.findOne({
+                        userId: userData.userId
+                      });
 
-                    await interaction.editReply({
-                      content: `Successfully logged into ${userData.userName}`,
-                    });
-                  }
-                });
+                      if (!oldOwner) {
+                        await collector.stop();
+                        return interaction.editReply({
+                          content: `I couldn't find the old owner, process aborted.`
+                        });
+                      }
 
-                collector.on("end", async (i) => {
-                  return interaction.editReply({
-                    content: `Session ended.`,
-                    components: [transferButtonsD],
+                      const oldAccount = await userSchema.findOne({
+                        userId: interaction.user.id
+                      });
+
+                      if (oldAccount)
+                        await oldAccount.updateOne({
+                          userId: null
+                        });
+
+                      await oldOwner.updateOne({
+                        userId: interaction.user.id
+                      });
+
+                      await interaction.editReply({
+                        content: `Successfully logged into ${userData.userName}`
+                      });
+                    }
                   });
-                });
+
+                  collector.on("end", async (i) => {
+                    return interaction.editReply({
+                      content: `Session ended.`,
+                      components: [transferButtonsD]
+                    });
+                  });
+                }
               }
             } else if (!userData) {
               const userHasAccount = new MessageEmbed()
@@ -221,13 +222,13 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 .setTimestamp();
 
               const userAccount = await userSchema.find({
-                userId: interaction.user.id,
+                userId: interaction.user.id
               });
 
               if (userAccount.length > 0)
                 return interaction.reply({
                   embeds: [userHasAccount],
-                  ephemeral: true,
+                  ephemeral: true
                 });
 
               const existingNickName = new MessageEmbed()
@@ -237,18 +238,18 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   `The name provided (${accountName}) is already in use, please choose another name.`
                 )
                 .setFooter({
-                  text: `GBF Security`,
+                  text: `GBF Security`
                 })
                 .setTimestamp();
 
               const checkName = await userSchema.find({
-                userName: accountName,
+                userName: accountName
               });
 
               if (checkName.length > 0)
                 return interaction.reply({
                   embeds: [existingNickName],
-                  ephemeral: true,
+                  ephemeral: true
                 });
 
               const weakPassword = new MessageEmbed()
@@ -258,7 +259,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   `The password entered (\`${accountPassword}\`) is too weak, you must add at least one of each:\n• 2 Uppercase characters\n• 3 Lowercase characters\n• 2 Numbers`
                 )
                 .setFooter({
-                  text: `GBF Security`,
+                  text: `GBF Security`
                 })
                 .setTimestamp();
 
@@ -268,7 +269,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               if (!checkPasswordStrength.test(accountPassword))
                 return interaction.reply({
                   embeds: [weakPassword],
-                  ephemeral: true,
+                  ephemeral: true
                 });
 
               function userNameCheck(username) {
@@ -292,14 +293,28 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 )
                 .setColor(colours.ERRORRED)
                 .setFooter({
-                  text: `GBF Security and safety | If you think this is a mistake please contact support`,
+                  text: `GBF Security and safety | If you think this is a mistake please contact support`
                 })
                 .setTimestamp();
 
               if (userNameCheck(accountName))
                 return interaction.reply({
                   embeds: [badUsername],
-                  ephemeral: true,
+                  ephemeral: true
+                });
+
+              const matchingCreds = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} You cannot do that`)
+                .setDescription(
+                  `Your account name and password cannot be the same!`
+                )
+                .setColor(colours.ERRORRED)
+                .setTimestamp();
+
+              if (accountName === accountPassword)
+                return interaction.reply({
+                  embeds: [matchingCreds],
+                  ephemeral: true
                 });
 
               const newUserAccount = new userSchema({
@@ -307,7 +322,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 userName: accountName,
                 userNameInsensitive: accountName.toLowerCase(),
                 accountPassword: accountPassword,
-                lastTransfer: new Date(Date.now()),
+                lastTransfer: new Date(Date.now())
               });
 
               await newUserAccount.save();
@@ -315,26 +330,148 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               const welcomeMessage = new MessageEmbed()
                 .setTitle(`${emojis.TRACER} Welcome to DunkelLuz`)
                 .setDescription(
-                  `Account has been successfully created.\n\nUnlocked basic DunkelLuz features, to unlock the story missions and side features you must complete the tutorial: \`/intro\`\n\nIt is recommended to keep your account details in a safe place since they can be used to retrieve progress in-case you lost your discord account`
+                  `Account has been successfully created.\n\nUnlocked basic DunkelLuz features, to unlock the story missions and side features you must complete the tutorial: \`/intro\`\n\nIt is recommended to keep your account details in a safe place since they can be used to retrieve progress in-case you lost your discord account.\n\n**Warning:**\nAfter creating an account or logging into one, you cannot log into that account again for **3 weeks** (<t:${threeWeeksFromNow}:F>)`
                 )
                 .addFields({
                   name: `Details:`,
-                  value: `Username: ${accountName}\nPassword: ${accountPassword}\n\n⚠️ The account username is case-insensitive but the account password is case-sensitive ⚠️`,
+                  value: `Username: ${accountName}\nPassword: ${accountPassword}\n\n⚠️ The account username is case-insensitive but the account password is case-sensitive ⚠️`
                 })
                 .setColor(colours.DEFAULT)
                 .setFooter({
-                  text: `Welcome to DunkelLuz | The city of saints and sinners`,
+                  text: `Welcome to DunkelLuz | The city of saints and sinners`
                 })
                 .setTimestamp();
 
               return interaction.reply({
                 embeds: [welcomeMessage],
-                ephemeral: true,
+                ephemeral: true
               });
             }
-          },
+          }
         },
-      },
+        logout: {
+          description: "Log out of your DunkelLuz account",
+          execute: async ({ client, interaction }) => {
+            const userData = await userSchema.findOne({
+              userId: interaction.user.id
+            });
+
+            const noAccount = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You cannot do that`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using \`/account login\` or log into an existing account using the same command.`
+              )
+              .setFooter({
+                text: `GBF Security and Safety`
+              })
+              .setTimestamp();
+
+            if (!userData)
+              return interaction.reply({
+                embeds: [noAccount],
+                ephemeral: true
+              });
+
+            const logOutMessage = new MessageEmbed()
+              .setTitle(`${emojis.VERIFY} Please confirm`)
+              .setDescription(
+                `Are you sure you want to log out of this account (${userData.userName})?\n\n⚠️ The account log-in cooldown will **not** be removed if you logout ⚠️`
+              )
+              .setColor(colours.DEFAULT)
+              .setTimestamp();
+
+            const confirmDenyButtons = new MessageActionRow().addComponents([
+              new MessageButton()
+                .setCustomId(`confirmLogout`)
+                .setEmoji(emojis.ERROR)
+                .setStyle("DANGER")
+                .setLabel(`Logout`),
+              new MessageButton()
+                .setCustomId(`denyLogout`)
+                .setEmoji(emojis.VERIFY)
+                .setStyle("SUCCESS")
+                .setLabel(`Cancel`)
+            ]);
+
+            await interaction.reply({
+              embeds: [logOutMessage],
+              components: [confirmDenyButtons],
+              ephemeral: true
+            });
+
+            const confirmDenyButtonsD = new MessageActionRow().addComponents([
+              new MessageButton()
+                .setCustomId(`confirmLogoutD`)
+                .setEmoji(emojis.ERROR)
+                .setDisabled(true)
+                .setStyle("DANGER")
+                .setLabel(`Logout`),
+              new MessageButton()
+                .setCustomId(`denyLogoutD`)
+                .setEmoji(emojis.VERIFY)
+                .setDisabled(true)
+                .setStyle("SUCCESS")
+                .setLabel(`Cancel`)
+            ]);
+            const filter = (i) => {
+              return i.user.id === interaction.user.id;
+            };
+
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 300000
+              });
+
+            collector.on("collect", async (i) => {
+              await i.deferUpdate();
+              await delay(750);
+
+              const userDecline = new MessageEmbed()
+                .setTitle(`${emojis.VERIFY} Success`)
+                .setDescription(`Cancelled user logout`)
+                .setColor(colours.DEFAULT)
+                .setTimestamp();
+
+              const logBackdate = `<t:${Math.floor(
+                userData.lastTransfer / 1000 + 3 * 7 * 24 * 60 * 60
+              )}:f>`;
+
+              const userAccept = new MessageEmbed()
+                .setTitle(`${emojis.VERIFY} Success`)
+                .setDescription(
+                  `Successfully logged out of ${userData.userName}\n\nLogin cooldown resets: ${logBackdate}`
+                )
+                .setColor(colours.DEFAULT)
+                .setTimestamp();
+
+              if (i.customId === "denyLogout") {
+                await collector.stop();
+                return interaction.editReply({
+                  embeds: [userDecline],
+                  ephemeral: true
+                });
+              } else if (i.customId === "confirmLogout") {
+                await collector.stop();
+                await userData.updateOne({
+                  userId: null
+                });
+                return interaction.editReply({
+                  embeds: [userAccept],
+                  ephemeral: true
+                });
+              }
+            });
+
+            collector.on("end", async (i) => {
+              return interaction.editReply({
+                components: [confirmDenyButtonsD]
+              });
+            });
+          }
+        }
+      }
     });
   }
 };
