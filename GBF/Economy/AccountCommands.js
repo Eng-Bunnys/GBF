@@ -470,6 +470,104 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               });
             });
           }
+        },
+        update: {
+          description: "Update your account credentials",
+          args: [
+            {
+              name: "password",
+              description: "Your account's current password",
+              type: "STRING",
+              required: true
+            },
+            {
+              name: "new-username",
+              description: "Your account's new username",
+              type: "STRING"
+            },
+            {
+              name: "new-password",
+              description: "Your account's new password",
+              type: "STRING"
+            }
+          ],
+          execute: async ({ client, interaction }) => {
+            const userData = await userSchema.findOne({
+              userId: interaction.user.id
+            });
+
+            const noAccount = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You cannot do that`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using \`/account login\` or log into an existing account using the same command.`
+              )
+              .setFooter({
+                text: `GBF Security and Safety`
+              })
+              .setTimestamp();
+
+            if (!userData)
+              return interaction.reply({
+                embeds: [noAccount],
+                ephemeral: true
+              });
+
+            const currentPassword = interaction.options.getString("password");
+            const newUsername = interaction.options.getString("new-username");
+            const newPassword = interaction.options.getString("new-password");
+
+            const badPassword = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `The password you entered does not match this accounts password, if you need help you can use the \`/account reset\` command`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (userData.accountPassword !== currentPassword)
+              return interaction.reply({
+                embeds: [badPassword],
+                ephemeral: true
+              });
+
+            const noOptionChosen = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `You must choose either a new username (\`new-username\`), new password (\`new-password\`) or both`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (!newUsername && !newPassword)
+              return interaction.reply({
+                embeds: [noOptionChosen],
+                ephemeral: true
+              });
+
+              const sameUsername = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `The username you entered matches the current account username, please change it.`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+              if (newUsername && newUsername === userData.userName) return interaction.reply({
+                embeds: [sameUsername],
+                ephemeral: true
+              });
+
+              /*
+              To do: 
+              1- Check password match
+              2- Add a confirm message
+              3- Update data in DB
+              4- Reset login timer to (3 weeks)
+              5- Check for login timer cooldown
+              */
+
+            }
         }
       }
     });
