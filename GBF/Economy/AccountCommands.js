@@ -303,6 +303,25 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   ephemeral: true
                 });
 
+              const noSpace = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} You can't do that`)
+                .setDescription(`Your password cannot contain a space`)
+                .setColor(colours.ERRORRED)
+                .setFooter({
+                  text: `GBF Security and safety | If you think this is a mistake please contact support`
+                })
+                .setTimestamp();
+
+              function hasWhiteSpace(password) {
+                return /\s/g.test(password);
+              }
+
+              if (hasWhiteSpace(accountPassword))
+                return interaction.reply({
+                  embeds: [noSpace],
+                  ephemeral: true
+                });
+
               const matchingCreds = new MessageEmbed()
                 .setTitle(`${emojis.ERROR} You cannot do that`)
                 .setDescription(
@@ -483,12 +502,16 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
             {
               name: "new-username",
               description: "Your account's new username",
-              type: "STRING"
+              type: "STRING",
+              minLength: 6,
+              maxLength: 16
             },
             {
               name: "new-password",
               description: "Your account's new password",
-              type: "STRING"
+              type: "STRING",
+              minLength: 8,
+              maxLength: 32
             }
           ],
           execute: async ({ client, interaction }) => {
@@ -539,13 +562,33 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               .setColor(colours.ERRORRED)
               .setTimestamp();
 
+            const cooldownTimer =
+              Date.parse(userData.lastUsernameChange) +
+              4 * 7 * 24 * 60 * 60 * 1000;
+
+            const onCooldown = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} Not Yet!`)
+              .setDescription(
+                `You cannot change your username until **<t:${Math.floor(
+                  userData.lastTransfer / 1000 + 4 * 7 * 24 * 60 * 60
+                )}:f>**\n\nDefault cooldown is **4 weeks**`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (cooldownTimer > Date.now() && newUsername)
+              return interaction.reply({
+                embeds: [onCooldown],
+                ephemeral: true
+              });
+
             if (!newUsername && !newPassword)
               return interaction.reply({
                 embeds: [noOptionChosen],
                 ephemeral: true
               });
 
-              const sameUsername = new MessageEmbed()
+            const sameUsername = new MessageEmbed()
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setDescription(
                 `The username you entered matches the current account username, please change it.`
@@ -553,21 +596,276 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               .setColor(colours.ERRORRED)
               .setTimestamp();
 
-              if (newUsername && newUsername === userData.userName) return interaction.reply({
+            if (newUsername && newUsername === userData.userName)
+              return interaction.reply({
                 embeds: [sameUsername],
                 ephemeral: true
               });
 
-              /*
-              To do: 
-              1- Check password match
-              2- Add a confirm message
-              3- Update data in DB
-              4- Reset login timer to (3 weeks)
-              5- Check for login timer cooldown
-              */
+            const samePassword = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `The password you entered matches the current account password.\n\n**Warning:**\nThe \`password\` option is your current account password, we use it to verify it's you, the \`new-password\` option is the password that you want to change to.`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
 
+            if (newPassword && newPassword === userData.accountPassword)
+              return interaction.reply({
+                embeds: [samePassword],
+                ephemeral: true
+              });
+
+            if (newUsername) {
+              const existingNickName = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} Dupe protection`)
+                .setColor(colours.ERRORRED)
+                .setDescription(
+                  `The name provided (${newUsername}) is already in use, please choose another name.`
+                )
+                .setFooter({
+                  text: `GBF Security`
+                })
+                .setTimestamp();
+
+              const checkName = await userSchema.find({
+                userName: newUsername
+              });
+
+              if (checkName.length > 0)
+                return interaction.reply({
+                  embeds: [existingNickName],
+                  ephemeral: true
+                });
+
+              function userNameCheck(username) {
+                const nWordCheck = /nigg/gi;
+                const rWordCheck = /re[a-zA-Z]ard/gi;
+                const fWordCheck = /[a-zA-Z]a[a-zA-Z]got/gi;
+
+                if (
+                  nWordCheck.test(username) ||
+                  rWordCheck.test(username) ||
+                  fWordCheck.test(username)
+                )
+                  return true;
+                else return false;
+              }
+
+              const badUsername = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} You can't do that`)
+                .setDescription(
+                  `The username entered has been flagged by our system as inappropriate, please choose another name.`
+                )
+                .setColor(colours.ERRORRED)
+                .setFooter({
+                  text: `GBF Security and safety | If you think this is a mistake please contact support`
+                })
+                .setTimestamp();
+
+              if (userNameCheck(newUsername))
+                return interaction.reply({
+                  embeds: [badUsername],
+                  ephemeral: true
+                });
             }
+
+            const noFunds = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `You do not have the sufficient funds to complete this transaction: \`Change username\`\n\nRequired: 10 DunkelCoins\nAvailable: ${userData.DunkelCoins} DunkelCoins`
+              )
+              .setColor(colours.ERRORRED)
+              .setFooter({
+                text: `Changing your username costs 10 DunkelCoins while changing your password is free`
+              })
+              .setTimestamp();
+
+            if (userData.DunkelCoins < 10 && newUsername)
+              return interaction.reply({
+                embeds: [noFunds],
+                ephemeral: true
+              });
+
+            if (newPassword) {
+              const weakPassword = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} Too weak!`)
+                .setColor(colours.ERRORRED)
+                .setDescription(
+                  `The password entered (\`${newPassword}\`) is too weak, you must add at least one of each:\n• 2 Uppercase characters\n• 3 Lowercase characters\n• 2 Numbers`
+                )
+                .setFooter({
+                  text: `GBF Security`
+                })
+                .setTimestamp();
+
+              const checkPasswordStrength =
+                /(?=.*[A-Z].*[A-Z])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{8}/gi;
+
+              if (!checkPasswordStrength.test(newPassword))
+                return interaction.reply({
+                  embeds: [weakPassword],
+                  ephemeral: true
+                });
+
+              const noSpace = new MessageEmbed()
+                .setTitle(`${emojis.ERROR} You can't do that`)
+                .setDescription(`Your password cannot contain a space`)
+                .setColor(colours.ERRORRED)
+                .setFooter({
+                  text: `GBF Security and safety | If you think this is a mistake please contact support`
+                })
+                .setTimestamp();
+
+              function hasWhiteSpace(password) {
+                return /\s/g.test(password);
+              }
+
+              if (hasWhiteSpace(newPassword))
+                return interaction.reply({
+                  embeds: [noSpace],
+                  ephemeral: true
+                });
+            }
+
+            const matchingCreds = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You cannot do that`)
+              .setDescription(
+                `Your account name and password cannot be the same!`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (newUsername && newPassword && newUsername === newPassword)
+              return interaction.reply({
+                embeds: [matchingCreds],
+                ephemeral: true
+              });
+
+            const confrimMessage = new MessageEmbed()
+              .setTitle(`Please confirm these new settings`)
+              .setColor(colours.DEFAULT)
+              .setDescription(
+                `**Username change costs 10 DunkelCoins <:dunkelCoin:979488319467573338>**\n\n` +
+                  `${
+                    newUsername
+                      ? "New username: " + newUsername
+                      : "No username change"
+                  }\n${
+                    newPassword
+                      ? "New password: " + newPassword
+                      : "No password change"
+                  }\n\n**⚠️ Warning:**\nYou can only change your username once every **4 weeks**`
+              )
+              .setTimestamp();
+
+            const changeButtons = new MessageActionRow().addComponents([
+              new MessageButton()
+                .setCustomId(`confirmChange`)
+                .setStyle("SUCCESS")
+                .setEmoji(emojis.VERIFY)
+                .setLabel(`Confirm`),
+              new MessageButton()
+                .setCustomId(`denyChange`)
+                .setStyle("DANGER")
+                .setEmoji(emojis.ERROR)
+                .setLabel(`Cancel`)
+            ]);
+
+            const changeButtonsD = new MessageActionRow().addComponents([
+              new MessageButton()
+                .setCustomId(`confirmChanged`)
+                .setDisabled(true)
+                .setStyle("SUCCESS")
+                .setEmoji(emojis.VERIFY)
+                .setLabel(`Confirm`),
+              new MessageButton()
+                .setCustomId(`denyChanged`)
+                .setStyle("DANGER")
+                .setDisabled(true)
+                .setEmoji(emojis.ERROR)
+                .setLabel(`Cancel`)
+            ]);
+
+            await interaction.reply({
+              embeds: [confrimMessage],
+              components: [changeButtons],
+              ephemeral: true
+            });
+
+            const filter = (i) => {
+              return i.user.id === interaction.user.id;
+            };
+
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 300000
+              });
+
+            collector.on("collect", async (i) => {
+              await i.deferUpdate();
+              await delay(750);
+
+              const deniedChange = new MessageEmbed()
+                .setTitle(`${emojis.VERIFY} Success`)
+                .setColor(colours.DEFAULT)
+                .setDescription(`Changes denied`)
+                .setTimestamp();
+
+              const newChanges = new MessageEmbed()
+                .setTitle(`${emojis.VERIFY} Success`)
+                .setColor(colours.DEFAULT)
+                .setDescription(
+                  `Changes saved\n\n${
+                    newUsername
+                      ? "New username: " + newUsername
+                      : "No username change"
+                  }\n${
+                    newPassword
+                      ? "New password: " + newPassword
+                      : "No password change"
+                  }`
+                )
+                .setTimestamp();
+
+              if (i.customId === "denyChange") {
+                await collector.stop();
+                return interaction.editReply({
+                  embeds: [deniedChange]
+                });
+              }
+              if (i.customId === "confirmChange") {
+                await userData.updateOne({
+                  userName: newUsername ? newUsername : userData.userName,
+                  userNameInsensitive: newUsername
+                    ? newUsername.toLowerCase()
+                    : userData.userNameInsensitive,
+                  accountPassword: newPassword
+                    ? newPassword
+                    : userData.accountPassword,
+                  DunkelCoins: newUsername
+                    ? userData.DunkelCoins - 10
+                    : userData.DunkelCoins,
+                  lastUsernameChange: newUsername
+                    ? new Date(Date.now())
+                    : userData.lastUsernameChange
+                });
+
+                await collector.stop();
+
+                return interaction.editReply({
+                  embeds: [newChanges]
+                });
+              }
+            });
+
+            collector.on("end", async (i) => {
+              return interaction.editReply({
+                components: [changeButtonsD]
+              });
+            });
+          }
         }
       }
     });
