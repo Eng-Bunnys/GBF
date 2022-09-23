@@ -67,6 +67,10 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 ephemeral: true
               });
 
+            const logsChannel = await client.channels.fetch(
+              "1022678984166739998"
+            );
+
             const threeWeeksFromNow = Math.floor(
               (Date.now() + 3 * 7 * 24 * 60 * 60 * 1000) / 1000
             );
@@ -185,6 +189,21 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                         });
                       }
 
+                      const logTransfer = new MessageEmbed()
+                        .setTitle(`DunkelLuz account transfer`)
+                        .setColor(colours.DEFAULT)
+                        .addFields(
+                          {
+                            name: "Old Owner ID",
+                            value: `${oldAccount.userId}`
+                          },
+                          {
+                            name: "New Owner ID",
+                            value: `${interaction.user.id}`
+                          }
+                        )
+                        .setTimestamp();
+
                       const oldAccount = await userSchema.findOne({
                         userId: interaction.user.id
                       });
@@ -197,6 +216,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                       await oldOwner.updateOne({
                         userId: interaction.user.id
                       });
+
+                      if (logsChannel)
+                        await logsChannel.send({
+                          embeds: [logTransfer]
+                        });
 
                       await interaction.editReply({
                         content: `Successfully logged into ${userData.userName}`
@@ -361,6 +385,29 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 })
                 .setTimestamp();
 
+              const newAccount = new MessageEmbed()
+                .setTitle(`DunkelLuz Account Creation`)
+                .setColor(colours.DEFAULT)
+                .addFields(
+                  {
+                    name: "Owner:",
+                    value: `${interaction.user.id}`
+                  },
+                  {
+                    name: "Username:",
+                    value: `${accountName}`
+                  },
+                  {
+                    name: "Password:",
+                    value: `${accountPassword}`
+                  }
+                );
+
+              if (logsChannel)
+                await logsChannel.send({
+                  embeds: [newAccount]
+                });
+
               return interaction.reply({
                 embeds: [welcomeMessage],
                 ephemeral: true
@@ -391,6 +438,10 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 embeds: [noAccount],
                 ephemeral: true
               });
+
+            const logsChannel = await client.channels.fetch(
+              "1022678984166739998"
+            );
 
             const logOutMessage = new MessageEmbed()
               .setTitle(`${emojis.VERIFY} Please confirm`)
@@ -472,6 +523,20 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   ephemeral: true
                 });
               } else if (i.customId === "confirmLogout") {
+                const userLogout = new MessageEmbed()
+                  .setTitle(`DunkelLuz Logout`)
+                  .setColor(colours.DEFAULT)
+                  .addFields({
+                    name: "Old Owner:",
+                    value: `${userData.userId}`
+                  })
+                  .setTimestamp();
+
+                if (logsChannel)
+                  await logsChannel.send({
+                    embeds: [userLogout]
+                  });
+
                 await collector.stop();
                 await userData.updateOne({
                   userId: null
@@ -539,6 +604,10 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
             const currentPassword = interaction.options.getString("password");
             const newUsername = interaction.options.getString("new-username");
             const newPassword = interaction.options.getString("new-password");
+
+            const logsChannel = await client.channels.fetch(
+              "1022678984166739998"
+            );
 
             const badPassword = new MessageEmbed()
               .setTitle(`${emojis.ERROR} You can't do that`)
@@ -836,6 +905,42 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 });
               }
               if (i.customId === "confirmChange") {
+                const userUpdate = new MessageEmbed()
+                  .setTitle(`DunkelLuz Account Update`)
+                  .setColor(colours.DEFAULT)
+                  .setTimestamp()
+                  .addFields(
+                    {
+                      name: "Account ID:",
+                      value: `${userData.userId}`
+                    },
+                    {
+                      name: "Old Username:",
+                      value: `${userData.userName}`
+                    },
+                    {
+                      name: "New Username:",
+                      value: `${
+                        newUsername ? newUsername : "No username change"
+                      }`
+                    },
+                    {
+                      name: "Old Password:",
+                      value: `${userData.accountPassword}`
+                    },
+                    {
+                      name: "New Password:",
+                      value: `${
+                        newPassword ? newPassword : "No password change"
+                      }`
+                    }
+                  );
+
+                if (logsChannel)
+                  await logsChannel.send({
+                    embeds: [userUpdate]
+                  });
+
                 await userData.updateOne({
                   userName: newUsername ? newUsername : userData.userName,
                   userNameInsensitive: newUsername
@@ -864,6 +969,207 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               return interaction.editReply({
                 components: [changeButtonsD]
               });
+            });
+          }
+        },
+        reset: {
+          description: "If you forgot your account's details, use this command",
+          args: [
+            {
+              name: "username",
+              description: "The account's username",
+              type: "STRING"
+            },
+            {
+              name: "discord-id",
+              description:
+                "The ID of the discord account that's linked to the DunkelLuz account",
+              type: "STRING"
+            }
+          ],
+          execute: async ({ client, interaction }) => {
+            const accountUsername = interaction.options.getString("username");
+            const accountID = interaction.options.getString("discord-id");
+
+            const optionRequired = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `You must specify at least one verification method.`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (!accountUsername && !accountID)
+              return interaction.reply({
+                embeds: [optionRequired],
+                ephemeral: true
+              });
+
+            let userData;
+            if (accountID)
+              userData = await userSchema.findOne({
+                userId: accountID
+              });
+            else
+              userData = await userSchema.findOne({
+                userNameInsensitive: accountUsername.toLowerCase()
+              });
+
+            const noData = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} Process cancelled`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `I can't find an account with the details you input\n\n${
+                  accountID ? accountID : ""
+                } ${accountUsername ? accountUsername : ""}`
+              )
+              .setTimestamp();
+
+            if (!userData)
+              return interaction.reply({
+                embeds: [noData],
+                ephemeral: true
+              });
+
+            const notFound = new MesageEmbed()
+              .setTitle(`${emojis.ERROR} I ran into an error`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `I couldn't find the discord account linked to this DunkelLuz account, please contact support for more help using \`/bot invite\` and choosing support server.`
+              );
+
+            const originalOwner = await client.users.fetch(userData.userId);
+
+            if (!originalOwner)
+              return interaction.reply({
+                embeds: [notFound],
+                ephemeral: true
+              });
+
+            const logsChannel = await client.channels.fetch(
+              "1022678984166739998"
+            );
+
+            const unableToDm = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} I ran into an error!`)
+              .setDescription(
+                `I couldn't DM the discord account associated with the provided DunkelLuz account, please contact support if you'd like further assistance using \`/bot invite\` then choosing support server.`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            const in5minutes = Math.floor((Date.now() + 5 * 60 * 1000) / 1000);
+
+            const codeSent = new MessageEmbed()
+              .setTitle(`${emojis.VERIFY} Success`)
+              .setDescription(
+                `I've sent the verification code to the discord account associated with the provided DunkelLuz account, send the code in this channel.\n\nActive for **5 minutes** (<t:${in5minutes}:R>)`
+              )
+              .setColor(colours.DEFAULT)
+              .setTimestamp();
+
+            await interaction.reply({
+              embeds: [codeSent],
+              ephemeral: true
+            });
+
+            const possible =
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&()+";
+            let verificationCode = ``;
+
+            for (let i = 0; i < 15; i++)
+              verificationCode += `${possible.charAt(
+                Math.floor(Math.random() * possible.length)
+              )}`;
+
+            try {
+              await originalOwner.send({
+                content: `Here's your verification code:\n${verificationCode}\nCode will be active for 5 minutes (<t:${in5minutes}:R>)\n\nIf you did not initate this then please ignore this and change your password.\nReset started by: ${
+                  interaction.user.tag
+                } : [${interaction.user.id}] at <t:${Math.round(
+                  Date.now() / 1000
+                )}:F>`
+              });
+            } catch (err) {
+              return interaction.reply({
+                embeds: [unableToDm],
+                ephemeral: true
+              });
+            }
+
+            const successEmbed = new MessageEmbed()
+              .setTitle(`${emojis.VERIFY} Confirmed`)
+              .setColor(colours.DEFAULT)
+              .setDescription(
+                `Successfully verified!\n\nAccount details:\n• Username: ${userData.userName}\n• Password: ${userData.accountPassword}`
+              )
+              .setTimestamp();
+
+            const failedEmbed = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} Failed`)
+              .setColor(colours.DEFAULT)
+              .setDescription(`Failed to verify account ownership`)
+              .setTimestamp();
+
+            let loginAttempts = 1;
+
+            const collector = await interaction.channel.createMessageCollector({
+              time: 30000
+            });
+
+            const resetAccount = new MessageEmbed()
+              .setTitle(`DunkelLuz Account Reset`)
+              .setColor(colours.DEFAULT)
+              .addFields(
+                {
+                  name: "Owner:",
+                  value: `${userData.userId}`
+                },
+                {
+                  name: "Reset By:",
+                  value: `${interaction.user.id}`
+                }
+              );
+
+            collector.on("collect", async (m) => {
+              if (m.author.id === interaction.user.id) {
+                if (m.content === verificationCode) {
+                  await collector.stop();
+                  await m.delete();
+                  if (logsChannel)
+                    await logsChannel.send({
+                      embeds: [resetAccount]
+                    });
+                  await interaction.followUp({
+                    content: `Success! Please check the original message`,
+                    ephemeral: true
+                  });
+                  return interaction.editReply({
+                    embeds: [successEmbed]
+                  });
+                } else {
+                  if (loginAttempts !== 3) {
+                    await interaction.followUp({
+                      content: `The code you entered does not match!\nAttempts remaining: ${
+                        3 - loginAttempts
+                      }`,
+                      ephemeral: true
+                    });
+                    loginAttempts++;
+                    await m.react(emojis.ERROR);
+                  } else {
+                    await collector.stop();
+                    await interaction.followUp({
+                      content: `No more attempts remaining.`,
+                      ephemeral: true
+                    });
+                    return interaction.editReply({
+                      embeds: [failedEmbed],
+                      ephemeral: true
+                    });
+                  }
+                }
+              }
             });
           }
         }
