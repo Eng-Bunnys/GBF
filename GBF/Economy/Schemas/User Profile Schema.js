@@ -6,6 +6,10 @@ const UserProfileSchema = new Schema(
     userName: String,
     userNameInsensitive: String,
     accountPassword: String,
+    introComplete: {
+      type: Boolean,
+      default: false
+    },
     wallet: {
       type: Number,
       default: 500
