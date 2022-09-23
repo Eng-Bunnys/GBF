@@ -10,37 +10,9 @@ const UserProfileSchema = new Schema(
       type: Boolean,
       default: false
     },
-    wallet: {
-      type: Number,
-      default: 500
-    },
-    bank: {
-      type: Number,
-      default: 0
-    },
-    netWorth: {
-      type: Number,
-      default: 500
-    },
     DunkelCoins: {
       type: Number,
       default: 250
-    },
-    totalEarned: {
-      type: Number,
-      default: 500
-    },
-    rank: {
-      type: Number,
-      default: 1
-    },
-    RP: {
-      type: Number,
-      default: 0
-    },
-    totalRPEarned: {
-      type: Number,
-      default: 0
     },
     accountAge: {
       type: Date,
