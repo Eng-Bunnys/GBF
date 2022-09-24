@@ -82,9 +82,9 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 const newOwner = interaction.user;
 
                 const existingAccount = new MessageEmbed()
-                  .setTitle(`${emojis.REMPEACE} Account Transfer`)
+                  .setTitle(`${emojis.VERIFY} Account Transfer`)
                   .setDescription(
-                    `By transferring \`${userData.userName}\` to ${newOwner.tag}, the account will be logged out from everywhere except here and you will have to wait **3 weeks** (<t:${threeWeeksFromNow}:R>) to log onto another account.`
+                    `By transferring \`${userData.userName}\` to ${newOwner.tag}, the account will be logged out from everywhere except here and you will have to wait **3 weeks** (<t:${threeWeeksFromNow}:F>) to transfer it to a new Discord account.`
                   )
                   .setColor(colours.DEFAULT)
                   .setTimestamp();
@@ -167,6 +167,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                     if (i.customId === "denyTransfer") {
                       await collector.stop();
                       return interaction.editReply({
+                        components: [transferButtonsD],
                         embeds: [denyTransferEmbed]
                       });
                     }
@@ -175,6 +176,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                       await interaction.editReply({
                         embeds: [],
                         content: `Logging out from all logged in devices...`,
+                        components: [transferButtonsD],
                         ephemeral: true
                       });
 
@@ -213,8 +215,9 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                           userId: null
                         });
 
-                      await oldOwner.updateOne({
-                        userId: interaction.user.id
+                      await userData.updateOne({
+                        userId: interaction.user.id,
+                        lastTransfer: new Date(Date.now())
                       });
 
                       if (logsChannel)
@@ -225,12 +228,143 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                       await interaction.editReply({
                         content: `Successfully logged into ${userData.userName}`
                       });
+                      return collector.stop();
                     }
                   });
 
                   collector.on("end", async (i) => {
                     return interaction.editReply({
-                      content: `Session ended.`,
+                      components: [transferButtonsD]
+                    });
+                  });
+                }
+              } else if (userData && userData.userId === null) {
+                const newOwner = interaction.user;
+
+                const existingAccount = new MessageEmbed()
+                  .setTitle(`${emojis.VERIFY} Account Transfer`)
+                  .setDescription(
+                    `By transferring \`${userData.userName}\` to ${newOwner.tag}, you will be logged in here and the **3 week** cooldown will restart (<t:${threeWeeksFromNow}:F>).`
+                  )
+                  .setColor(colours.DEFAULT)
+                  .setTimestamp();
+
+                const onCooldown = new MessageEmbed()
+                  .setTitle(`${emojis.ERROR} Not Yet!`)
+                  .setDescription(
+                    `You cannot log into this account until **<t:${Math.floor(
+                      userData.lastTransfer / 1000 + 3 * 7 * 24 * 60 * 60
+                    )}:f>**\n\nYou can create a new account or log onto an existing account that doesn't have a cooldown.`
+                  )
+                  .setColor(colours.ERRORRED)
+                  .setTimestamp();
+
+                if (cooldownTimer > Date.now()) {
+                  return interaction.reply({
+                    embeds: [onCooldown],
+                    ephemeral: true
+                  });
+                } else {
+                  const transferButtons = new MessageActionRow().addComponents([
+                    new MessageButton()
+                      .setCustomId(`confirmTransfer2`)
+                      .setStyle("SUCCESS")
+                      .setEmoji(emojis.VERIFY)
+                      .setLabel(`Transfer`),
+                    new MessageButton()
+                      .setCustomId(`denyTransfer2`)
+                      .setStyle("DANGER")
+                      .setEmoji(emojis.ERROR)
+                      .setLabel(`Cancel`)
+                  ]);
+
+                  const transferButtonsD = new MessageActionRow().addComponents(
+                    [
+                      new MessageButton()
+                        .setCustomId(`confirmTransfer2D`)
+                        .setStyle("SUCCESS")
+                        .setEmoji(emojis.VERIFY)
+                        .setDisabled(true)
+                        .setLabel(`Transfer`),
+                      new MessageButton()
+                        .setCustomId(`denyTransfer2D`)
+                        .setStyle("DANGER")
+                        .setEmoji(emojis.ERROR)
+                        .setDisabled(true)
+                        .setLabel(`Cancel`)
+                    ]
+                  );
+
+                  await interaction.reply({
+                    embeds: [existingAccount],
+                    components: [transferButtons],
+                    ephemeral: true
+                  });
+
+                  const filter = (i) => {
+                    return i.user.id === interaction.user.id;
+                  };
+
+                  const collector =
+                    interaction.channel.createMessageComponentCollector({
+                      filter,
+                      time: 300000
+                    });
+
+                  collector.on("collect", async (i) => {
+                    await i.deferUpdate();
+                    await delay(750);
+
+                    const denyTransferEmbed = new MessageEmbed()
+                      .setTitle(`${emojis.ERROR} Transfer Cancelled`)
+                      .setDescription(`Reason: User Cancelled Transfer`)
+                      .setColor(colours.ERRORRED)
+                      .setFooter({
+                        text: `DunekelLuz | Account Transfer`
+                      })
+                      .setTimestamp();
+
+                    if (i.customId === "denyTransfer2") {
+                      await collector.stop();
+                      return interaction.editReply({
+                        embeds: [denyTransferEmbed]
+                      });
+                    } else if (i.customId === "confirmTransfer2") {
+                      const logTransfer = new MessageEmbed()
+                        .setTitle(`DunkelLuz account transfer`)
+                        .setColor(colours.DEFAULT)
+                        .addFields(
+                          {
+                            name: "Old Owner ID",
+                            value: `Not available`
+                          },
+                          {
+                            name: "New Owner ID",
+                            value: `${interaction.user.id}`
+                          }
+                        )
+                        .setTimestamp();
+                      await userData.updateOne({
+                        userId: interaction.user.id,
+                        lastTransfer: new Date(Date.now())
+                      });
+
+                      if (logsChannel)
+                        await logsChannel.send({
+                          embeds: [logTransfer]
+                        });
+
+                      await interaction.editReply({
+                        content: `Successfully logged into ${userData.userName}`,
+                        embeds: []
+                      });
+
+                      return collector.stop();
+                    }
+                  });
+
+                  collector.on("end", async (i) => {
+                    return interaction.editReply({
                       components: [transferButtonsD]
                     });
                   });
@@ -376,7 +510,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   `Account has been successfully created.\n\nUnlocked basic DunkelLuz features, to unlock the story missions and side features you must complete the tutorial: \`/intro\`\n\nIt is recommended to keep your account details in a safe place since they can be used to retrieve progress in-case you lost your discord account.\n\n**Warning:**\nAfter creating an account or logging into one, you cannot log into that account again for **3 weeks** (<t:${threeWeeksFromNow}:F>)`
                 )
                 .addFields({
-                  name: `Details:`,
+                  name: `Details [Keep safe]:`,
                   value: `Username: ${accountName}\nPassword: ${accountPassword}\n\n⚠️ The account username is case-insensitive but the account password is case-sensitive ⚠️`
                 })
                 .setColor(colours.DEFAULT)
