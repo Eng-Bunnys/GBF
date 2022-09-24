@@ -6,6 +6,7 @@ const UserProfileSchema = new Schema(
     userName: String,
     userNameInsensitive: String,
     accountPassword: String,
+    characterName: String,
     introComplete: {
       type: Boolean,
       default: false
@@ -33,6 +34,42 @@ const UserProfileSchema = new Schema(
     lastUsernameChange: {
       type: Date,
       default: new Date(Date.now() - 4 * 7 * 24 * 60 * 60 * 1000)
+    },
+    wallet: {
+      type: Number,
+      default: 500
+    },
+    bank: {
+      type: Number,
+      default: 0
+    },
+    netWorth: {
+      type: Number,
+      default: 500
+    },
+    totalEarned: {
+      type: Number,
+      default: 500
+    },
+    rank: {
+      type: Number,
+      default: 1
+    },
+    RP: {
+      type: Number,
+      default: 0
+    },
+    totalRPEarned: {
+      type: Number,
+      default: 0
+    },
+    badges: {
+      type: Array,
+      default: []
+    },
+    achievements: {
+      type: Array,
+      default: []
     }
   },
   {
