@@ -51,6 +51,17 @@ module.exports = (client) => {
         totalRPEarned: userData.totalRPEarned + 1000
       });
 
+      const achievementType = {
+        type: "TutorialComplete",
+        name: "Welcome to DunkelLuz",
+        hasBadge: false
+      };
+      await client.emit(
+        "achievementComplete",
+        interaction,
+        player,
+        achievementType
+      );
       if (checkRank(userData.rank, userData.RP + 1000))
         await client.emit("playerLevelUp", interaction, player);
 
