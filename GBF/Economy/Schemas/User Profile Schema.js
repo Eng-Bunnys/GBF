@@ -21,11 +21,11 @@ const UserProfileSchema = new Schema(
     },
     dailyCooldown: {
       type: Date,
-      default: new Date(Date.now() - 21600000)
+      default: new Date(Date.now() - 86400000)
     },
     dailyStreak: {
       type: Number,
-      default: 0
+      default: 1
     },
     lastTransfer: {
       type: Date,
