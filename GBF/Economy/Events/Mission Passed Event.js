@@ -31,7 +31,7 @@ module.exports = (client) => {
       .setColor(colours.DunkelLuzGreen)
       .setDescription(`Mission: ${mission.missionName}`)
       .setFooter({
-        text: `The harder the mission the better the rewards get`
+        text: `The harder the mission the better the rewards are`
       });
 
     if (mission.missionName === "Tutorial") {
@@ -54,7 +54,7 @@ module.exports = (client) => {
       if (checkRank(userData.rank, userData.RP + 1000))
         await client.emit("playerLevelUp", interaction, player);
 
-      return interaction.followUp({
+      return interaction.channel.send({
         content: `<@${player.id}>`,
         embeds: [missionCompleteMessage]
       });
