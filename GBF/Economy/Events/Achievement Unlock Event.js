@@ -32,19 +32,20 @@ module.exports = (client) => {
         ephemeral: true
       });
 
-    if (achievement.type === "100Streak") {
-      const hundredStreak = new MessageEmbed()
-        .setTitle(`Achievement Unlocked: 100 Days 💯🔥`)
-        .setColor(colours.DEFAULT)
-        .setDescription(
-          `Requirements: Reach a hundred day daily login streak\n\nRewards:\n• ₲500,000\n• 1 Rank\n• ${emojis.dunkelCoin}100 DunkelCoins`
-        )
-        .setFooter({
-          text: `${achievementCompletion(
-            userData.achievements.length + 1
-          )}% of achievements earned`
-        });
+    const achievementScreen = new MessageEmbed()
+      .setTitle(`Achievement Unlocked: ${achievement.name}`)
+      .setColor(colours.DEFAULT)
+      .setDescription(`Requirements: ${achievement.requirements}`)
+      .setFooter({
+        text: `${achievementCompletion(
+          userData.achievements.length + 1
+        )}% of achievements earned`
+      });
 
+    if (achievement.hasBadge)
+      await client.emit("badgeComplete", interaction, player, achievement.type);
+
+    if (achievement.type === "100Streak") {
       const requiredRP = RPRequiredToLevelUp(userData.rank);
       const rewardedRP = requiredRP - userData.RP + 1;
 
@@ -73,21 +74,9 @@ module.exports = (client) => {
 
       return interaction.channel.send({
         content: `<@${player.id}>`,
-        embeds: [hundredStreak]
+        embeds: [achievementScreen]
       });
     } else if (achievement.type === "Rank100") {
-      const rankHundred = new MessageEmbed()
-        .setTitle(`Achievement Unlocked: Rank 100 💯`)
-        .setColor(colours.DEFAULT)
-        .setDescription(
-          `Requirements: Reach Rank 100\n\nRewards:\n• ₲100,000\n• 5,000 Rank\n• ${emojis.dunkelCoin}10 DunkelCoins`
-        )
-        .setFooter({
-          text: `${achievementCompletion(
-            userData.achievements.length + 1
-          )}% of achievements earned`
-        });
-
       await userData.updateOne({
         DunkelCoins: userData.DunkelCoins + 10,
         bank: userData.bank + 100000,
@@ -104,36 +93,27 @@ module.exports = (client) => {
       if (checkRank(userData.rank, userData.RP + 5000))
         await client.emit("playerLevelUp", interaction, interaction.user);
 
-      if (achievement.hasBadge)
-        await client.emit(
-          "badgeComplete",
-          interaction,
-          player,
-          achievement.type
-        );
-
       return interaction.channel.send({
         content: `<@${player.id}>`,
-        embeds: [rankHundred]
+        embeds: [achievementScreen]
       });
     } else if (achievement.type === "TutorialComplete") {
-      const welcomeToDunkelLuz = new MessageEmbed()
-        .setTitle(`Achievement Unlocked: ${achievement.name}`)
-        .setColor(colours.DEFAULT)
-        .setDescription(`Requirements: Complete the DunkelLuz tutorial`)
-        .setFooter({
-          text: `${achievementCompletion(
-            userData.achievements.length + 1
-          )}% of achievements earned`
-        });
-
       await userData.achievements.push("TutorialComplete");
 
       await userData.save();
 
       return interaction.channel.send({
         content: `<@${player.id}>`,
-        embeds: [welcomeToDunkelLuz]
+        embeds: [achievementScreen]
+      });
+    } else if (achievement.type === "JackpotPrize") {
+      await userData.achievements.push("JackpotPrize");
+
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [achievementScreen]
       });
     }
   });
