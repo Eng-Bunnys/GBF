@@ -43,7 +43,7 @@ function DailyRP(streak) {
 }
 
 function achievementCompletion(totalEarned) {
-  const totalAchievements = 2;
+  const totalAchievements = 3;
   return (totalEarned / totalAchievements) * 100;
 }
 
