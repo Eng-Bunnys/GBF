@@ -103,6 +103,30 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
                 embeds: [userPrivateProfile],
                 ephemeral: true
               });
+
+            const profileBadges = {
+              "": "None",
+              "100Streak": `${emojis["100Badge"]}`
+            };
+            const badges =
+              userData.badges.map((flag) => profileBadges[flag]).join(" ") ||
+              "None";
+
+            const firstPage = new MessageEmbed()
+              .setTitle(`${targetUser.username}'s DunkelLuz profile`)
+              .setColor(colours.DEFAULT)
+              .setDescription(`Badges: ${badges}`)
+              .addFields({
+                name: "💰 Cash:",
+                value: `**Wallet:** \`₲ ${userData.wallet.toLocaleString()}\`\n**Bank:** \`₲ ${userData.bank.toLocaleString()}\`\n**Combined:** \`₲ ${(
+                  userData.bank + userData.wallet
+                ).toLocaleString()}\`\n**Net Worth:** \`₲ ${userData.netWorth.toLocaleString()}\`\n**Total Earned:** \`₲ ${userData.totalEarned.toLocaleString()}\``
+              })
+              .setTimestamp();
+
+            return interaction.reply({
+              embeds: [firstPage]
+            });
           }
         }
       }
