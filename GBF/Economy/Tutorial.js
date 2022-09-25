@@ -143,7 +143,8 @@ module.exports = class DunkelTutorial extends SlashCommand {
 
     await interaction.reply({
       embeds: [confirmName],
-      components: [confirmDenyButtons]
+      components: [confirmDenyButtons],
+      ephemeral: true
     });
 
     const filter = (i) => {
