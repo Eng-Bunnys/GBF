@@ -88,7 +88,7 @@ module.exports = (client) => {
         DunkelCoins: userData.DunkelCoins + coinsEarned
       });
 
-      return interaction.followUp({
+      return interaction.channel.send({
         content: `<@${player.id}>`,
         embeds: [rankedUp]
       });
