@@ -90,7 +90,7 @@ module.exports = class DailyCommands extends SlashCommand {
                 totalEarned: userData.totalEarned + 300,
                 RP: userData.RP + 100,
                 totalRPEarned: userData.totalRPEarned + 100,
-                dailyCooldown: new Date(Date.now())
+                dailyCooldown: new Date(Date.now() - 25 * 60 * 60 * 1000)
               });
 
               if (checkRank(userData.rank, userData.RP + 100))
@@ -105,7 +105,10 @@ module.exports = class DailyCommands extends SlashCommand {
               });
             }
 
-            if (CurrentStreak + 1 === 100) {
+            if (
+              CurrentStreak + 1 === 100 &&
+              !userData.achievements.includes("100Streak")
+            ) {
               const achievementType = {
                 type: "100Streak",
                 hasBadge: true
@@ -141,7 +144,7 @@ module.exports = class DailyCommands extends SlashCommand {
               totalEarned: userData.totalEarned + EarnedMoney,
               RP: userData.RP + EarnedRP,
               totalRPEarned: userData.totalRPEarned + EarnedRP,
-              dailyCooldown: new Date(Date.now())
+              dailyCooldown: new Date(Date.now() - 25 * 60 * 60 * 1000)
             });
 
             if (checkRank(userData.rank, userData.RP + EarnedRP))
