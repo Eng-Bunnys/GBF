@@ -44,6 +44,8 @@ module.exports = (client) => {
     if (userData.rank + 1 === 5000) {
       const achievementType = {
         type: "MaxRank",
+        name: "Max Rank",
+        requirements: `Reach Rank 5,000`,
         hasBadge: true
       };
       await client.emit(
@@ -57,6 +59,8 @@ module.exports = (client) => {
     if (userData.rank + 1 === 100) {
       const achievementType = {
         type: "Rank100",
+        name: "Rank 100 💯",
+        requirements: `Reach Rank 100\n\nRewards:\n• ₲100,000\n• 5,000 Rank\n• ${emojis.dunkelCoin}10 DunkelCoins`,
         hasBadge: false
       };
       await client.emit(
