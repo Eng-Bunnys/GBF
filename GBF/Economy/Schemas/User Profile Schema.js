@@ -23,6 +23,10 @@ const UserProfileSchema = new Schema(
       type: Date,
       default: new Date(Date.now() - 86400000)
     },
+    wheelCooldown: {
+      type: Date,
+      default: new Date(Date.now() - 86400000)
+    },
     dailyStreak: {
       type: Number,
       default: 1
