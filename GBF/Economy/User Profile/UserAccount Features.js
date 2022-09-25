@@ -7,7 +7,7 @@ const title = require("../../../gbfembedmessages.json");
 const userSchema = require("../../../schemas/Economy Schemas/User Profile Schema");
 const { MessageEmbed, MessageButton, MessageActionRow } = require("discord.js");
 
-const { delay } = require("../../../utils/engine");
+const { delay, capitalize } = require("../../../utils/engine");
 
 module.exports = class DunkelLuzProfile extends SlashCommand {
   constructor(client) {
@@ -711,6 +711,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               type: "STRING",
               minLength: 8,
               maxLength: 32
+            },
+            {
+              name: "private-profile",
+              description: "If true only you can check your player stats",
+              type: "BOOLEAN"
             }
           ],
           execute: async ({ client, interaction }) => {
@@ -738,6 +743,8 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
             const currentPassword = interaction.options.getString("password");
             const newUsername = interaction.options.getString("new-username");
             const newPassword = interaction.options.getString("new-password");
+            const privateProfileChoice =
+              interaction.options.getBoolean("private-profile");
 
             const logsChannel = await client.channels.fetch(
               "1022678984166739998"
@@ -1067,6 +1074,14 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                       value: `${
                         newPassword ? newPassword : "No password change"
                       }`
+                    },
+                    {
+                      name: "Private Profile:",
+                      value: `${
+                        privateProfileChoice
+                          ? capitalize(privateProfileChoice.toString())
+                          : "No choice chosen"
+                      }`
                     }
                   );
 
@@ -1088,7 +1103,10 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                     : userData.DunkelCoins,
                   lastUsernameChange: newUsername
                     ? new Date(Date.now())
-                    : userData.lastUsernameChange
+                    : userData.lastUsernameChange,
+                  privateProfile: privateProfileChoice
+                    ? privateProfileChoice
+                    : userData.privateProfile
                 });
 
                 await collector.stop();
