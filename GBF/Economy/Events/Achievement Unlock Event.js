@@ -83,7 +83,7 @@ module.exports = (client) => {
           `Requirements: Reach Rank 100\n\nRewards:\n• ₲100,000\n• 5,000 Rank\n• ${emojis.dunkelCoin}10 DunkelCoins`
         )
         .setFooter({
-          text: `${achievement(
+          text: `${achievementCompletion(
             userData.achievements.length + 1
           )}% of achievements earned`
         });
@@ -115,6 +115,25 @@ module.exports = (client) => {
       return interaction.channel.send({
         content: `<@${player.id}>`,
         embeds: [rankHundred]
+      });
+    } else if (achievement.type === "TutorialComplete") {
+      const welcomeToDunkelLuz = new MessageEmbed()
+        .setTitle(`Achievement Unlocked: ${achievement.name}`)
+        .setColor(colours.DEFAULT)
+        .setDescription(`Requirements: Complete the DunkelLuz tutorial`)
+        .setFooter({
+          text: `${achievementCompletion(
+            userData.achievements.length + 1
+          )}% of achievements earned`
+        });
+
+      await userData.achievements.push("TutorialComplete");
+
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [welcomeToDunkelLuz]
       });
     }
   });
