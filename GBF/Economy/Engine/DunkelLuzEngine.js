@@ -42,6 +42,11 @@ function DailyRP(streak) {
   return RewardedRP;
 }
 
+function achievementCompletion(totalEarned) {
+  const totalAchievements = 2;
+  return (totalEarned / totalAchievements) * 100;
+}
+
 const accountRequired = new MessageEmbed()
   .setTitle(`${emojis.ERROR} Not yet!`)
   .setColor(colours.ERRORRED)
@@ -68,6 +73,7 @@ module.exports = {
   DunkelCoinsEarned,
   DailyMoney,
   DailyRP,
+  achievementCompletion,
   accountRequired,
   incompleteTutorial
 };
