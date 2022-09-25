@@ -54,6 +54,7 @@ module.exports = (client) => {
       const achievementType = {
         type: "TutorialComplete",
         name: "Welcome to DunkelLuz",
+        requirements: "Complete the DunkelLuz tutorial",
         hasBadge: false
       };
       await client.emit(
