@@ -11,6 +11,10 @@ const UserProfileSchema = new Schema(
       type: Boolean,
       default: false
     },
+    privateProfile: {
+      type: Boolean,
+      default: false
+    },
     DunkelCoins: {
       type: Number,
       default: 250
