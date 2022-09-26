@@ -44,7 +44,12 @@ function DailyRP(streak) {
 
 function achievementCompletion(totalEarned) {
   const totalAchievements = 3;
-  return (totalEarned / totalAchievements) * 100;
+  return ((totalEarned / totalAchievements) * 100).toFixed(1);
+}
+
+function guessReward(bet) {
+  const CashAndRpReward = [Math.round(bet * 2), Math.round(bet * 0.75)];
+  return CashAndRpReward;
 }
 
 const accountRequired = new MessageEmbed()
@@ -66,6 +71,18 @@ const incompleteTutorial = new MessageEmbed()
   )
   .setTimestamp();
 
+const targetNoAccount = new MessageEmbed()
+  .setTitle(`${emojis.ERROR} Not yet!`)
+  .setColor(colours.ERRORRED)
+  .setDescription(`The specified user does not have a DunkelLuz account`)
+  .setTimestamp();
+
+const targetNoTutorial = new MessageEmbed()
+  .setTitle(`${emojis.ERROR} Not yet!`)
+  .setColor(colours.ERRORRED)
+  .setDescription(`The specified user has not completed the DunkelLuz tutorial`)
+  .setTimestamp();
+
 module.exports = {
   RPRequiredToLevelUp,
   LevelUpReward,
@@ -74,6 +91,9 @@ module.exports = {
   DailyMoney,
   DailyRP,
   achievementCompletion,
+  guessReward,
   accountRequired,
-  incompleteTutorial
+  incompleteTutorial,
+  targetNoAccount,
+  targetNoTutorial
 };
