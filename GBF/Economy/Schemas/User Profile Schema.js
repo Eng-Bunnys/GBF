@@ -78,6 +78,22 @@ const UserProfileSchema = new Schema(
     achievements: {
       type: Array,
       default: []
+    },
+    casinoWins: {
+      type: Number,
+      default: 0
+    },
+    casinoLosses: {
+      type: Number,
+      default: 0
+    },
+    casinoBet: {
+      type: Number,
+      default: 0
+    },
+    casinoCashWin: {
+      type: Number,
+      default: 0
     }
   },
   {
