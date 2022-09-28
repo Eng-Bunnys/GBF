@@ -107,7 +107,9 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
 
             const profileBadges = {
               "": "None",
-              "100Streak": `${emojis["100Badge"]}`
+              "100Streak": `${emojis["100Badge"]}`,
+              "Rank100": "💯",
+              "MaxRank": `${emojis.MaxRank}`
             };
             const badges =
               userData.badges.map((flag) => profileBadges[flag]).join(" ") ||
