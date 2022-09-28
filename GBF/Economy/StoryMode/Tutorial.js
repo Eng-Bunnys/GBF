@@ -151,7 +151,7 @@ module.exports = class DunkelTutorial extends SlashCommand {
       return i.user.id === interaction.user.id;
     };
 
-    const collector = interaction.channel.createMessageComponentCollector({
+    const collector = interaction.createMessageComponentCollector({
       filter,
       time: 300000
     });
