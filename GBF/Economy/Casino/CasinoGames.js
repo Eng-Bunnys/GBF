@@ -145,7 +145,7 @@ module.exports = class CasinoGames extends SlashCommand {
             };
 
             const collector =
-              interaction.channel.createMessageComponentCollector({
+              interaction.createMessageComponentCollector({
                 filter,
                 time: 300000
               });
@@ -207,6 +207,10 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
+                console.log(
+                  checkRank(userData.rank, userData.RP, userData.RP + RPReward)
+                );
+
                 if (
                   checkRank(
                     userData.rank,
@@ -222,7 +226,12 @@ module.exports = class CasinoGames extends SlashCommand {
                       userData.rank,
                       userData.RP,
                       userData.RP + RPReward
-                    )[1]
+                    )[1],
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[2]
                   );
 
                 return interaction.editReply({
@@ -252,6 +261,10 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
+                console.log(
+                  checkRank(userData.rank, userData.RP, userData.RP + RPReward)
+                );
+
                 if (
                   checkRank(
                     userData.rank,
@@ -267,7 +280,12 @@ module.exports = class CasinoGames extends SlashCommand {
                       userData.rank,
                       userData.RP,
                       userData.RP + RPReward
-                    )[1]
+                    )[1],
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[2]
                   );
 
                 return interaction.editReply({
@@ -300,6 +318,10 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
+                console.log(
+                  checkRank(userData.rank, userData.RP, userData.RP + RPReward)
+                );
+
                 if (
                   checkRank(
                     userData.rank,
@@ -315,7 +337,12 @@ module.exports = class CasinoGames extends SlashCommand {
                       userData.rank,
                       userData.RP,
                       userData.RP + RPReward
-                    )[1]
+                    )[1],
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[2]
                   );
 
                 return interaction.editReply({
