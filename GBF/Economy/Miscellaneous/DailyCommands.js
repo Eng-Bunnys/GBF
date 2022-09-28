@@ -95,7 +95,9 @@ module.exports = class DailyCommands extends SlashCommand {
                 await client.emit(
                   "playerLevelUp",
                   interaction,
-                  interaction.user
+                  interaction.user,
+                  checkRank(userData.rank, userData.RP, userData.RP + 100)[1],
+                  checkRank(userData.rank, userData.RP, userData.RP + 100)[2]
                 );
 
               return interaction.reply({
@@ -146,7 +148,17 @@ module.exports = class DailyCommands extends SlashCommand {
             });
 
             if (checkRank(userData.rank, userData.RP + EarnedRP))
-              await client.emit("playerLevelUp", interaction, interaction.user);
+              await client.emit(
+                "playerLevelUp",
+                interaction,
+                interaction.user,
+                checkRank(
+                  userData.rank,
+                  userData.RP,
+                  userData.RP + EarnedRP
+                )[1],
+                checkRank(userData.rank, userData.RP, userData.RP + EarnedRP)[2]
+              );
 
             return interaction.reply({
               embeds: [dailyCollected]
@@ -422,7 +434,17 @@ module.exports = class DailyCommands extends SlashCommand {
                     await client.emit(
                       "playerLevelUp",
                       interaction,
-                      interaction.user
+                      interaction.user,
+                      checkRank(
+                        userData.rank,
+                        userData.RP,
+                        userData.RP + prize
+                      )[1],
+                      checkRank(
+                        userData.rank,
+                        userData.RP,
+                        userData.RP + prize
+                      )[2]
                     );
                 }
 
@@ -439,7 +461,8 @@ module.exports = class DailyCommands extends SlashCommand {
                   const achievementType = {
                     type: "JackpotPrize",
                     name: "Cash is king",
-                    requirements: "Win the Jackpot prize in the lucky wheel (8M)",
+                    requirements:
+                      "Win the Jackpot prize in the lucky wheel (8M)",
                     hasBadge: false
                   };
                   await client.emit(
