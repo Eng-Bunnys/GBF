@@ -390,7 +390,7 @@ module.exports = class DailyCommands extends SlashCommand {
             };
 
             const collector =
-              interaction.createMessageComponentCollector({
+              interaction.channel.createMessageComponentCollector({
                 filter,
                 time: 30000
               });
