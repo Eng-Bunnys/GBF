@@ -47,7 +47,7 @@ function checkRank(currentRank, currentRP, addedRP) {
       requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
     }
   }
-
+  if (addedLevels + currentRank >= 5000) addedLevels--;
   return [hasRankedUp, addedLevels, remainingRP];
 }
 
@@ -56,12 +56,12 @@ function DunkelCoinsEarned(rank, extraRanks) {
   if (extraRanks !== 0) {
     for (let i = 0; i < extraRanks; i++) {
       let checkDivisiblity = (rank + i) % 10 === 0;
-      if (checkDivisiblity) rewardedCoins += 20;
+      if (checkDivisiblity) rewardedCoins += 0.5 * rank + 1;
       else rewardedCoins += 0;
     }
   } else {
     let checkDivisiblity = rank % 10 === 0;
-    if (checkDivisiblity) rewardedCoins += 20;
+    if (checkDivisiblity) rewardedCoins += 0.5 * rank + 1;
     else rewardedCoins += 0;
   }
   return rewardedCoins;
@@ -82,12 +82,12 @@ function DailyRP(streak) {
 }
 
 function achievementCompletion(totalEarned) {
-  const totalAchievements = 4;
+  const totalAchievements = 5;
   return ((totalEarned / totalAchievements) * 100).toFixed(0);
 }
 
 function guessReward(bet) {
-  const CashAndRpReward = [Math.round(bet * 2), Math.round(bet * 20)];
+  const CashAndRpReward = [Math.round(bet * 2), Math.round(bet * 0.75)];
   return CashAndRpReward;
 }
 
