@@ -390,7 +390,7 @@ module.exports = class DailyCommands extends SlashCommand {
             };
 
             const collector =
-              interaction.channel.createMessageComponentCollector({
+              interaction.createMessageComponentCollector({
                 filter,
                 time: 30000
               });
@@ -431,6 +431,24 @@ module.exports = class DailyCommands extends SlashCommand {
                     DunkelCoins: userData.DunkelCoins + prize,
                     wheelCooldown: new Date(Date.now())
                   });
+
+                if (
+                  prize === 8000000 &&
+                  !userData.achievements.includes("JackpotPrize")
+                ) {
+                  const achievementType = {
+                    type: "JackpotPrize",
+                    name: "Cash is king",
+                    requirements: "Win the Jackpot prize in the lucky wheel (8M)",
+                    hasBadge: false
+                  };
+                  await client.emit(
+                    "achievementComplete",
+                    interaction,
+                    interaction.user,
+                    achievementType
+                  );
+                }
 
                 return interaction.editReply({
                   embeds: [prizeWon]
