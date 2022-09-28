@@ -171,7 +171,7 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
               false
             )}\``;
 
-            const rankStats = `**Rank:** \`${userData.rank.toLocaleString()}\`\n**RP:** \`${abbreviateNumber(
+            let rankStats = `**Rank:** \`${userData.rank.toLocaleString()}\`\n**RP:** \`${abbreviateNumber(
               userData.RP,
               2,
               false,
@@ -181,22 +181,27 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
               2,
               false,
               false
-            )}\`\n**Rank ${(
-              userData.rank + 1
-            ).toLocaleString()}:** \`${abbreviateNumber(
-              userData.RP,
-              3,
-              false,
-              false
-            )} / ${abbreviateNumber(
-              RPRequiredToLevelUp(userData.rank, userData.RP),
-              3,
-              false,
-              false
-            )} [${percentageCompleteTillNextRank(
-              userData.rank + 1,
-              userData.RP
-            )}%]\``;
+            )}\``;
+
+            if (userData.rank === 5000)
+              rankStats += `\n**Max rank obtained:** \`[5,000]\``;
+            else
+              rankStats += `\n**Rank ${(
+                userData.rank + 1
+              ).toLocaleString()}:** \`${abbreviateNumber(
+                userData.RP,
+                3,
+                false,
+                false
+              )} / ${abbreviateNumber(
+                RPRequiredToLevelUp(userData.rank, userData.RP),
+                3,
+                false,
+                false
+              )} [${percentageCompleteTillNextRank(
+                userData.rank + 1,
+                userData.RP
+              )}%]\``;
 
             const firstPage = new MessageEmbed()
               .setTitle(`${targetUser.username}'s DunkelLuz profile`)
