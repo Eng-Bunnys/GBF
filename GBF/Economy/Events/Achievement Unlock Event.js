@@ -61,8 +61,8 @@ module.exports = (client) => {
       await userData.achievements.push("100Streak");
 
       await userData.save();
-
-      await client.emit("playerLevelUp", interaction, interaction.user);
+      if (userData.rank !== 5000)
+        await client.emit("playerLevelUp", interaction, interaction.user, 0, 0);
 
       if (achievement.hasBadge)
         await client.emit(
@@ -90,8 +90,14 @@ module.exports = (client) => {
 
       await userData.save();
 
-      if (checkRank(userData.rank, userData.RP + 5000))
-        await client.emit("playerLevelUp", interaction, interaction.user);
+      if (checkRank(userData.rank, userData.RP, userData.RP + 5000))
+        await client.emit(
+          "playerLevelUp",
+          interaction,
+          interaction.user,
+          checkRank(userData.rank, userData.RP, userData.RP + 5000)[1],
+          checkRank(userData.rank, userData.RP, userData.RP + 5000)[2]
+        );
 
       return interaction.channel.send({
         content: `<@${player.id}>`,
@@ -108,6 +114,15 @@ module.exports = (client) => {
       });
     } else if (achievement.type === "JackpotPrize") {
       await userData.achievements.push("JackpotPrize");
+
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [achievementScreen]
+      });
+    } else if (achievement.type === "MaxRank") {
+      await userData.achievements.push("MaxRank");
 
       await userData.save();
 
