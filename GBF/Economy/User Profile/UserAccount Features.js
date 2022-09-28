@@ -145,12 +145,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                     return i.user.id === interaction.user.id;
                   };
 
-                  const collector = interaction.createMessageComponentCollector(
-                    {
+                  const collector =
+                    interaction.channel.createMessageComponentCollector({
                       filter,
                       time: 300000
-                    }
-                  );
+                    });
 
                   collector.on("collect", async (i) => {
                     await i.deferUpdate();
@@ -306,12 +305,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                     return i.user.id === interaction.user.id;
                   };
 
-                  const collector = interaction.createMessageComponentCollector(
-                    {
+                  const collector =
+                    interaction.channel.createMessageComponentCollector({
                       filter,
                       time: 300000
-                    }
-                  );
+                    });
 
                   collector.on("collect", async (i) => {
                     await i.deferUpdate();
@@ -624,10 +622,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               return i.user.id === interaction.user.id;
             };
 
-            const collector = interaction.createMessageComponentCollector({
-              filter,
-              time: 300000
-            });
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 300000
+              });
 
             collector.on("collect", async (i) => {
               await i.deferUpdate();
@@ -1008,10 +1007,11 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               return i.user.id === interaction.user.id;
             };
 
-            const collector = interaction.createMessageComponentCollector({
-              filter,
-              time: 300000
-            });
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 300000
+              });
 
             collector.on("collect", async (i) => {
               await i.deferUpdate();
@@ -1265,7 +1265,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
 
             let loginAttempts = 1;
 
-            const collector = await interaction.createMessageCollector({
+            const collector = await interaction.channel.createMessageCollector({
               time: 30000
             });
 
