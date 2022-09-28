@@ -14,9 +14,10 @@ const {
   incompleteTutorial,
   targetNoAccount,
   targetNoTutorial,
-  DailyMoney,
-  DailyRP,
-  checkRank
+  abbreviateNumber,
+  RPRequiredToLevelUp,
+  achievementCompletion,
+  percentageCompleteTillNextRank
 } = require("../../../utils/DunkelLuzEngine");
 
 module.exports = class DunkelLuzProfileCommands extends SlashCommand {
@@ -53,7 +54,7 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
               .setTitle(`${interaction.user.username}'s DunkelLuz bank balance`)
               .setColor(colours.DEFAULT)
               .setDescription(
-                `**Wallet:** ₲ ${userData.wallet.toLocaleString()}\n**Bank:** ₲ ${userData.bank.toLocaleString()}\n**Net Worth:** ₲ ${userData.netWorth.toLocaleString()}`
+                `**Wallet:** \`₲${userData.wallet.toLocaleString()}\`\n**Bank:** \`₲${userData.bank.toLocaleString()}\`\n**Net Worth:** \`₲${userData.netWorth.toLocaleString()}\``
               );
 
             return interaction.reply({
@@ -112,15 +113,114 @@ module.exports = class DunkelLuzProfileCommands extends SlashCommand {
               userData.badges.map((flag) => profileBadges[flag]).join(" ") ||
               "None";
 
+            const cashStats = `**Wallet:** \`₲ ${abbreviateNumber(
+              userData.wallet,
+              2,
+              false,
+              false
+            )}\`\n**Bank:** \`₲ ${abbreviateNumber(
+              userData.bank,
+              2,
+              false,
+              false
+            )}\`\n**Combined:** \`₲ ${abbreviateNumber(
+              userData.wallet + userData.bank,
+              2,
+              false,
+              false
+            )}\`\n**Net Worth:** \`₲ ${abbreviateNumber(
+              userData.netWorth,
+              3,
+              false,
+              false
+            )}\`\n**Total Earned:** \`₲ ${abbreviateNumber(
+              userData.totalEarned,
+              3,
+              false,
+              false
+            )}\``;
+
+            function casinoWinrate(wins, losses) {
+              let totalPlayed = wins + losses;
+              if (totalPlayed === 0) return 0;
+              return ((wins / totalPlayed) * 100).toFixed(1);
+            }
+
+            const casinoStats = `**Games Won:** \`${abbreviateNumber(
+              userData.casinoWins,
+              2,
+              false,
+              false
+            )}\`\n**Games Lost:** \`${abbreviateNumber(
+              userData.casinoLosses,
+              2,
+              false,
+              false
+            )}\`\n**WinRate:** \`${casinoWinrate(
+              userData.casinoWins,
+              userData.casinoLosses
+            )}%\`\n**Winnings:** \`₲ ${abbreviateNumber(
+              userData.casinoCashWin,
+              2,
+              false,
+              false
+            )}\`\n**Total Bet:** \`₲ ${abbreviateNumber(
+              userData.casinoBet,
+              2,
+              false,
+              false
+            )}\``;
+
+            const rankStats = `**Rank:** \`${userData.rank.toLocaleString()}\`\n**RP:** \`${abbreviateNumber(
+              userData.RP,
+              2,
+              false,
+              false
+            )}\`\n**Total RP Earned:** \`${abbreviateNumber(
+              userData.totalRPEarned,
+              2,
+              false,
+              false
+            )}\`\n**Rank ${(
+              userData.rank + 1
+            ).toLocaleString()}:** \`${abbreviateNumber(
+              userData.RP,
+              3,
+              false,
+              false
+            )} / ${abbreviateNumber(
+              RPRequiredToLevelUp(userData.rank, userData.RP),
+              3,
+              false,
+              false
+            )} [${percentageCompleteTillNextRank(
+              userData.rank + 1,
+              userData.RP
+            )}%]\``;
+
             const firstPage = new MessageEmbed()
               .setTitle(`${targetUser.username}'s DunkelLuz profile`)
               .setColor(colours.DEFAULT)
               .setDescription(`Badges: ${badges}`)
-              .addFields({
-                name: "💰 Cash:",
-                value: `**Wallet:** \`₲ ${userData.wallet.toLocaleString()}\`\n**Bank:** \`₲ ${userData.bank.toLocaleString()}\`\n**Combined:** \`₲ ${(
-                  userData.bank + userData.wallet
-                ).toLocaleString()}\`\n**Net Worth:** \`₲ ${userData.netWorth.toLocaleString()}\`\n**Total Earned:** \`₲ ${userData.totalEarned.toLocaleString()}\``
+              .addFields(
+                {
+                  name: "💰 Cash:",
+                  value: `${cashStats}`,
+                  inline: true
+                },
+                {
+                  name: "📩 Rank:",
+                  value: `${rankStats}`,
+                  inline: true
+                },
+                {
+                  name: "🎰 Casino:",
+                  value: `${casinoStats}`,
+                  inline: true
+                }
+              )
+              .setFooter({
+                text: `The city of saints and sinners || DunkelLuz`
               })
               .setTimestamp();
 
