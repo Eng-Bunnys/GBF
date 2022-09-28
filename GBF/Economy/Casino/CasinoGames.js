@@ -29,7 +29,7 @@ module.exports = class CasinoGames extends SlashCommand {
       cooldown: 2,
       development: true,
       subcommands: {
-        guess: {
+        highlow: {
           description: "Higher or lower guessing game",
           args: [
             {
@@ -207,11 +207,22 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
-                if (checkRank(userData.rank, userData.RP + RPReward))
+                if (
+                  checkRank(
+                    userData.rank,
+                    userData.RP,
+                    userData.RP + RPReward
+                  )[0]
+                )
                   await client.emit(
                     "playerLevelUp",
                     interaction,
-                    interaction.user
+                    interaction.user,
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[1]
                   );
 
                 return interaction.editReply({
@@ -241,11 +252,22 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
-                if (checkRank(userData.rank, userData.RP + RPReward))
+                if (
+                  checkRank(
+                    userData.rank,
+                    userData.RP,
+                    userData.RP + RPReward
+                  )[0]
+                )
                   await client.emit(
                     "playerLevelUp",
                     interaction,
-                    interaction.user
+                    interaction.user,
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[1]
                   );
 
                 return interaction.editReply({
@@ -278,11 +300,22 @@ module.exports = class CasinoGames extends SlashCommand {
                   totalRPEarned: userData.totalRPEarned + RPReward
                 });
 
-                if (checkRank(userData.rank, userData.RP + RPReward))
+                if (
+                  checkRank(
+                    userData.rank,
+                    userData.RP,
+                    userData.RP + RPReward
+                  )[0]
+                )
                   await client.emit(
                     "playerLevelUp",
                     interaction,
-                    interaction.user
+                    interaction.user,
+                    checkRank(
+                      userData.rank,
+                      userData.RP,
+                      userData.RP + RPReward
+                    )[1]
                   );
 
                 return interaction.editReply({
