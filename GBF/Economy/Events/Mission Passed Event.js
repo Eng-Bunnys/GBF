@@ -51,20 +51,29 @@ module.exports = (client) => {
         totalRPEarned: userData.totalRPEarned + 1000
       });
 
-      const achievementType = {
-        type: "TutorialComplete",
-        name: "Welcome to DunkelLuz",
-        requirements: "Complete the DunkelLuz tutorial",
-        hasBadge: false
-      };
-      await client.emit(
-        "achievementComplete",
-        interaction,
-        player,
-        achievementType
-      );
+      if (!userData.achievements.includes("TutorialComplete")) {
+        const achievementType = {
+          type: "TutorialComplete",
+          name: "Welcome to DunkelLuz",
+          requirements: "Complete the DunkelLuz tutorial",
+          hasBadge: false
+        };
+        await client.emit(
+          "achievementComplete",
+          interaction,
+          player,
+          achievementType
+        );
+      }
+
       if (checkRank(userData.rank, userData.RP + 1000))
-        await client.emit("playerLevelUp", interaction, player);
+        await client.emit(
+          "playerLevelUp",
+          interaction,
+          player,
+          checkRank(userData.rank, userData.RP, userData.RP + RPReward)[1],
+          checkRank(userData.rank, userData.RP, userData.RP + RPReward)[2]
+        );
 
       return interaction.channel.send({
         content: `<@${player.id}>`,
