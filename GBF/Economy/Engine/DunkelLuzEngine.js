@@ -4,13 +4,8 @@ const colours = require("../GBFColor.json");
 const emojis = require("../GBFEmojis.json");
 const title = require("../gbfembedmessages.json");
 
-function RPRequiredToLevelUp(rank, rp) {
-  return rank * 800 + (rank - 1) * 400 + rp;
-}
-
-function RPForMultipleLevels(rank, currentRP, extraRanks) {
-  const addedRanks = rank + extraRanks;
-  return addedRanks * 800 + (addedRanks - 1) * 400 + currentRP;
+function RPRequiredToLevelUp(rank) {
+  return rank * 800 + (rank - 1) * 400;
 }
 
 function percentageCompleteTillNextRank(rank, rp) {
@@ -28,29 +23,32 @@ function LevelUpReward(rank, extraLevels) {
   return rewardedCash;
 }
 
-function checkRank(currentRank, rpBeforeGain, rpAfterGain) {
-  let rankedLevels = 0;
+function checkRank(currentRank, currentRP, addedRP) {
+  let addedLevels = 0;
   let hasRankedUp = false;
+
+  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
 
   if (currentRank >= 5000) return;
 
-  let RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, rankedLevels);
-
-  if (rpAfterGain === RPRequired) {
-    rankedLevels++;
+  if (addedRP > requiredRP) {
     hasRankedUp = true;
+    addedLevels++;
   }
 
-  for (let i = 0; rpAfterGain > RPRequired; i++) {
-    rankedLevels++;
-    hasRankedUp = true;
-    RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, rankedLevels);
-    if (rpAfterGain < RPRequired) {
-      rankedLevels--;
-      break;
+  let remainingRP = addedRP - requiredRP;
+  if (Math.abs(remainingRP) === remainingRP) {
+    for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
+      addedLevels++;
+      if (currentRank + addedLevels >= 5000) {
+        addedLevels--;
+        break;
+      }
+      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
     }
   }
-  return [hasRankedUp, rankedLevels];
+
+  return [hasRankedUp, addedLevels, remainingRP];
 }
 
 function DunkelCoinsEarned(rank, extraRanks) {
@@ -89,7 +87,7 @@ function achievementCompletion(totalEarned) {
 }
 
 function guessReward(bet) {
-  const CashAndRpReward = [Math.round(bet * 2), Math.round(bet * 0.75)];
+  const CashAndRpReward = [Math.round(bet * 2), Math.round(bet * 20)];
   return CashAndRpReward;
 }
 
