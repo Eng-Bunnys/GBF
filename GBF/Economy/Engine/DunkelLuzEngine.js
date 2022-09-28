@@ -4,28 +4,68 @@ const colours = require("../GBFColor.json");
 const emojis = require("../GBFEmojis.json");
 const title = require("../gbfembedmessages.json");
 
-function RPRequiredToLevelUp(rank) {
-  return rank * 800 + (rank - 1) * 400;
+function RPRequiredToLevelUp(rank, rp) {
+  return rank * 800 + (rank - 1) * 400 + rp;
 }
 
-function LevelUpReward(rank) {
-  return rank * 5 * 100;
+function RPForMultipleLevels(rank, currentRP, extraRanks) {
+  const addedRanks = rank + extraRanks;
+  return addedRanks * 800 + (addedRanks - 1) * 400 + currentRP;
 }
 
-function checkRank(rank, rp) {
-  const requiredRp = RPRequiredToLevelUp(rank);
-  let hasLeveledUp = false;
-
-  if (rank >= 5000) return;
-
-  if (rp >= requiredRp) hasLeveledUp = true;
-  return hasLeveledUp;
+function percentageCompleteTillNextRank(rank, rp) {
+  const nextRankRp = RPRequiredToLevelUp(rank, rp);
+  return ((rp * 100) / nextRankRp).toFixed(1);
 }
 
-function DunkelCoinsEarned(rank) {
-  const rankChecker = rank % 10 === 0;
-  if (rankChecker) return 0.5 * rank + 1;
-  else return 0;
+function LevelUpReward(rank, extraLevels) {
+  let rewardedCash = 0;
+  if (extraLevels !== 0) {
+    for (let i = 0; i < extraLevels; i++) {
+      rewardedCash += (rank + i) * 5 * 100;
+    }
+  } else rewardedCash = rank * 5 * 100;
+  return rewardedCash;
+}
+
+function checkRank(currentRank, rpBeforeGain, afterUpdate) {
+  let rankedLevels = 0;
+  let hasRankedUp = false;
+
+  let RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, afterUpdate);
+
+  if (rpAfterGain === RPRequired) {
+    rankedLevels++;
+    hasRankedUp = true;
+  }
+
+  for (let i = 0; rpAfterGain > RPRequired; i++) {
+    rankedLevels++;
+    hasRankedUp = true;
+    RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, rankedLevels);
+    if (rpAfterGain < RPRequired) {
+      rankedLevels--;
+      break;
+    }
+  }
+  return [hasRankedUp, rankedLevels];
+}
+
+function DunkelCoinsEarned(rank, extraLevels) {
+  let rewardedCoins = 0;
+  let rankChecker;
+  if (extraLevels !== 0) {
+    for (let i = 0; i < extraLevels; i++) {
+      rankChecker = (rank + extraLevels) % 10 === 0;
+      if (rankChecker) rewardedCoins += 0.5 * (rank + extraLevels) + 1;
+      else rewardedCoins += 0;
+    }
+  } else {
+    rankChecker = rank % 10 === 0;
+    if (rankChecker) rewardedCoins += 0.5 * rank + 1;
+    else rewardedCoins += 0;
+  }
+  return rewardedCoins;
 }
 
 function DailyMoney(streak) {
@@ -43,8 +83,8 @@ function DailyRP(streak) {
 }
 
 function achievementCompletion(totalEarned) {
-  const totalAchievements = 3;
-  return ((totalEarned / totalAchievements) * 100).toFixed(1);
+  const totalAchievements = 4;
+  return ((totalEarned / totalAchievements) * 100).toFixed(0);
 }
 
 function guessReward(bet) {
@@ -52,11 +92,62 @@ function guessReward(bet) {
   return CashAndRpReward;
 }
 
+function abbreviateNumber(number, maxPlaces, forcePlaces, forceLetter) {
+  number = Number(number);
+  forceLetter = forceLetter || false;
+  if (forceLetter !== false) {
+    return annotateAbbreviation(number, maxPlaces, forcePlaces, forceLetter);
+  }
+  let abbr;
+  if (number >= 1e12) {
+    abbr = "T";
+  } else if (number >= 1e9) {
+    abbr = "B";
+  } else if (number >= 1e6) {
+    abbr = "M";
+  } else if (number >= 1e3) {
+    abbr = "K";
+  } else {
+    abbr = "";
+  }
+  return annotateAbbreviation(number, maxPlaces, forcePlaces, abbr);
+}
+
+function annotateAbbreviation(number, maxPlaces, forcePlaces, abbr) {
+  let rounded = 0;
+  switch (abbr) {
+    case "T":
+      rounded = number / 1e12;
+      break;
+    case "B":
+      rounded = number / 1e9;
+      break;
+    case "M":
+      rounded = number / 1e6;
+      break;
+    case "K":
+      rounded = number / 1e3;
+      break;
+    case "":
+      rounded = number;
+      break;
+  }
+  if (maxPlaces !== false) {
+    let test = new RegExp("\\.\\d{" + (maxPlaces + 1) + ",}$");
+    if (test.test("" + rounded)) {
+      rounded = rounded.toFixed(maxPlaces);
+    }
+  }
+  if (forcePlaces !== false) {
+    rounded = Number(rounded).toFixed(forcePlaces);
+  }
+  return rounded + abbr;
+}
 const accountRequired = new MessageEmbed()
   .setTitle(`${emojis.ERROR} Not yet!`)
   .setColor(colours.ERRORRED)
   .setDescription(
-    `A DunkelLuz account is required to use this feature, you can create one for free using \`/account login\` or transfer an existing account to this Discord account using the same command.`
+    `A DunkelLuz account is required to use this feature, you can create one for free using </account login:1023695302332526653> or transfer an existing account to this Discord account using the same command.`
   )
   .setFooter({
     text: `This system is in place to help protect your progress in-case you lost your Discord account or moved to a new one`
@@ -67,7 +158,7 @@ const incompleteTutorial = new MessageEmbed()
   .setTitle(`${emojis.ERROR} Not yet!`)
   .setColor(colours.ERRORRED)
   .setDescription(
-    `You are required to complete the DunkelLuz tutorial before using it's feautres.\n\n\`/tutorial\``
+    `You are required to complete the DunkelLuz tutorial before using it's feautres.\n\n\</tutorial:1023342243433697403>`
   )
   .setTimestamp();
 
@@ -92,6 +183,8 @@ module.exports = {
   DailyRP,
   achievementCompletion,
   guessReward,
+  abbreviateNumber,
+  percentageCompleteTillNextRank,
   accountRequired,
   incompleteTutorial,
   targetNoAccount,
