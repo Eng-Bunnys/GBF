@@ -28,11 +28,13 @@ function LevelUpReward(rank, extraLevels) {
   return rewardedCash;
 }
 
-function checkRank(currentRank, rpBeforeGain, afterUpdate) {
+function checkRank(currentRank, rpBeforeGain, rpAfterGain) {
   let rankedLevels = 0;
   let hasRankedUp = false;
 
-  let RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, afterUpdate);
+  if (currentRank >= 5000) return;
+
+  let RPRequired = RPForMultipleLevels(currentRank, rpBeforeGain, rankedLevels);
 
   if (rpAfterGain === RPRequired) {
     rankedLevels++;
@@ -51,18 +53,17 @@ function checkRank(currentRank, rpBeforeGain, afterUpdate) {
   return [hasRankedUp, rankedLevels];
 }
 
-function DunkelCoinsEarned(rank, extraLevels) {
+function DunkelCoinsEarned(rank, extraRanks) {
   let rewardedCoins = 0;
-  let rankChecker;
-  if (extraLevels !== 0) {
-    for (let i = 0; i < extraLevels; i++) {
-      rankChecker = (rank + extraLevels) % 10 === 0;
-      if (rankChecker) rewardedCoins += 0.5 * (rank + extraLevels) + 1;
+  if (extraRanks !== 0) {
+    for (let i = 0; i < extraRanks; i++) {
+      let checkDivisiblity = (rank + i) % 10 === 0;
+      if (checkDivisiblity) rewardedCoins += 20;
       else rewardedCoins += 0;
     }
   } else {
-    rankChecker = rank % 10 === 0;
-    if (rankChecker) rewardedCoins += 0.5 * rank + 1;
+    let checkDivisiblity = rank % 10 === 0;
+    if (checkDivisiblity) rewardedCoins += 20;
     else rewardedCoins += 0;
   }
   return rewardedCoins;
