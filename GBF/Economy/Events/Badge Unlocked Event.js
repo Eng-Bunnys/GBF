@@ -47,6 +47,36 @@ module.exports = (client) => {
         content: `<@${player.id}>`,
         embeds: [hundredStreakBadge]
       });
+    } else if (badge === "Rank100") {
+      const rankHundredBadge = new MessageEmbed()
+        .setTitle(`💯 New badge unlocked`)
+        .setColor(`#BB1A34`)
+        .setDescription(
+          `Requirements: Complete the "Rank100" achievement\n\nRewards:\n• Profile Badge 💯`
+        );
+
+      await userData.badges.push("Rank100");
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [rankHundredBadge]
+      });
+    } else if (badge === "MaxRank") {
+      const maxRankBadge = new MessageEmbed()
+        .setTitle(`${emojis.MaxRank} New badge unlocked`)
+        .setColor(`GOLD`)
+        .setDescription(
+          `Requirements: Complete the "MaxRank" achievement\n\nRewards:\n• Profile Badge ${emojis.MaxRank}`
+        );
+
+      await userData.badges.push("MaxRank");
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [maxRankBadge]
+      });
     }
   });
 };
