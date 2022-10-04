@@ -142,6 +142,48 @@ function annotateAbbreviation(number, maxPlaces, forcePlaces, abbr) {
   }
   return rounded + abbr;
 }
+
+function slotMachine(bet, firstOutput, secondOutput, thirdOutput) {
+  let displayMulti = 0;
+  let slotReward = 0;
+  if (
+    firstOutput === secondOutput ||
+    firstOutput === thirdOutput ||
+    secondOutput === thirdOutput
+  ) {
+    slotReward = bet * 2;
+    displayMulti = 2;
+  } else if ((firstOutput === secondOutput) === thirdOutput) {
+    slotReward = bet * 3;
+    displayMulti = 3;
+  }
+  return [slotReward, displayMulti];
+}
+
+function horseRacing(bet, horseNumber) {
+  let rewardedCash = 0;
+  let rewardedRP = Math.round(bet * 1.25);
+  let hasWon = false;
+  let firstBet = 0;
+  let secondBet = 0;
+  let thirdBet = 0;
+
+  let winningHorse = Math.floor(Math.random() * 4);
+
+  for (let i = 0; i < 3; i++) {
+    rewardedCash += Math.floor(Math.random() * (250000 - 10000) + 10000);
+    if (firstBet === 0 && secondBet === 0) firstBet += rewardedCash;
+    if (secondBet === 0 && firstBet !== 0) secondBet += rewardedCash;
+    if (thirdBet === 0 && secondBet !== 0) thirdBet += rewardedCash;
+  }
+
+  if (winningHorse === 0) winningHorse = 1;
+
+  if (horseNumber == winningHorse) hasWon = true;
+
+  return [hasWon, rewardedCash, rewardedRP, firstBet, secondBet, thirdBet];
+}
+
 const accountRequired = new MessageEmbed()
   .setTitle(`${emojis.ERROR} Not yet!`)
   .setColor(colours.ERRORRED)
@@ -184,6 +226,8 @@ module.exports = {
   guessReward,
   abbreviateNumber,
   percentageCompleteTillNextRank,
+  slotMachine,
+  horseRacing,
   accountRequired,
   incompleteTutorial,
   targetNoAccount,
