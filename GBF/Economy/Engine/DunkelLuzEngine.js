@@ -37,7 +37,7 @@ function checkRank(currentRank, currentRP, addedRP) {
   }
 
   let remainingRP = addedRP - requiredRP;
-  if (Math.abs(remainingRP) === remainingRP) {
+  if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
     for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
       addedLevels++;
       if (currentRank + addedLevels >= 5000) {
@@ -47,6 +47,7 @@ function checkRank(currentRank, currentRP, addedRP) {
       requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
     }
   }
+  if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
   if (addedLevels + currentRank >= 5000) addedLevels--;
   return [hasRankedUp, addedLevels, remainingRP];
 }
@@ -143,45 +144,49 @@ function annotateAbbreviation(number, maxPlaces, forcePlaces, abbr) {
   return rounded + abbr;
 }
 
-function slotMachine(bet, firstOutput, secondOutput, thirdOutput) {
-  let displayMulti = 0;
-  let slotReward = 0;
+function slotMachine(userBet, firstSlot, secondSlot, thirdSlot) {
+  let userWinngs = 0;
+  let rewardMulti = 0;
+
   if (
-    firstOutput === secondOutput ||
-    firstOutput === thirdOutput ||
-    secondOutput === thirdOutput
+    (firstSlot === secondSlot && firstSlot !== thirdSlot) ||
+    (firstSlot === thirdSlot && firstSlot !== secondSlot)
   ) {
-    slotReward = bet * 2;
-    displayMulti = 2;
-  } else if ((firstOutput === secondOutput) === thirdOutput) {
-    slotReward = bet * 3;
-    displayMulti = 3;
+    rewardMulti = 2;
   }
-  return [slotReward, displayMulti];
+
+  if (firstSlot === secondSlot && firstSlot === thirdSlot) {
+    rewardMulti = 3;
+  }
+
+  userWinngs += userBet * rewardMulti;
+
+  return [userWinngs, rewardMulti];
 }
 
-function horseRacing(bet, horseNumber) {
-  let rewardedCash = 0;
-  let rewardedRP = Math.round(bet * 1.25);
-  let hasWon = false;
-  let firstBet = 0;
-  let secondBet = 0;
-  let thirdBet = 0;
+function horseRacing(bet, chosenHorse) {
+  let winningHorse = Math.round(Math.random() * 4);
 
-  let winningHorse = Math.floor(Math.random() * 4);
+  let winnerBoolean = false;
 
-  for (let i = 0; i < 3; i++) {
-    rewardedCash += Math.floor(Math.random() * (250000 - 10000) + 10000);
-    if (firstBet === 0 && secondBet === 0) firstBet += rewardedCash;
-    if (secondBet === 0 && firstBet !== 0) secondBet += rewardedCash;
-    if (thirdBet === 0 && secondBet !== 0) thirdBet += rewardedCash;
-  }
+  if (chosenHorse == winningHorse) winnerBoolean = true;
 
-  if (winningHorse === 0) winningHorse = 1;
+  const secondHorseBet = Math.round(Math.random() * (maxBet - minBet) + minBet);
+  const thirdHorseBet = Math.round(Math.random() * (maxBet - minBet) + minBet);
+  const fourthHorseBet = Math.round(Math.random() * (maxBet - minBet) + minBet);
 
-  if (horseNumber == winningHorse) hasWon = true;
+  const userWinnings = secondHorseBet + thirdHorseBet + fourthHorseBet;
 
-  return [hasWon, rewardedCash, rewardedRP, firstBet, secondBet, thirdBet];
+  const wonRP = Math.round(bet * 1.25);
+
+  return [
+    winnerBoolean,
+    userWinnings,
+    wonRP,
+    secondHorseBet,
+    thirdHorseBet,
+    fourthHorseBet
+  ];
 }
 
 const accountRequired = new MessageEmbed()
