@@ -15,7 +15,7 @@ const {
 module.exports = (client) => {
   client.on(
     "playerLevelUp",
-    async (interaction, player, extraLevels, remainingRP) => {
+    async (interaction, player, extraLevels, remainderRP) => {
       const userData = await UserProfileSchema.findOne({
         userId: player.id
       });
@@ -33,29 +33,34 @@ module.exports = (client) => {
           ephemeral: true
         });
 
+      let remainingRP;
+      if (Math.abs(remainderRP) === remainderRP) remainingRP = remainderRP;
+      else remainingRP = 0;
+
       const userRankAfterOneRank = userData.rank + 1;
 
       const rankedUp = new MessageEmbed()
         .setTitle(`${emojis.VERIFY} Ranked Up`)
         .setColor(colours.DunkelLuzGreen)
         .setDescription(
-          `Current Rank: ${(
-            userRankAfterOneRank + extraLevels
-          ).toLocaleString()} ${
-            extraLevels !== 0
-              ? `|| Went up ${extraLevels.toLocaleString()} levels`
-              : ""
+          `Current Rank: ${userRankAfterOneRank + extraLevels} ${
+            extraLevels > 1 ? `|| Went up ${extraLevels} levels` : ""
           }`
         )
         .setFooter({
-          text: `Carry over RP: ${remainingRP.toLocaleString()} || You get DunkelCoins every 10 levels!`
+          text: `Carry over RP: ${abbreviateNumber(
+            remainingRP,
+            2,
+            false,
+            false
+          )} || You get DunkelCoins every 10 levels!`
         });
 
       const cashEarned = LevelUpReward(userRankAfterOneRank, extraLevels);
       const coinsEarned = DunkelCoinsEarned(userRankAfterOneRank, extraLevels);
 
       if (
-        userRankAfterOneRank + extraLevels === 5000 &&
+        userRankAfterOneRank + extraLevels >= 5000 &&
         !userData.achievements.includes("MaxRank")
       ) {
         const achievementType = {
@@ -80,7 +85,7 @@ module.exports = (client) => {
           type: "Rank100",
           name: "Rank 100 💯",
           requirements: `Reach Rank 100\n\nRewards:\n• ₲100,000\n• 5,000 RP\n• ${emojis.dunkelCoin}10 DunkelCoins`,
-          hasBadge: false
+          hasBadge: true
         };
         await client.emit(
           "achievementComplete",
