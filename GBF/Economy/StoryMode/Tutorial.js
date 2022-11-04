@@ -30,11 +30,11 @@ module.exports = class DunkelTutorial extends SlashCommand {
         }
       ],
 
-      devOnly: true,
+      devOnly: false,
       userPermission: [],
       botPermission: [],
       cooldown: 0,
-      development: true,
+      development: false,
       Partner: false
     });
   }
@@ -48,7 +48,7 @@ module.exports = class DunkelTutorial extends SlashCommand {
       .setTitle(`${emojis.ERROR} Not yet!`)
       .setColor(colours.ERRORRED)
       .setDescription(
-        `A DunkelLuz account is required to use this feature, you can create one for free using \`/account login\` or transfer an existing account to this Discord account using the same command.`
+        `A DunkelLuz account is required to use this feature, you can create one for free using </account login:1038030860462592052> or transfer an existing account to this Discord account using the same command.`
       )
       .setFooter({
         text: `This system is in place to help protect your progress in-case you lost your Discord account or moved to a new one`
