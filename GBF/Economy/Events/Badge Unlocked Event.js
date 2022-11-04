@@ -77,6 +77,21 @@ module.exports = (client) => {
         content: `<@${player.id}>`,
         embeds: [maxRankBadge]
       });
+    } else if (badge === "Early Supporter") {
+      const earlySupporter = new MessageEmbed()
+        .setTitle(`🐤 New badge unlocked`)
+        .setColor(colours.DEFAULT)
+        .setDescription(
+          `Requirements: Register an account during the beta\n• Profile Badge 🐤`
+        );
+
+      await userData.badges.push("EarlySupporter");
+      await userData.save();
+
+      return interaction.channel.send({
+        content: `<@${player.id}>`,
+        embeds: [earlySupporter]
+      });
     }
   });
 };
