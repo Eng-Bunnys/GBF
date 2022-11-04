@@ -64,6 +64,15 @@ module.exports = (client) => {
           player,
           achievementType
         );
+
+        if (!userData.badges.includes("EarlySupporter")) {
+          await client.emit(
+            "badgeComplete",
+            interaction,
+            player,
+            "Early Supporter"
+          );
+        }
       }
 
       if (checkRank(userData.rank, userData.RP + 1000))
