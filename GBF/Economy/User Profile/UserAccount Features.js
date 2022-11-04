@@ -7,7 +7,7 @@ const title = require("../../../gbfembedmessages.json");
 const userSchema = require("../../../schemas/Economy Schemas/User Profile Schema");
 const { MessageEmbed, MessageButton, MessageActionRow } = require("discord.js");
 
-const { delay, capitalize } = require("../../../utils/engine");
+const { delay, capitalize, hasProfanity } = require("../../../utils/engine");
 
 module.exports = class DunkelLuzProfile extends SlashCommand {
   constructor(client) {
@@ -430,20 +430,6 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   ephemeral: true
                 });
 
-              function userNameCheck(username) {
-                const nWordCheck = /nigg/gi;
-                const rWordCheck = /re[a-zA-Z]ard/gi;
-                const fWordCheck = /[a-zA-Z]a[a-zA-Z]got/gi;
-
-                if (
-                  nWordCheck.test(username) ||
-                  rWordCheck.test(username) ||
-                  fWordCheck.test(username)
-                )
-                  return true;
-                else return false;
-              }
-
               const badUsername = new MessageEmbed()
                 .setTitle(`${emojis.ERROR} You can't do that`)
                 .setDescription(
@@ -455,7 +441,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 })
                 .setTimestamp();
 
-              if (userNameCheck(accountName))
+              if (hasProfanity(accountName))
                 return interaction.reply({
                   embeds: [badUsername],
                   ephemeral: true
@@ -700,7 +686,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
             },
             {
               name: "new-username",
-              description: "Your account's new username",
+              description: "Your account's new username [Costs 10 DunkelCoins]",
               type: "STRING",
               minLength: 6,
               maxLength: 16
@@ -848,20 +834,6 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                   ephemeral: true
                 });
 
-              function userNameCheck(username) {
-                const nWordCheck = /nigg/gi;
-                const rWordCheck = /re[a-zA-Z]ard/gi;
-                const fWordCheck = /[a-zA-Z]a[a-zA-Z]got/gi;
-
-                if (
-                  nWordCheck.test(username) ||
-                  rWordCheck.test(username) ||
-                  fWordCheck.test(username)
-                )
-                  return true;
-                else return false;
-              }
-
               const badUsername = new MessageEmbed()
                 .setTitle(`${emojis.ERROR} You can't do that`)
                 .setDescription(
@@ -873,7 +845,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
                 })
                 .setTimestamp();
 
-              if (userNameCheck(newUsername))
+              if (hasProfanity(newUsername))
                 return interaction.reply({
                   embeds: [badUsername],
                   ephemeral: true
