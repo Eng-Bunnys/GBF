@@ -18,7 +18,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
       userPermission: [],
       botPermission: [],
       cooldown: 5,
-      development: true,
+      development: false,
       subcommands: {
         login: {
           description:
@@ -546,7 +546,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               .setTitle(`${emojis.ERROR} You cannot do that`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using \`/account login\` or log into an existing account using the same command.`
+                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using </account login:1038030860462592052> or log into an existing account using the same command.`
               )
               .setFooter({
                 text: `GBF Security and Safety`
@@ -713,7 +713,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
               .setTitle(`${emojis.ERROR} You cannot do that`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using \`/account login\` or log into an existing account using the same command.`
+                `You do not have a DunkelLuz account linked to this Discord account, you can create one for free using </account login:1038030860462592052> or log into an existing account using the same command.`
               )
               .setFooter({
                 text: `GBF Security and Safety`
@@ -739,7 +739,7 @@ module.exports = class DunkelLuzProfile extends SlashCommand {
             const badPassword = new MessageEmbed()
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setDescription(
-                `The password you entered does not match this accounts password, if you need help you can use the \`/account reset\` command`
+                `The password you entered does not match this accounts password, if you need help you can use the </account reset:1038030860462592052> command`
               )
               .setColor(colours.ERRORRED)
               .setTimestamp();
