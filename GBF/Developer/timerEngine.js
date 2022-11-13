@@ -50,21 +50,10 @@ module.exports = (client) => {
 
         const timeElapsed = (Date.now() - startedAtUNIX) / 1000;
 
-        const averageInMS =
-          timerData.timeSpent * 1000 +
-          (timeElapsed * 1000) / timerData.numberOfStarts +
-          1;
-
-        const updatedUserData = msToTime(averageInMS);
-
         const sessionDetails = new MessageEmbed()
           .setTitle(`🕛 Timer Stopped`)
           .setColor(colours.DEFAULT)
-          .setDescription(
-            `Time spent:\n${msToTime(
-              timeElapsed * 1000
-            )}\n\nAverage session time: ${updatedUserData}`
-          )
+          .setDescription(`Time spent:\n${msToTime(timeElapsed * 1000)} [${Math.round(timeElapsed).toLocaleString()} seconds]`)
           .setTimestamp();
 
         await interaction.reply({
