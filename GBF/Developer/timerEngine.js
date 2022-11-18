@@ -11,10 +11,12 @@ const { msToTime } = require("../utils/engine");
 module.exports = (client) => {
   client.on("interactionCreate", async (interaction) => {
     if (interaction.isButton()) {
-      if (
-        interaction.customId === "devTimerA" &&
-        interaction.user.id === "333644367539470337"
-      ) {
+      if (interaction.customId === "devTimerA") {
+        if (interaction.user.id !== "333644367539470337")
+          return interaction.reply({
+            content: `Fuck off will you`,
+            ephemeral: true
+          });
         const timerData = await timerSchema.findOne({
           userID: interaction.user.id
         });
@@ -32,10 +34,12 @@ module.exports = (client) => {
         await interaction.channel.send({
           content: `Timer started`
         });
-      } else if (
-        interaction.customId === "devTimer" &&
-        interaction.user.id === "333644367539470337"
-      ) {
+      } else if (interaction.customId === "devTimer") {
+        if (interaction.user.id !== "333644367539470337")
+          return interaction.reply({
+            content: `Fuck off will you`,
+            ephemeral: true
+          });
         const timerData = await timerSchema.findOne({
           userID: interaction.user.id
         });
@@ -53,7 +57,11 @@ module.exports = (client) => {
         const sessionDetails = new MessageEmbed()
           .setTitle(`🕛 Timer Stopped`)
           .setColor(colours.DEFAULT)
-          .setDescription(`Time spent:\n${msToTime(timeElapsed * 1000)} [${Math.round(timeElapsed).toLocaleString()} seconds]`)
+          .setDescription(
+            `Time spent:\n${msToTime(timeElapsed * 1000)} [${Math.round(
+              timeElapsed
+            ).toLocaleString()} seconds]`
+          )
           .setTimestamp();
 
         await interaction.reply({
