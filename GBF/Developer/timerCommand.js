@@ -10,6 +10,8 @@ const timerSchema = require("../../schemas/GBF Schemas/timer schema");
 
 const { msToTime } = require("../../utils/engine");
 
+const fetch = require("node-fetch");
+
 module.exports = class ClearCommand extends SlashCommand {
   constructor(client) {
     super(client, {
@@ -19,7 +21,7 @@ module.exports = class ClearCommand extends SlashCommand {
       usage: "/timer",
       examples: "/timer",
 
-      devOnly: true,
+      devOnly: false,
       userPermission: ["MANAGE_MESSAGES"],
       botPermission: [],
       cooldown: 0,
@@ -29,6 +31,12 @@ module.exports = class ClearCommand extends SlashCommand {
   }
 
   async execute({ client, interaction }) {
+
+    if (interaction.user.id !== '333644367539470337') return interaction.reply({
+      content: `Fuck off will you`,
+      ephemeral: true
+    })
+
     const userData = await timerSchema.findOne({
       userID: interaction.user.id
     });
@@ -49,10 +57,7 @@ module.exports = class ClearCommand extends SlashCommand {
         .setCustomId("devTimerA")
         .setLabel("Start timer")
         .setStyle("SECONDARY")
-        .setEmoji("🕛")
-    ]);
-
-    const timerButton = new MessageActionRow().addComponents([
+        .setEmoji("🕛"),
       new MessageButton()
         .setCustomId("devTimer")
         .setLabel("End timer")
@@ -64,19 +69,27 @@ module.exports = class ClearCommand extends SlashCommand {
       (userData.timeSpent * 1000) / userData.numberOfStarts
     );
 
+    let goofyAdvice;
+
+    await fetch(`https://luminabot.xyz/api/json/advice`)
+      .then((response) => response.json())
+      .then((data) => {
+        goofyAdvice = `Goofy Advice: ${data.advice}`;
+      });
+
     const timerStart = new MessageEmbed()
       .setTitle(`⏰ Timer started`)
       .setColor(colours.DEFAULT)
       .setDescription(
-        `Average session time: ${updatedUserData}\nNumber of sessions: ${userData.numberOfStarts}`
+        `Average session time: ${updatedUserData}\nNumber of sessions: ${userData.numberOfStarts}\n\n${goofyAdvice}`
       )
       .setFooter({
-        text: `Best of luck! Remember why you're doing this.`
+        text: `Best of luck!`
       });
 
     await interaction.reply({
       embeds: [timerStart],
-      components: [timerButtonA, timerButton]
+      components: [timerButtonA]
     });
   }
 };
