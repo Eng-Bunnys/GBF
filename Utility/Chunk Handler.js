@@ -6,12 +6,6 @@ function chunkAverage(chunkArray, size) {
   const mainChunk = [];
   const averageChunks = [];
 
-  const renderDistance = 7;
-
-  for (let i = 1; i <= renderDistance; i++) {
-    chunkArray.push(i);
-  }
-
   const splitIndex = size ? size : 5;
 
   while (chunkArray.length > 0) {
