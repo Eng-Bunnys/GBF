@@ -717,6 +717,7 @@ function chunkAverage(chunkArray, size) {
 
   for (let j = 0; j < mainChunk.length; j++) {
     chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
+    // commented out to remove unnecessary feature
     // chunkAverage = chunkSum / mainChunk[j].length;
     averageChunks.push(chunkSum);
   }
