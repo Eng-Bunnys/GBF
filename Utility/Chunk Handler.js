@@ -1,5 +1,4 @@
 function chunkAverage(chunkArray, size) {
-  if (!size || !chunkArray || !chunkArray.length <= 0) return;
   let renderedChunk;
   let chunkAverage = 0;
   let chunkSum = 0;
