@@ -691,10 +691,10 @@ function twentyFourToTwelve(hours) {
   if (Number.isNaN(hours)) return;
   let displayTime;
 
-  if (hours < 12) displayTime = `${hours} AM`;
+  if (hours < 12) displayTime = `${hours.toFixed(2)} AM`;
   else {
     hours -= 12;
-    displayTime = `${hours} PM`;
+    displayTime = `${hours.toFixed(2)} PM`;
   }
   return displayTime;
 }
@@ -707,24 +707,68 @@ function chunkAverage(chunkArray, size) {
   const mainChunk = [];
   const averageChunks = [];
 
-  const splitIndex = !Number.isNaN(size) ? size : 5;
+  const backupChunks = [];
+
+  const splitIndex = !Number.isNaN(size) ? size : 7;
 
   while (chunkArray.length > 0) {
     renderedChunk = chunkArray.splice(0, splitIndex);
 
-    mainChunk.push(renderedChunk);
+    if (renderedChunk.length === splitIndex) mainChunk.push(renderedChunk);
+    else backupChunks.push(renderedChunk);
   }
 
-  for (let j = 0; j < mainChunk.length; j++) {
-    chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
-    // commented out to remove unnecessary feature
-    // chunkAverage = chunkSum / mainChunk[j].length;
-    averageChunks.push(chunkSum);
+  for (let j = 0; j < mainChunk.length || j < backupChunks.length; j++) {
+    if (mainChunk.length) {
+      chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
+      // chunkAverage = chunkSum / mainChunk[j].length;
+      averageChunks.push(chunkSum);
+    } else {
+      chunkSum = backupChunks[j].reduce((partialSum, a) => partialSum + a, 0);
+      // chunkAverage = chunkSum / backupChunks[j].length;
+      averageChunks.push(chunkSum);
+    }
   }
+
   return averageChunks;
 }
 
+function RPRequiredToLevelUp(rank) {
+  return rank * 800 + (rank - 1) * 400;
+}
+
+function checkRank(currentRank, currentRP, addedRP) {
+  let addedLevels = 0;
+  let hasRankedUp = false;
+
+  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+
+  if (currentRank >= 5000) return;
+
+  if (addedRP > requiredRP) {
+    hasRankedUp = true;
+    addedLevels++;
+  }
+
+  let remainingRP = addedRP - requiredRP;
+  if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
+    for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
+      addedLevels++;
+      if (currentRank + addedLevels >= 5000) {
+        addedLevels--;
+        break;
+      }
+      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+    }
+  }
+  if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
+  if (addedLevels + currentRank >= 5000) addedLevels--;
+  return [hasRankedUp, addedLevels, remainingRP];
+}
+
 module.exports = {
+  RPRequiredToLevelUp,
+  checkRank,
   processArguments,
   paginate,
   getReply,
