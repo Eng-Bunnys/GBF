@@ -699,35 +699,23 @@ function twentyFourToTwelve(hours) {
   return displayTime;
 }
 
-function chunkAverage(chunkArray, size) {
-  let renderedChunk;
-  let chunkAverage = 0;
-  let chunkSum = 0;
-
-  const mainChunk = [];
+function chunkAverage(chunkArray, size = 7) {
+  const mainChunks = [];
+  const backupChunks = [];
   const averageChunks = [];
 
-  const backupChunks = [];
-
-  const splitIndex = !Number.isNaN(size) ? size : 7;
-
   while (chunkArray.length > 0) {
-    renderedChunk = chunkArray.splice(0, splitIndex);
-
-    if (renderedChunk.length === splitIndex) mainChunk.push(renderedChunk);
-    else backupChunks.push(renderedChunk);
+    const renderedChunk = chunkArray.splice(0, size);
+    renderedChunk.length === size
+      ? mainChunks.push(renderedChunk)
+      : backupChunks.push(renderedChunk);
   }
 
-  for (let j = 0; j < mainChunk.length || j < backupChunks.length; j++) {
-    if (mainChunk.length) {
-      chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
-      // chunkAverage = chunkSum / mainChunk[j].length;
-      averageChunks.push(chunkSum);
-    } else {
-      chunkSum = backupChunks[j].reduce((partialSum, a) => partialSum + a, 0);
-      // chunkAverage = chunkSum / backupChunks[j].length;
-      averageChunks.push(chunkSum);
-    }
+  for (let i = 0; i < mainChunks.length || i < backupChunks.length; i++) {
+    const chunkSum = mainChunks.length
+      ? mainChunks[i].reduce((partialSum, a) => partialSum + a, 0)
+      : backupChunks[i].reduce((partialSum, a) => partialSum + a, 0);
+    averageChunks.push(chunkSum);
   }
 
   return averageChunks;
