@@ -769,6 +769,24 @@ module.exports = class BasicTimerUI extends SlashCommand {
               embeds: [sessionStats]
             });
           }
+        },
+        help: {
+          description: "Find out how to use GBF Timers",
+          execute: async ({ client, interaction }) => {
+            const helpEmbed = new MessageEmbed()
+              .setTitle(`${emojis.LOGOTRANS} GBF Timers`)
+              .setColor(colours.DEFAULT)
+              .setDescription(`1. Start by registering, this can be done for **free** using  </timer registry:1068210539689414777>
+            2. Once registered, you can start a new session using </timer initiate:1068210539689414777>, buttons will be displayed that you can use to start, stop or pause the timer!
+            3. Once you finished your session, you can view your stats using </timer stats:1068210539689414777>
+            
+            Semester ended and want to reset? Use </timer reset:1068210539689414777>, this will delete your previous data and you can register a new account for free again`);
+
+            return interaction.reply({
+              embeds: [helpEmbed],
+              ephemeral: true
+            });
+          }
         }
       }
     });
