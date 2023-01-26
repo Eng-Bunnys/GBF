@@ -8,7 +8,7 @@ These folders were provided by [GBF Timers V2](https://github.com/DepressedBunny
 Your data will be closed and inaccessible by anyone, the data is updated using a computer and there is no manual work this means that no human will be in-between you and your data.
 You can request data deletion and that process will also be automatically done using a computer to ensure no human can view your data.
 
-Your data is encrpyted using AES256-CBC [256-bit Advanced Encryption Standard in Cipher Block Chaining mode], this protects your data by encrypting your data from the client to the secure database, TDE is also supported.
+Your data is encrpyted using AES256-CBC [256-bit Advanced Encryption Standard in Cipher Block Chaining mode], this protects your data by encrypting your data from the client to the secure database.
 
 ## How to access for free
 [Click here](https://discord.com/api/oauth2/authorize?client_id=795361755223556116&permissions=1642787765494&scope=bot%20applications.commands) to invite GBF Timers to your server with the required permissions
