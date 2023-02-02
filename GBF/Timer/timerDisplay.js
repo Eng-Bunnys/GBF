@@ -321,6 +321,14 @@ module.exports = class BasicTimerUI extends SlashCommand {
         },
         initiate: {
           description: "Start a timer for the current season",
+          args: [
+            {
+              name: "topic",
+              description: "The subject/topic of the session",
+              type: Constants.ApplicationCommandOptionTypes.STRING,
+              required: true
+            }
+          ],
           execute: async ({ client, interaction }) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
@@ -338,6 +346,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 embeds: [noAccount],
                 ephemeral: true
               });
+
+            const sessionTopic = interaction.options.getString("topic");
 
             const HRTotalTime =
               timerData.timeSpent > 0
@@ -426,7 +436,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
             }
 
             const mainEmbed = new MessageEmbed()
-              .setTitle(`${randomTitleText}`)
+              .setTitle(`${randomTitleText} | ${sessionTopic}`)
               .setColor(colours.DEFAULT)
               .setDescription(`${messageDescription}`)
               .setFooter({
