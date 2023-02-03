@@ -198,13 +198,17 @@ module.exports = class BasicTimerUI extends SlashCommand {
               return level * 400 + (level - 1) * 200;
             }
 
+            function xpRequiredAccount(level) {
+              return level * 800 + (level - 1) * 400;
+            }
+
             const seasonRank =
               timerData.seasonLevel > 0 ? timerData.seasonLevel : 1;
 
             const accountRank =
               timerData.accountLevel > 0 ? timerData.accountLevel : 1;
 
-            const accountXPrequired = xpRequired(accountRank + 1);
+            const accountXPrequired = xpRequiredAccount(accountRank + 1);
             const seasonXPrequired = xpRequired(seasonRank + 1);
 
             // Function that calculates the hours required till the next rank since every 5 minutes is 10 XP
