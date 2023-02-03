@@ -378,10 +378,12 @@ module.exports = (client) => {
 
       // Calculating the time between the current date and the time when the session started then subtracting it from the break time
 
-      const timeElapsed = Math.abs(
+      let timeElapsed =
         ((Date.now() - timerData.intiationTime.getTime()) / 1000).toFixed(3) -
-          breakTime
-      );
+        breakTime;
+
+      if (timeElapsed <= 0)
+        timeElapsed = Math.abs(Math.abs(timeElapsed) - breakTime);
 
       // Calculating the average break time
       // Here we don't check if the numerator is 0 since 0 / Number = 0 while Number / 0 is undefined
@@ -530,7 +532,9 @@ module.exports = (client) => {
 
       // Making the description here so it's easier to update
 
-      const embedDescription = `• Time Elapsed: ${msToTime(
+      const embedDescription = `• Start Time: <t:${
+        timerData.initationTime.getTime() / 1000
+      }:F>\n\n• Time Elapsed: ${msToTime(
         (timeElapsed + breakTime) * 1000
       )} [${Number(
         (timeElapsed + breakTime).toFixed(2)
