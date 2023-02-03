@@ -115,6 +115,11 @@ module.exports = (client) => {
     function xpRequired(level) {
       return level * 400 + (level - 1) * 200;
     }
+
+    function xpRequiredAccount(level) {
+      return level * 800 + (level - 1) * 400;
+    }
+
     // Function that gives the user XP dependant on the time spent
 
     /**
@@ -482,7 +487,9 @@ module.exports = (client) => {
       let accountProgressBar;
 
       const percentageAccountComplete =
-        (hasRankedUpAccount[2] / xpRequired(timerData.accountLevel + 2)) * 100;
+        (hasRankedUpAccount[2] /
+          xpRequiredAccount(timerData.accountLevel + 2)) *
+        100;
 
       if (percentageAccountComplete >= 50 && percentageAccountComplete < 90)
         accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
@@ -505,7 +512,7 @@ module.exports = (client) => {
             hasRankedUpAccount[2]
           }\`\n• XP required to reach level ${
             timerData.accountLevel + 2
-          }: \`${xpRequired(
+          }: \`${xpRequiredAccount(
             timerData.accountLevel + 2
           ).toLocaleString()}\`\n• Account Level Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
             2
