@@ -113,11 +113,11 @@ module.exports = (client) => {
 
     // Function that calculates the amount of XP required to level up
     function xpRequired(level) {
-      return level * 400 + (level - 1) * 200;
+      return level * 400 + (level - 1) * 200 - 300;
     }
 
     function xpRequiredAccount(level) {
-      return level * 800 + (level - 1) * 400;
+      return level * 800 + (level - 1) * 400 - 500;
     }
 
     // Function that gives the user XP dependant on the time spent
@@ -434,7 +434,7 @@ module.exports = (client) => {
       );
 
       const leveledUpMessage = new MessageEmbed()
-        .setTitle(`${emojis.ParrotDance} Ranked Up`)
+        .setTitle(`🆙 Ranked Up`)
         .setColor(colours.DEFAULT);
 
       let hasRankedUpMessage = ``;
@@ -532,9 +532,9 @@ module.exports = (client) => {
 
       // Making the description here so it's easier to update
 
-      const embedDescription = `• Start Time: <t:${
-        timerData.initationTime.getTime() / 1000
-      }:F>\n\n• Time Elapsed: ${msToTime(
+      const embedDescription = `• Start Time: <t:${Math.round(
+        timerData.intiationTime.getTime() / 1000
+      )}:F>\n• Time Elapsed: ${msToTime(
         (timeElapsed + breakTime) * 1000
       )} [${Number(
         (timeElapsed + breakTime).toFixed(2)
@@ -576,7 +576,11 @@ module.exports = (client) => {
       });
 
       const sessionStats = new MessageEmbed()
-        .setTitle(`${emojis.VERIFY} Session Ended`)
+        .setTitle(
+          `${emojis.VERIFY} Session Ended | ${
+            timerData.sessionTopic ? timerData.sessionTopic : ""
+          }`
+        )
         .setColor(colours.DEFAULT)
         .setDescription(`${embedDescription}`)
         .setFooter({
