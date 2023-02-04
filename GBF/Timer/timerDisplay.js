@@ -33,7 +33,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
       development: false,
       subcommands: {
         stats: {
-          description: "Get the stats of the current tracking season",
+          description: "Get the stats of the current tracking semester",
           execute: async ({ client, interaction }) => {
             //Abbreviation dictionary
             /**
@@ -47,7 +47,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // timerData object stores time in seconds, so we have to convert it to miliseconds to be able to use the msToTime function
 
-            //Checking if the user data on the current season
+            //Checking if the user data on the current semester
 
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
@@ -57,7 +57,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `I couldn't find any data matching your user ID.\n\nCreate a new seasonal account using </timer registry:1068210539689414777>`
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
 
             if (!timerData || (timerData && !timerData.seasonName))
@@ -195,11 +195,11 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // Function that calculates the amount of XP required to level up
             function xpRequired(level) {
-              return level * 400 + (level - 1) * 200;
+              return level * 400 + (level - 1) * 200 - 300;
             }
 
             function xpRequiredAccount(level) {
-              return level * 800 + (level - 1) * 400;
+              return level * 800 + (level - 1) * 400 - 500;
             }
 
             const seasonRank =
@@ -266,7 +266,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // The main message that stores all of the information and the third quadrant | Longest session
 
-            const messageDescription = `• Total Season Time: ${HRTotalTime} [${hrTotalTime} Hours]\n• Average Session Time: ${avgTotalTime} [${Number(
+            const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} Hours]\n• Average Session Time: ${avgTotalTime} [${Number(
               rawTotalTime.toFixed(2)
             ).toLocaleString()} Seconds]\n• Total Number of Sessions: ${
               timerData.numberOfStarts
@@ -282,13 +282,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
               msToTime(deltaTime * 1000)
                 ? msToTime(deltaTime * 1000)
                 : `In-sufficient data`
-            }\n\n• Average Start Time: ${displayAverageStartTime} [GMT +2]\n• Average Session Time per Week: ${displayWeeklyTimeAverage}\n\n• Season Level: ${
+            }\n\n• Average Start Time: ${displayAverageStartTime} [GMT +2]\n• Average Session Time per Week: ${displayWeeklyTimeAverage}\n\n• Semester Level: ${
               timerData.seasonLevel
             }\n• XP to reach level ${
               timerData.seasonLevel + 1
             }: ${timerData.seasonXP.toLocaleString()} / ${seasonXPrequired.toLocaleString()}\n${seasonProgressBar} [${percentageSeasonComplete.toFixed(
               2
-            )}%]\n• Estimated time till next seasonal level up: ${Number(
+            )}%]\n• Estimated time till next semester level up: ${Number(
               hoursNeededSeason.toFixed(2)
             ).toLocaleString()} Hours [${Number(
               (hoursNeededSeason * 60).toFixed(2)
@@ -324,12 +324,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
           }
         },
         initiate: {
-          description: "Start a timer for the current season",
+          description: "Create a new session for the current semester",
           args: [
             {
               name: "topic",
               description: "The subject/topic of the session",
               type: Constants.ApplicationCommandOptionTypes.STRING,
+              minLength: 2,
               required: true
             }
           ],
@@ -342,7 +343,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`⚠️ You cannot do that ⚠️`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `I couldn't find any data matching your user ID.\n\nCreate a new seasonal account using </timer registry:1068210539689414777>`
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
 
             if (!timerData || (timerData && !timerData.seasonName))
@@ -406,7 +407,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               deltaTime = `In-sufficient data`;
             }
 
-            const messageDescription = `• Total Season Time: ${HRTotalTime} [${hrTotalTime.toLocaleString()} Hours]\n• Average Session Time: ${avgTotalTime} [${rawTotalTime.toLocaleString()} Seconds]\n• Total Number of Sessions: ${
+            const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime.toLocaleString()} Hours]\n• Average Session Time: ${avgTotalTime} [${rawTotalTime.toLocaleString()} Seconds]\n• Total Number of Sessions: ${
               timerData.numberOfStarts
             }\n\n• Total Break Time: ${HRBreakTime} [${hrBreakTime.toLocaleString()} Hours]\n• Average Break Time: ${avgBreakTime} [${rawBreakTime.toLocaleString()} Seconds]\n• Total Number of Breaks: ${
               timerData.totalBreaks
@@ -474,7 +475,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
             });
 
             return timerData.updateOne({
-              messageID: initiateMessage.id
+              messageID: initiateMessage.id,
+              sessionTopic: sessionTopic
             });
           }
         },
@@ -482,9 +484,9 @@ module.exports = class BasicTimerUI extends SlashCommand {
           description: "Register your account to use GBF Timers",
           args: [
             {
-              name: "season-name",
+              name: "semester-name",
               description:
-                "The season's name [CANNOT BE CHANGED], this will be used until you reset",
+                "The semester's name [CANNOT BE CHANGED], this will be used until you reset",
               type: Constants.ApplicationCommandOptionTypes.STRING,
               minLength: 6,
               maxLength: 20,
@@ -500,7 +502,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `You already have existing season data, you can reset and create a new profile using </timer registry:1068210539689414777>`
+                `You already have existing semester data, you can reset and create a new profile using </timer registry:1068210539689414777>`
               );
 
             // Checking if there's an existing season
@@ -511,7 +513,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 ephemeral: true
               });
 
-            const seasonName = interaction.options.getString("season-name");
+            const seasonName = interaction.options.getString("semester-name");
 
             const newSemesterSeason = new MessageEmbed()
               .setTitle(`${emojis.VERIFY} Registered`)
@@ -519,7 +521,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setDescription(
                 `Registry Time:\n<t:${Math.floor(
                   Date.now() / 1000
-                )}:F>\n\nSuccessfully registered ${seasonName} as a new season/semester, best of luck.\n\nYou can reset using </timer reset:1068210539689414777>\nThis will delete all of the previously saved data ⚠️`
+                )}:F>\n\nSuccessfully registered ${seasonName} as a new semester, best of luck.\n\nYou can reset using </timer reset:1068210539689414777>\nThis will delete all of the previously saved data ⚠️`
               );
 
             // Checking if there's an account but no existing season
@@ -574,7 +576,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`⚠️ You cannot do that ⚠️`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `I couldn't find any data matching your user ID.\n\nCreate a new seasonal account using </timer registry:1068210539689414777>`
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
 
             if (!timerData || (timerData && !timerData.seasonName))
@@ -619,7 +621,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`⚠️ Confirmation required`)
               .setColor(colours.DEFAULT)
               .setDescription(
-                `Please use the buttons below to confirm or deny this action. [Season reset, this includes season XP]`
+                `Please use the buttons below to confirm or deny this action. [Semester reset, this includes semester XP]`
               );
 
             await interaction.reply({
@@ -666,7 +668,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
                   .setTitle(`${emojis.VERIFY} Success`)
                   .setColor(colours.DEFAULT)
                   .setDescription(
-                    `Your data has been deleted, to create a new season use </timer registry:1068210539689414777>`
+                    `Your data has been deleted, to create a new semester use </timer registry:1068210539689414777>`
                   );
 
                 // Deleting the data
@@ -725,7 +727,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`⚠️ You cannot do that ⚠️`)
               .setColor(colours.ERRORRED)
               .setDescription(
-                `I couldn't find any data matching your user ID.\n\nCreate a new seasonal account using </timer registry:1068210539689414777>`
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
 
             if (!timerData || (timerData && !timerData.seasonName))
@@ -768,7 +770,12 @@ module.exports = class BasicTimerUI extends SlashCommand {
               ) - breakTime;
 
             const sessionStats = new MessageEmbed()
-              .setTitle(`Session Stats`)
+              .setTitle(
+                `Session Stats | ${
+                  timerData.sessionTopic ? timerData.sessionTopic : ""
+                }`
+              )
+              .setColor(colours.DEFAULT)
               .setDescription(
                 `• Time Elapsed: ${msToTime(
                   Math.abs(timeElapsed * 1000)
@@ -799,6 +806,64 @@ module.exports = class BasicTimerUI extends SlashCommand {
             return interaction.reply({
               embeds: [helpEmbed],
               ephemeral: true
+            });
+          }
+        },
+        topic_update: {
+          args: [
+            {
+              name: "topic",
+              description: "The subject/topic of the session",
+              type: Constants.ApplicationCommandOptionTypes.STRING,
+              minLength: 2,
+              required: true
+            }
+          ],
+          description: "Update the current session's topic",
+          execute: async ({ client, interaction }) => {
+            const timerData = await timerSchema.findOne({
+              userID: interaction.user.id
+            });
+
+            const noAccount = new MessageEmbed()
+              .setTitle(`⚠️ You cannot do that ⚠️`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
+              );
+
+            if (!timerData || (timerData && !timerData.seasonName))
+              return interaction.reply({
+                embeds: [noAccount],
+                ephemeral: true
+              });
+
+            // Checking if there's an active session
+
+            const noActiveSession = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colours.ERRORRED)
+              .setDescription(`There are no active sessions.`);
+
+            if (!timerData.intiationTime)
+              return interaction.reply({
+                embeds: [noActiveSession],
+                ephemeral: true
+              });
+
+            await timerData.updateOne({
+              sessionTopic: interaction.options.getString("topic")
+            });
+
+            const topicUpdated = new MessageEmbed()
+              .setTitle(`${emojis.VERIFY} Success`)
+              .setColor(colours.DEFAULT)
+              .setDescription(
+                `New session topic: ${interaction.options.getString("topic")}`
+              );
+
+            return interaction.reply({
+              embeds: [topicUpdated]
             });
           }
         }
