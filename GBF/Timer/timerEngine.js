@@ -419,6 +419,29 @@ module.exports = (client) => {
 
       const rewardedXP = Math.round(calculateXP(timeElapsed / 60));
 
+      let rankUpEmoji;
+
+      // Checking who has the higher level
+
+      let highestLevel =
+        timerData.seasonLevel > timerData.accountLevel
+          ? timerData.seasonLevel
+          : timerData.accountLevel;
+
+      highestLevel++;
+
+      if (highestLevel <= 25) rankUpEmoji = `<a:W_:805604232354332704>`;
+      else if (highestLevel > 25 && highestLevel <= 50)
+        rankUpEmoji = `<a:blackSpin:1025851052442005594>`;
+      else if (highestLevel > 50 && highestLevel <= 75)
+        rankUpEmoji = `<a:redSpin:1025851361583173773>`;
+      else if (highestLevel > 75 && highestLevel < 100)
+        rankUpEmoji = `<a:pinkSpin:1025851222068052101>`;
+      else if (highestLevel === 100)
+        rankUpEmoji = `<a:100_Streak_Badge:963696947015864340>`;
+      else if (highestLevel > 100)
+        rankUpEmoji = `<a:donutSpin:1025851417421955204>`;
+
       // Checking if the user leveled up or not
 
       const hasRankedUpSeason = checkRank(
@@ -434,7 +457,7 @@ module.exports = (client) => {
       );
 
       const leveledUpMessage = new MessageEmbed()
-        .setTitle(`🆙 Ranked Up`)
+        .setTitle(`${rankUpEmoji} Ranked Up`)
         .setColor(colours.DEFAULT);
 
       let hasRankedUpMessage = ``;
@@ -537,19 +560,19 @@ module.exports = (client) => {
       )}:F>\n• Time Elapsed: ${msToTime(
         (timeElapsed + breakTime) * 1000
       )} [${Number(
-        (timeElapsed + breakTime).toFixed(2)
+        Math.round(timeElapsed + breakTime)
       ).toLocaleString()} Seconds]\n• Session Time: ${msToTime(
         timeElapsed * 1000
       )} [${Number(
-        timeElapsed.toFixed(2)
+        Math.round(timeElapsed)
       ).toLocaleString()} Seconds]\n\n• Average Break Time: ${
         averageBreakTime > 0 ? msToTime(averageBreakTime * 1000) : "0 seconds"
       } [${Number(
-        averageBreakTime.toFixed(2)
+        Math.round(averageBreakTime)
       ).toLocaleString()} Seconds]\n• Break Time: ${
         breakTime > 0 ? msToTime(breakTime * 1000) : "0 seconds"
       } [${Number(
-        breakTime.toFixed(2)
+        Math.round(breakTime)
       ).toLocaleString()} Seconds]\n• Number of Breaks: ${
         timerData.sessionBreaks
       }\n\n• Average Session Time Movement: ${displayDeltaAverageTime} [${Number(
@@ -557,6 +580,11 @@ module.exports = (client) => {
       ).toLocaleString()} Seconds]\n\n• XP rewarded: ${Number(
         rewardedXP.toFixed(2)
       ).toLocaleString()}`;
+
+      const longestDiff =
+        timerData.longestSessionTime > timeElapsed
+          ? timerData.longestSessionTime - timeElapsed
+          : timeElapsed - timerData.longestSessionTime;
 
       // Updating the data to the DB & resetting the timer
 
@@ -574,6 +602,28 @@ module.exports = (client) => {
         sessionBreaks: 0,
         sessionBreakTime: 0
       });
+
+      const longestSession = new MessageEmbed()
+        .setTitle(`${emojis.VERIFY} New Longest Session`)
+        .setColor(colours.DEFAULT)
+        .setDescription(
+          `Today's session was the longest session recorded in ${
+            timerData.seasonName ? timerData.seasonName : "this semester"
+          }\n\nDuration: ${msToTime(
+            timeElapsed * 1000
+          )}\nTime difference: ${Math.round(
+            Number(longestDiff / 3600).toFixed(2)
+          ).toLocaleString()} Hrs ${Math.round(
+            Number(longestDiff / 60).toFixed(2)
+          ).toLocaleString()} Mins ${Math.round(
+            Number(longestDiff).toFixed(2)
+          ).toLocaleString()}s`
+        );
+
+      if (timerData.longestSessionTime < timeElapsed)
+        await interaction.channel.send({
+          embeds: [longestSession]
+        });
 
       const sessionStats = new MessageEmbed()
         .setTitle(
