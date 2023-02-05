@@ -633,6 +633,10 @@ module.exports = (client) => {
           text: `Good Job`
         });
 
+      await timerData.updateOne({
+        sessionTopic: null
+      });
+
       // Disabling the buttons
 
       await originalMessage.edit({
