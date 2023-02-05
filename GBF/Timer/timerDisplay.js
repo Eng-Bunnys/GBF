@@ -100,6 +100,20 @@ module.exports = class BasicTimerUI extends SlashCommand {
               rawBreakTime = 0;
             } else avgBreakTime = msToTime(avgBreakTime * 1000);
 
+            // Finding the average time between breaks
+
+            let avgBreaks;
+
+            if (
+              hrTotalTime > 0 &&
+              //hrBreakTime > 0 &&
+              timerData.totalBreaks > 0
+            ) {
+              avgBreaks = msToTime(
+                Math.abs(hrTotalTime / timerData.totalBreaks) * 1000 * 3600
+              );
+            } else avgBreaks = `In-sufficient data`;
+
             // Fourth quadrant | Previous session details
 
             // Checking if there was a last session
@@ -266,15 +280,23 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // The main message that stores all of the information and the third quadrant | Longest session
 
-            const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} Hours]\n• Average Session Time: ${avgTotalTime} [${Number(
-              rawTotalTime.toFixed(2)
-            ).toLocaleString()} Seconds]\n• Total Number of Sessions: ${
+            const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
+              hrTotalTime > 1 ? "Hour" : "Hours"
+            }]\n• Average Session Time: ${avgTotalTime} [${Math.round(
+              rawTotalTime
+            ).toLocaleString()} ${
+              Math.floor(rawTotalTime) > 1 ? "Second" : "Seconds"
+            }]\n• Total Number of Sessions: ${
               timerData.numberOfStarts
-            }\n\n• Total Break Time: ${HRBreakTime} [${hrBreakTime} Hours]\n• Average Break Time: ${avgBreakTime} [${Number(
-              rawBreakTime.toFixed(2)
-            ).toLocaleString()} Seconds]\n• Total Number of Breaks: ${
+            }\n\n• Total Break Time: ${HRBreakTime} [${hrBreakTime} ${
+              hrBreakTime > 1 ? "Hour" : "Hours"
+            }]\n• Average Break Time: ${avgBreakTime} [${Math.round(
+              rawBreakTime
+            ).toLocaleString()} ${
+              Math.floor(rawBreakTime) > 1 ? "Second" : "Seconds"
+            }]\n• Total Number of Breaks: ${
               timerData.totalBreaks
-            }\n\n• Longest Session Time: ${
+            }\n• Average Time Between Breaks: ${avgBreaks}\n\n• Longest Session Time: ${
               timerData.longestSessionTime
                 ? msToTime(timerData.longestSessionTime * 1000)
                 : `In-sufficient data`
@@ -524,11 +546,25 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 )}:F>\n\nSuccessfully registered ${seasonName} as a new semester, best of luck.\n\nYou can reset using </timer reset:1068210539689414777>\nThis will delete all of the previously saved data ⚠️`
               );
 
+            const helpEmbed = new MessageEmbed()
+              .setTitle(`${emojis.LOGOTRANS} GBF Timers`)
+              .setColor(colours.DEFAULT)
+              .setDescription(`1. Start by registering, this can be done for **free** using  </timer registry:1068210539689414777>
+            2. Once registered, you can start a new session using </timer initiate:1068210539689414777>, buttons will be displayed that you can use to start, stop or pause the timer!
+            3. Once you finished your session, you can view your stats using </timer stats:1068210539689414777>
+            
+            Semester ended and want to reset? Use </timer reset:1068210539689414777>, this will delete your previous data and you can register a new account for free again\n\nWant to display this message? Use </timer help:1068210539689414777>`);
+
             // Checking if there's an account but no existing season
 
             if (timerData && !timerData.seasonName) {
               await interaction.reply({
                 embeds: [newSemesterSeason]
+              });
+
+              await interaction.followUp({
+                embeds: [helpEmbed],
+                ephemeral: true
               });
 
               // Reseting the data and updating to the new season name
@@ -557,7 +593,12 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
               await newUserProfile.save();
 
-              return interaction.reply({
+              await interaction.reply({
+                embeds: [helpEmbed],
+                ephemeral: true
+              });
+
+              return interaction.followUp({
                 embeds: [newSemesterSeason]
               });
             }
@@ -621,7 +662,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setTitle(`⚠️ Confirmation required`)
               .setColor(colours.DEFAULT)
               .setDescription(
-                `Please use the buttons below to confirm or deny this action. [Semester reset, this includes semester XP]`
+                `Please use the buttons below to confirm or deny this action. [Semester reset, this includes semester XP]\n\nWe recommend using </timer stats:1068210539689414777> before restting.`
               );
 
             await interaction.reply({
@@ -671,6 +712,26 @@ module.exports = class BasicTimerUI extends SlashCommand {
                     `Your data has been deleted, to create a new semester use </timer registry:1068210539689414777>`
                   );
 
+                const semesterRecap = `• Total Time: ${msToTime(
+                  timerData.timeSpent * 1000
+                )}\n• Number of Sessions: ${
+                  timerData.numberOfStarts
+                }\n• Total Break Time: ${msToTime(
+                  timerData.breakTime * 1000
+                )}\n• Number of Breaks: ${
+                  timerData.totalBreaks
+                }\n\n• Semester Level: ${
+                  timerData.seasonLevel
+                }\n• Semester XP: ${timerData.seasonXP}`;
+
+                const semesterStats = new MessageEmbed()
+                  .setTitle(`${timerData.seasonName} Recap`)
+                  .setColor(colours.DEFAULT)
+                  .setDescription(`${semesterRecap}`)
+                  .setFooter({
+                    text: `Good luck on your next journey! - GBF Team`
+                  });
+
                 // Deleting the data
 
                 await timerData.updateOne({
@@ -690,7 +751,12 @@ module.exports = class BasicTimerUI extends SlashCommand {
                   intiationTime: null,
                   sessionBreakTime: 0,
                   sessionBreaks: 0,
-                  breakTimerStart: null
+                  breakTimerStart: null,
+                  sessionTopic: null
+                });
+
+                await interaction.followUp({
+                  embeds: [semesterStats]
                 });
 
                 await interaction.editReply({
@@ -801,7 +867,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
             2. Once registered, you can start a new session using </timer initiate:1068210539689414777>, buttons will be displayed that you can use to start, stop or pause the timer!
             3. Once you finished your session, you can view your stats using </timer stats:1068210539689414777>
             
-            Semester ended and want to reset? Use </timer reset:1068210539689414777>, this will delete your previous data and you can register a new account for free again`);
+            Semester ended and want to reset? Use </timer reset:1068210539689414777>, this will delete your previous data and you can register a new account for free again\n\nWant to display this message again? Use </timer help:1068210539689414777>`);
 
             return interaction.reply({
               embeds: [helpEmbed],
