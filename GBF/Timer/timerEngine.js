@@ -609,15 +609,11 @@ module.exports = (client) => {
         .setDescription(
           `Today's session was the longest session recorded in ${
             timerData.seasonName ? timerData.seasonName : "this semester"
-          }\n\nDuration: ${msToTime(
-            timeElapsed * 1000
-          )}\nTime difference: ${Math.round(
-            Number(longestDiff / 3600).toFixed(2)
-          ).toLocaleString()} Hrs ${Math.round(
-            Number(longestDiff / 60).toFixed(2)
-          ).toLocaleString()} Mins ${Math.round(
-            Number(longestDiff).toFixed(2)
-          ).toLocaleString()}s`
+          }\n\nDuration: ${msToTime(timeElapsed * 1000)}\nTime difference: ${
+            longestDiff < 0
+              ? "-" + msToTime(Math.abs(longestDiff * 1000))
+              : msToTime(longestDiff * 1000)
+          }`
         );
 
       if (timerData.longestSessionTime < timeElapsed)
