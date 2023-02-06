@@ -281,19 +281,19 @@ module.exports = class BasicTimerUI extends SlashCommand {
             // The main message that stores all of the information and the third quadrant | Longest session
 
             const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
-              hrTotalTime > 1 ? "Hour" : "Hours"
+              hrTotalTime == 1 ? "Hour" : "Hours"
             }]\n• Average Session Time: ${avgTotalTime} [${Math.round(
               rawTotalTime
             ).toLocaleString()} ${
-              Math.floor(rawTotalTime) > 1 ? "Second" : "Seconds"
+              Math.floor(rawTotalTime) == 1 ? "Second" : "Seconds"
             }]\n• Total Number of Sessions: ${
               timerData.numberOfStarts
             }\n\n• Total Break Time: ${HRBreakTime} [${hrBreakTime} ${
-              hrBreakTime > 1 ? "Hour" : "Hours"
+              hrBreakTime == 1 ? "Hour" : "Hours"
             }]\n• Average Break Time: ${avgBreakTime} [${Math.round(
               rawBreakTime
             ).toLocaleString()} ${
-              Math.floor(rawBreakTime) > 1 ? "Second" : "Seconds"
+              Math.floor(rawBreakTime) == 1 ? "Second" : "Seconds"
             }]\n• Total Number of Breaks: ${
               timerData.totalBreaks
             }\n• Average Time Between Breaks: ${avgBreaks}\n\n• Longest Session Time: ${
