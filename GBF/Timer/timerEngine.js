@@ -837,10 +837,10 @@ module.exports = (client) => {
 
       // Calculating the break time
 
-      const timeElapsed = Number(
-        Math.abs(
-          (Date.now() - timerData.breakTimerStart.getTime()) / 1000
-        ).toFixed(3)
+      const timeElapsed = Math.round(
+        Number(
+          Math.abs((Date.now() - timerData.breakTimerStart.getTime()) / 1000)
+        )
       );
 
       // Adding that data to the DB
@@ -856,7 +856,9 @@ module.exports = (client) => {
         .setDescription(
           `Session timer has been un-paused\n\n• Break Time: ${msToTime(
             timeElapsed * 1000
-          )} [${timeElapsed} Seconds]`
+          )} [${timeElapsed.toLocaleString()} Seconds]\nThis is break number ${
+            timerData.sessionBreaks
+          }`
         );
 
       await originalMessage.edit({
