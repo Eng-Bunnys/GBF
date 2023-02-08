@@ -165,6 +165,32 @@ module.exports = (client) => {
       return [hasRankedUp, addedLevels, remainingRP];
     }
 
+    function checkRankAccount(currentRank, currentRP, addedRP) {
+      let addedLevels = 0;
+      let hasRankedUp = false;
+
+      let requiredRP = xpRequiredAccount(currentRank + addedLevels, currentRP);
+
+      if (addedRP > requiredRP) {
+        hasRankedUp = true;
+        addedLevels++;
+      }
+
+      let remainingRP = addedRP - requiredRP;
+      if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
+        for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
+          addedLevels++;
+          if (currentRank + addedLevels >= 5000) {
+            addedLevels--;
+            break;
+          }
+          requiredRP = xpRequiredAccount(currentRank + addedLevels, currentRP);
+        }
+      }
+      if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
+      return [hasRankedUp, addedLevels, remainingRP];
+    }
+
     if (interaction.customId === "startTimer") {
       const statusCheck = checkUser(
         timerData,
@@ -450,7 +476,7 @@ module.exports = (client) => {
         timerData.seasonXP + rewardedXP
       );
 
-      const hasRankedUpAccount = checkRank(
+      const hasRankedUpAccount = xpRequiredAccount(
         timerData.accountLevel,
         timerData.accountXP,
         timerData.seasonXP + rewardedXP
