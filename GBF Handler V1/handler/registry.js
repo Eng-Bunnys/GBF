@@ -60,17 +60,9 @@ async function registerCommands(client, ...dirs) {
                                 continue;
                             }
 
-                            if (cmdModule.development) {
-                                const GBFTestMain = await client.guilds.fetch("827589582932410388");
-                                const GBFTestMN = await client.guilds.fetch("439890528583286784");
-                                const TSUwU = await client.guilds.fetch("614515078997475333");
-                                const GBFTest4 = await client.guilds.fetch("850005402863140895")
-
-                                if (!GBFTestMain || !GBFTestMN || !TSUwU || !GBFTest4) {
-                                    console.log(`This command only works in ${GBFTestMain}, ${GBFTestMN}, ${TSUwU} and ${GBFTest4}.`);
-                                    continue;
-                                }
-                            }
+//                             if (cmdModule.development) {
+//                         
+//                             }
                             client.slashCommands.set(name, cmdModule);
                         }
                     } catch (e) {
