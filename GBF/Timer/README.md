@@ -38,9 +38,9 @@ This is a temporary level that resets after each season/semester.
 2. Account level
 This is a permenant level.
 
+GBF Timers is now available for public use and the source code is now open source.
+
 ### Bug Fixes & Small Updates
 To read the bug fixes and small updates please check the main repository [GBF Timers](https://github.com/DepressedBunnys/GBF-Timers/tree/main/V2)
-
-GBF Timers is now available for public use and the source code is now open source.
 
 ## Under GBF
