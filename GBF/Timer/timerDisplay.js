@@ -155,19 +155,26 @@ module.exports = class BasicTimerUI extends SlashCommand {
               return sum / data.length;
             }
 
-            // Function that converts seconds to hours
-            function toHours(seconds) {
-              return seconds / 3600;
-            }
+            console.log(
+              weeklyAverages[
+                weeklyAverages.length - 1 >= 0 ? weeklyAverages.length - 1 : 0
+              ]
+            );
 
             if (!weeklyAverages.length || weeklyAverages.length < 1)
               displayWeeklyTimeAverage = `In-sufficient data`;
             else {
               displayWeeklyTimeAverage = `${msToTime(
-                averageTotal(weeklyAverages) * 1000
-              )} [${toHours(
-                averageTotal(weeklyAverages)
-              )} Hours]\n• Number of weeks: ${weeklyAverages.length}`;
+                weeklyAverages[
+                  weeklyAverages.length - 1 >= 0 ? weeklyAverages.length - 1 : 0
+                ] * 1000
+              )}\n  [${(
+                weeklyAverages[
+                  weeklyAverages.length - 1 >= 0 ? weeklyAverages.length - 1 : 0
+                ] / 3600
+              ).toFixed(2)} Hours]\n• Number of weeks: ${
+                weeklyAverages.length
+              }`;
             }
 
             // Getting the average start time (Old code)
