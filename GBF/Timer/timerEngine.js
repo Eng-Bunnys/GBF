@@ -435,7 +435,7 @@ module.exports = (client) => {
       let displayDeltaAverageTime;
 
       // Determine the absolute value of deltaAverageTime and format it to display
-      if (Math.abs(deltaAverageTime) !== deltaAverageTime) {
+      if (deltaAverageTime < 0) {
         displayDeltaAverageTime = `-${msToTime(
           Math.abs(deltaAverageTime * 1000)
         )}`;
@@ -444,6 +444,11 @@ module.exports = (client) => {
       // Calculating the XP given
 
       const rewardedXP = Math.round(calculateXP(timeElapsed / 60));
+
+      await timerData.updateOne({
+        seasonXP: timerData.seasonXP + rewardedXP,
+        accountXP: timerData.accountXP + rewardedXP
+      });
 
       let rankUpEmoji;
 
@@ -602,7 +607,7 @@ module.exports = (client) => {
       ).toLocaleString()} Seconds]\n• Number of Breaks: ${
         timerData.sessionBreaks
       }\n\n• Average Session Time Movement: ${displayDeltaAverageTime} [${Number(
-        deltaAverageTime.toFixed(2)
+        Math.round(deltaAverageTime)
       ).toLocaleString()} Seconds]\n\n• XP rewarded: ${Number(
         rewardedXP.toFixed(2)
       ).toLocaleString()}`;
@@ -628,6 +633,9 @@ module.exports = (client) => {
         sessionBreaks: 0,
         sessionBreakTime: 0
       });
+
+      await timerData.sessionLengths.push(Number(timeElapsed.toFixed(2)));
+      await timerData.save();
 
       const longestSession = new MessageEmbed()
         .setTitle(`${emojis.VERIFY} New Longest Session`)
@@ -882,7 +890,7 @@ module.exports = (client) => {
         .setDescription(
           `Session timer has been un-paused\n\n• Break Time: ${msToTime(
             timeElapsed * 1000
-          )} [${timeElapsed.toLocaleString()} Seconds]\nThis is break number ${
+          )} [${timeElapsed.toLocaleString()} Seconds]\n• This is break number ${
             timerData.sessionBreaks
           }`
         );
