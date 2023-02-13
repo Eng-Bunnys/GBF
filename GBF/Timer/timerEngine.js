@@ -261,7 +261,7 @@ module.exports = (client) => {
         .setColor(colours.ERRORRED)
         .setDescription(`The timer is already on.`);
 
-      if (timerData.initationTime) {
+      if (timerData.intiationTime) {
         // Attempting to fix the buttons
 
         await originalMessage.edit({
