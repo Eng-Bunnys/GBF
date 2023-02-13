@@ -21,6 +21,8 @@ const {
 
 const fetch = require("node-fetch");
 
+const next24Hours = Math.round((Date.now() + 24 * 60 * 60 * 1000) / 1000);
+
 module.exports = class BasicTimerUI extends SlashCommand {
   constructor(client) {
     super(client, {
@@ -938,6 +940,115 @@ module.exports = class BasicTimerUI extends SlashCommand {
             return interaction.reply({
               embeds: [topicUpdated]
             });
+          }
+        },
+        daily: {
+          description: "Collect your daily login reward",
+          execute: async ({ client, interaction }) => {
+            return interaction.reply({
+              content: `Command disabled due to an incomplete feature, please check in later.`
+            });
+
+            const timerData = await timerSchema.findOne({
+              userID: interaction.user.id
+            });
+
+            const noAccount = new MessageEmbed()
+              .setTitle(`⚠️ You cannot do that ⚠️`)
+              .setColor(colours.ERRORRED)
+              .setDescription(
+                `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
+              );
+
+            if (!timerData || (timerData && !timerData.seasonName))
+              return interaction.reply({
+                embeds: [noAccount],
+                ephemeral: true
+              });
+
+            // Checking if there's an active session
+
+            const noActiveSession = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colours.ERRORRED)
+              .setDescription(`There are no active sessions.`);
+
+            if (!timerData.intiationTime)
+              return interaction.reply({
+                embeds: [noActiveSession],
+                ephemeral: true
+              });
+
+            // Function that gives the login reward
+
+            /**
+             *
+             * @param {streak} The user's current login streak + 1 day
+             * @returns [Rewarded XP, Rewarded Coins]
+             */
+
+            function loginReward(streak) {
+              // Getting the day number of the week based of the user's streak
+
+              let day;
+              if (N % 7 == 0) {
+                day = 7;
+              } else {
+                day = N % 7;
+              }
+
+              // XP reward
+
+              let xpReward = streak * 200 - 100;
+
+              if (xpReward > 1000) xpReward = 1000;
+
+              let coinsReward = streak * 5;
+
+              if (coinsReward > 50) coinsReward = 50;
+
+              if (day === 4) coinsReward /= 2;
+              if (day === 6) xpReward *= 2;
+              if (day === 7) coinsReward *= 2;
+
+              return [xpReward, coinsReward];
+            }
+
+            // Checking if the user is on cooldown
+
+            const currentStreak = timerData.dailyStreak;
+
+            const onCooldown = new MessageEmbed()
+              .setTitle(`${emojis.ERROR} You cannot use that yet`)
+              .setDescription(
+                `You have already collected your daily reward!\n\nYou can collect it again **<t:${Math.floor(
+                  timerData.dailyCooldown / 1000 + 86400
+                )}:R>**\n\nCurrent streak: **${currentStreak.toLocaleString()} day(s) 🔥**`
+              )
+              .setColor(colours.ERRORRED)
+              .setTimestamp();
+
+            if (Date.parse(timerData.dailyCooldown) + 86400000 > Date.now())
+              return interaction.reply({
+                embeds: [onCooldown],
+                ephemeral: true
+              });
+
+            const lastCollected = Math.round(timerData.dailyCooldown / 1000);
+
+            const lostStreak = new MessageEmbed()
+              .setTitle("Collected 💰")
+              .setColor(colours.DEFAULT)
+              .setDescription(
+                `Looks like you failed to keep up the streak up 🙊\nLast time collected: <t:${lastCollected}:F>\nYour last streak was: ${currentStreak} day(s) 🔥\n\nYou can collect your next daily: <t:${next24Hours}:F>`
+              )
+              .setFooter({
+                text: `If you think there is a mistake please contact support (/bot invite) || The streak dies after 48 hours of not claiming your reward`,
+                iconURL: interaction.user.displayAvatarURL()
+              });
+
+            if (Date.parse(timerData.dailyCooldown) + 172800000 < Date.now()) {
+            }
           }
         }
       }
