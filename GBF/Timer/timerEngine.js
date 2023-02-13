@@ -481,7 +481,7 @@ module.exports = (client) => {
         timerData.seasonXP + rewardedXP
       );
 
-      const hasRankedUpAccount = xpRequiredAccount(
+      const hasRankedUpAccount = checkRankAccount(
         timerData.accountLevel,
         timerData.accountXP,
         timerData.seasonXP + rewardedXP
