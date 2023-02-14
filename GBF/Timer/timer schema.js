@@ -5,6 +5,10 @@ const TimerSchema = new Schema(
     userID: String,
     messageID: String,
     seasonName: String,
+    dunkelCoins: {
+      type: Number,
+      default: 500
+    },
     seasonLevel: {
       type: Number,
       default: 1
@@ -29,6 +33,7 @@ const TimerSchema = new Schema(
       type: Date,
       default: null
     },
+    sessionTopic: String,
     numberOfStarts: {
       type: Number,
       default: 0
@@ -63,7 +68,15 @@ const TimerSchema = new Schema(
       type: Number,
       default: 0
     },
-    breakTimerStart: Date
+    breakTimerStart: Date,
+    dailyCooldown: {
+      type: Date,
+      default: new Date(Date.now() - 86400000)
+    },
+    dailyStreak: {
+      type: Number,
+      default: 0
+    }
   },
   {
     collection: "Timer data"
