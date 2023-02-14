@@ -23,7 +23,9 @@ const {
   xpRequired,
   xpRequiredAccount,
   hoursRequired,
-  loginReward
+  loginReward,
+  checkRank,
+  checkRankAccount
 } = require("../../utils/TimerLogic");
 
 const fetch = require("node-fetch");
