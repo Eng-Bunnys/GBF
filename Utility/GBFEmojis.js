@@ -37,5 +37,6 @@
     "middleEmpty": "<:middleEmpty:1068143614804377681>",
     "middleFull": "<:middleFull:1068143723080319038>",
     "rightEmpty": "<:rightEmpty:1068143887010517032>",
-    "rightFull": "<:rightFull:1068143806622470244>"
+    "rightFull": "<:rightFull:1068143806622470244>",
+    "dunkelCoin": "<:dunkelCoin:1023348951337938984>"
 }
