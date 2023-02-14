@@ -35,8 +35,8 @@ function loginReward(streak) {
   // Getting the day number of the week based of the user's streak
 
   let day;
-  if (N % 7 == 0) day = 7;
-  else day = N % 7;
+  if (streak % 7 == 0) day = 7;
+  else day = streak % 7;
 
   // XP reward
 
