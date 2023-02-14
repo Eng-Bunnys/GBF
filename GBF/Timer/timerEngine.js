@@ -13,6 +13,17 @@ const timerSchema = require("../schemas/GBF Schemas/timer schema");
 
 const { msToTime } = require("../utils/engine");
 
+const {
+  xpRequired,
+  xpRequiredAccount,
+  hoursRequired,
+  loginReward,
+  checkUser,
+  calculateXP,
+  checkRank,
+  checkRankAccount
+} = require("../utils/TimerLogic");
+
 module.exports = (client) => {
   client.on("interactionCreate", async (interaction) => {
     // Checking if the interaction type is a button
@@ -94,102 +105,6 @@ module.exports = (client) => {
       .setDescription(
         `You can't use that, create your own using </timer registry:1068210539689414777>.`
       );
-
-    function checkUser(data, message, originalUser, interaction) {
-      let status;
-      if (!data) return (status = "404");
-      else if (data && !data.messageID) return (status = "403");
-      if (data && !message) return (status = "404-1");
-      if (data && !originalUser) return (status = "404-1");
-      if (
-        data &&
-        message &&
-        originalUser &&
-        originalUser.userID !== interaction.user.id
-      )
-        return (status = "403-1");
-      else return (status = "200");
-    }
-
-    // Function that calculates the amount of XP required to level up
-    function xpRequired(level) {
-      return level * 400 + (level - 1) * 200 - 300;
-    }
-
-    function xpRequiredAccount(level) {
-      return level * 800 + (level - 1) * 400 - 500;
-    }
-
-    // Function that gives the user XP dependant on the time spent
-
-    /**
-     * @param {time} - Used to calculate the XP given, every 5 minutes is 10 XP
-     */
-
-    function calculateXP(time) {
-      return Math.floor(time / 5) * 10;
-    }
-
-    // Function from GBF's engine that calculates the levels given
-
-    /**
-     * @param {currentRank} - The user's current level
-     * @param {currentRP} - The user's XP before any additions
-     * @param {addedRP} - currentRP + the XP rewarded
-     * @returns - [Boolean if the user has ranked up [0], Number of level ups [1], Remaining XP that was extra [2]]
-     */
-
-    function checkRank(currentRank, currentRP, addedRP) {
-      let addedLevels = 0;
-      let hasRankedUp = false;
-
-      let requiredRP = xpRequired(currentRank + addedLevels, currentRP);
-
-      if (addedRP > requiredRP) {
-        hasRankedUp = true;
-        addedLevels++;
-      }
-
-      let remainingRP = addedRP - requiredRP;
-      if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
-        for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
-          addedLevels++;
-          if (currentRank + addedLevels >= 5000) {
-            addedLevels--;
-            break;
-          }
-          requiredRP = xpRequired(currentRank + addedLevels, currentRP);
-        }
-      }
-      if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
-      return [hasRankedUp, addedLevels, remainingRP];
-    }
-
-    function checkRankAccount(currentRank, currentRP, addedRP) {
-      let addedLevels = 0;
-      let hasRankedUp = false;
-
-      let requiredRP = xpRequiredAccount(currentRank + addedLevels, currentRP);
-
-      if (addedRP > requiredRP) {
-        hasRankedUp = true;
-        addedLevels++;
-      }
-
-      let remainingRP = addedRP - requiredRP;
-      if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
-        for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
-          addedLevels++;
-          if (currentRank + addedLevels >= 5000) {
-            addedLevels--;
-            break;
-          }
-          requiredRP = xpRequiredAccount(currentRank + addedLevels, currentRP);
-        }
-      }
-      if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
-      return [hasRankedUp, addedLevels, remainingRP];
-    }
 
     if (interaction.customId === "startTimer") {
       const statusCheck = checkUser(
