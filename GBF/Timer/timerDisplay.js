@@ -256,16 +256,21 @@ module.exports = class BasicTimerUI extends SlashCommand {
               (timerData.seasonXP / seasonXPrequired) * 100;
 
             if (percentageSeasonComplete >= 50 && percentageSeasonComplete < 90)
-              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
             else if (
               percentageSeasonComplete >= 25 &&
               percentageSeasonComplete < 50
             )
-              seasonProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
-            else if (percentageSeasonComplete >= 99)
-              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (
+              percentageSeasonComplete >= 90 &&
+              percentageSeasonComplete < 95
+            )
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleFull}${emojis.rightEmpty}`;
             else if (percentageSeasonComplete < 25)
               seasonProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (percentageSeasonComplete >= 95)
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleFull}${emojis.rightFull}`;
 
             let accountProgressBar;
 
@@ -276,16 +281,21 @@ module.exports = class BasicTimerUI extends SlashCommand {
               percentageAccountComplete >= 50 &&
               percentageAccountComplete < 90
             )
-              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
             else if (
               percentageAccountComplete >= 25 &&
               percentageAccountComplete < 50
             )
-              accountProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
-            else if (percentageAccountComplete >= 99)
-              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+              accountProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (
+              percentageAccountComplete >= 90 &&
+              percentageAccountComplete < 95
+            )
+              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleFull}${emojis.rightEmpty}`;
             else if (percentageAccountComplete < 25)
               accountProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (percentageAccountComplete >= 95)
+              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleFull}${emojis.rightFull}`;
 
             // The main message that stores all of the information and the third quadrant | Longest session
 
