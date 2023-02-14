@@ -19,6 +19,13 @@ const {
   twentyFourToTwelve
 } = require("../../utils/engine");
 
+const {
+  xpRequired,
+  xpRequiredAccount,
+  hoursRequired,
+  loginReward
+} = require("../../utils/TimerLogic");
+
 const fetch = require("node-fetch");
 
 const next24Hours = Math.round((Date.now() + 24 * 60 * 60 * 1000) / 1000);
@@ -149,19 +156,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
             let displayWeeklyTimeAverage;
 
             // Getting the average of the weekly data
-            function averageTotal(data) {
-              let sum = 0;
-              for (let k = 0; k < data.length; k++) {
-                sum += data[k];
-              }
-              return sum / data.length;
-            }
-
-            console.log(
-              weeklyAverages[
-                weeklyAverages.length - 1 >= 0 ? weeklyAverages.length - 1 : 0
-              ]
-            );
+            // function averageTotal(data) {
+            //   let sum = 0;
+            //   for (let k = 0; k < data.length; k++) {
+            //     sum += data[k];
+            //   }
+            //   return sum / data.length;
+            // }
 
             if (!weeklyAverages.length || weeklyAverages.length < 1)
               displayWeeklyTimeAverage = `In-sufficient data`;
@@ -216,15 +217,6 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // Getting the required XP to rank up, XP till that & progress bar
 
-            // Function that calculates the amount of XP required to level up
-            function xpRequired(level) {
-              return level * 400 + (level - 1) * 200 - 300;
-            }
-
-            function xpRequiredAccount(level) {
-              return level * 800 + (level - 1) * 400 - 500;
-            }
-
             const seasonRank =
               timerData.seasonLevel > 0 ? timerData.seasonLevel : 1;
 
@@ -233,13 +225,6 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             const accountXPrequired = xpRequiredAccount(accountRank + 1);
             const seasonXPrequired = xpRequired(seasonRank + 1);
-
-            // Function that calculates the hours required till the next rank since every 5 minutes is 10 XP
-
-            function hoursRequired(XP) {
-              let minutesFunction = (5 * XP) / 10;
-              return minutesFunction / 60;
-            }
 
             const hoursNeededAccount = Math.abs(
               hoursRequired(accountXPrequired - timerData.accountXP)
@@ -955,10 +940,6 @@ module.exports = class BasicTimerUI extends SlashCommand {
         daily: {
           description: "Collect your daily login reward",
           execute: async ({ client, interaction }) => {
-            return interaction.reply({
-              content: `Command disabled due to an incomplete feature, please check in later.`
-            });
-
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
@@ -989,40 +970,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 ephemeral: true
               });
 
-            // Function that gives the login reward
-
             /**
-             *
-             * @param {streak} The user's current login streak + 1 day
-             * @returns [Rewarded XP, Rewarded Coins]
+              Example shop prices:
+
+              - Cheapest : Change embed colour : 2k [Should take]
+              - Medium : Math settings [10k]
+
              */
-
-            function loginReward(streak) {
-              // Getting the day number of the week based of the user's streak
-
-              let day;
-              if (N % 7 == 0) {
-                day = 7;
-              } else {
-                day = N % 7;
-              }
-
-              // XP reward
-
-              let xpReward = streak * 200 - 100;
-
-              if (xpReward > 1000) xpReward = 1000;
-
-              let coinsReward = streak * 5;
-
-              if (coinsReward > 50) coinsReward = 50;
-
-              if (day === 4) coinsReward /= 2;
-              if (day === 6) xpReward *= 2;
-              if (day === 7) coinsReward *= 2;
-
-              return [xpReward, coinsReward];
-            }
 
             // Checking if the user is on cooldown
 
@@ -1057,8 +1011,304 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 iconURL: interaction.user.displayAvatarURL()
               });
 
+            const gainedRewardsLost = loginReward(1);
+
+            let rankUpEmoji;
+
+            let highestLevel =
+              timerData.seasonLevel > timerData.accountLevel
+                ? timerData.seasonLevel
+                : timerData.accountLevel;
+
+            highestLevel++;
+
+            if (highestLevel <= 25) rankUpEmoji = `<a:W_:805604232354332704>`;
+            else if (highestLevel > 25 && highestLevel <= 50)
+              rankUpEmoji = `<a:blackSpin:1025851052442005594>`;
+            else if (highestLevel > 50 && highestLevel <= 75)
+              rankUpEmoji = `<a:redSpin:1025851361583173773>`;
+            else if (highestLevel > 75 && highestLevel < 100)
+              rankUpEmoji = `<a:pinkSpin:1025851222068052101>`;
+            else if (highestLevel === 100)
+              rankUpEmoji = `<a:100_Streak_Badge:963696947015864340>`;
+            else if (highestLevel > 100)
+              rankUpEmoji = `<a:donutSpin:1025851417421955204>`;
+
             if (Date.parse(timerData.dailyCooldown) + 172800000 < Date.now()) {
+              await interaction.reply({
+                embeds: [lostStreak]
+              });
+
+              await timerData.updateOne({
+                dailyStreak: 1,
+                dunkelCoins: timerData.dunkelCoins + gainedRewardsLost[1],
+                accountXP: timerData.accountXP + gainedRewardsLost[0],
+                seasonXP: timerData.seasonXP + gainedRewardsLost[0]
+              });
+
+              const hasRankedUpSeason = checkRank(
+                timerData.seasonLevel,
+                timerData.seasonXP,
+                timerData.seasonXP + gainedRewardsLost[0]
+              );
+
+              const hasRankedUpAccount = checkRankAccount(
+                timerData.accountLevel,
+                timerData.accountXP,
+                timerData.seasonXP + gainedRewardsLost[0]
+              );
+
+              const leveledUpMessage = new MessageEmbed()
+                .setTitle(`${rankUpEmoji} Ranked Up`)
+                .setColor(colours.DEFAULT);
+
+              let hasRankedUpMessage = ``;
+
+              let sendRankUp = false;
+
+              let seasonProgressBar;
+
+              const percentageSeasonComplete =
+                (hasRankedUpSeason[2] / xpRequired(timerData.seasonLevel + 2)) *
+                100;
+
+              if (
+                percentageSeasonComplete >= 50 &&
+                percentageSeasonComplete < 90
+              )
+                seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+              else if (
+                percentageSeasonComplete >= 25 &&
+                percentageSeasonComplete < 50
+              )
+                seasonProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
+              else if (percentageSeasonComplete >= 99)
+                seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+              else if (percentageSeasonComplete < 25)
+                seasonProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+
+              if (hasRankedUpSeason[0] === true) {
+                hasRankedUpMessage =
+                  hasRankedUpMessage +
+                  `• New Season Level: \`${
+                    timerData.seasonLevel + 1
+                  }\`\n• Season XP: \`${
+                    hasRankedUpSeason[2]
+                  }\`\n• XP required to reach level ${
+                    timerData.seasonLevel + 2
+                  }: \`${xpRequired(
+                    timerData.seasonLevel + 2
+                  ).toLocaleString()}\`\n• Season Level Progress: ${seasonProgressBar} \`[${percentageSeasonComplete.toFixed(
+                    2
+                  )} %]\`\n\n`;
+
+                sendRankUp = true;
+
+                await timerData.updateOne({
+                  seasonLevel: timerData.seasonLevel + 1,
+                  seasonXP: Number(hasRankedUpSeason[2])
+                });
+              }
+
+              let accountProgressBar;
+
+              const percentageAccountComplete =
+                (hasRankedUpAccount[2] /
+                  xpRequiredAccount(timerData.accountLevel + 2)) *
+                100;
+
+              if (
+                percentageAccountComplete >= 50 &&
+                percentageAccountComplete < 90
+              )
+                accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+              else if (
+                percentageAccountComplete >= 25 &&
+                percentageAccountComplete < 50
+              )
+                accountProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
+              else if (percentageAccountComplete >= 99)
+                accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+              else if (percentageAccountComplete < 25)
+                accountProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+
+              if (hasRankedUpAccount[0] === true) {
+                hasRankedUpMessage =
+                  hasRankedUpMessage +
+                  `• New Account Level: \`${
+                    timerData.accountLevel + 1
+                  }\`\n• Account XP: \`${
+                    hasRankedUpAccount[2]
+                  }\`\n• XP required to reach level ${
+                    timerData.accountLevel + 2
+                  }: \`${xpRequiredAccount(
+                    timerData.accountLevel + 2
+                  ).toLocaleString()}\`\n• Account Level Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
+                    2
+                  )} %]\``;
+
+                sendRankUp = true;
+
+                await timerData.updateOne({
+                  accountLevel: timerData.seasonLevel + 1,
+                  accountXP: Number(hasRankedUpSeason[2])
+                });
+              }
+
+              leveledUpMessage.setDescription(`${hasRankedUpMessage}`);
+
+              if (sendRankUp)
+                return interaction.followUp({
+                  embeds: [leveledUpMessage]
+                });
+
+              return;
             }
+
+            const gainedRewards = loginReward(currentStreak + 1);
+
+            let rewardMessage =
+              gainedRewards[0] !== 0
+                ? `• ${gainedRewards[0]} XP`
+                : `• ${gainedRewards[1]} DunkelCoins ${emojis.dunkelCoin}`;
+
+            const dailyCollected = new MessageEmbed()
+              .setTitle("Collected 💰")
+              .setColor(colours.DEFAULT)
+              .setDescription(
+                `**Collected your daily reward!**\n\n${rewardMessage}\n• Daily Streak: ${(
+                  currentStreak + 1
+                ).toLocaleString()} day(s) 🔥\n\nYou can collect your next daily: <t:${next24Hours}:F>`
+              )
+              .setFooter({
+                text: `Keep the streak up for better rewards! || The streak dies after 48 hours of not claiming your reward`,
+                iconURL: interaction.user.displayAvatarURL()
+              });
+
+            await timerData.updateOne({
+              dailyStreak: timerData.dailyStreak + 1,
+              seasonXP: timerData.seasonXP + gainedRewards[0],
+              accountXP: timerData.accountXP + gainedRewards[0],
+              dunkelCoins: timerData.dunkelCoins + gainedRewards[1],
+              dailyCooldown: new Date(Date.now())
+            });
+
+            await interaction.reply({
+              embeds: [dailyCollected]
+            });
+
+            const hasRankedUpSeason = checkRank(
+              timerData.seasonLevel,
+              timerData.seasonXP,
+              timerData.seasonXP + gainedRewards[0]
+            );
+
+            const hasRankedUpAccount = checkRankAccount(
+              timerData.accountLevel,
+              timerData.accountXP,
+              timerData.seasonXP + gainedRewards[0]
+            );
+
+            const leveledUpMessage = new MessageEmbed()
+              .setTitle(`${rankUpEmoji} Ranked Up`)
+              .setColor(colours.DEFAULT);
+
+            let hasRankedUpMessage = ``;
+
+            let sendRankUp = false;
+
+            let seasonProgressBar;
+
+            const percentageSeasonComplete =
+              (hasRankedUpSeason[2] / xpRequired(timerData.seasonLevel + 2)) *
+              100;
+
+            if (percentageSeasonComplete >= 50 && percentageSeasonComplete < 90)
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+            else if (
+              percentageSeasonComplete >= 25 &&
+              percentageSeasonComplete < 50
+            )
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (percentageSeasonComplete >= 99)
+              seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+            else if (percentageSeasonComplete < 25)
+              seasonProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+
+            if (hasRankedUpSeason[0] === true) {
+              hasRankedUpMessage =
+                hasRankedUpMessage +
+                `• New Season Level: \`${
+                  timerData.seasonLevel + 1
+                }\`\n• Season XP: \`${
+                  hasRankedUpSeason[2]
+                }\`\n• XP required to reach level ${
+                  timerData.seasonLevel + 2
+                }: \`${xpRequired(
+                  timerData.seasonLevel + 2
+                ).toLocaleString()}\`\n• Season Level Progress: ${seasonProgressBar} \`[${percentageSeasonComplete.toFixed(
+                  2
+                )} %]\`\n\n`;
+
+              sendRankUp = true;
+
+              await timerData.updateOne({
+                seasonLevel: timerData.seasonLevel + 1,
+                seasonXP: Number(hasRankedUpSeason[2])
+              });
+            }
+
+            let accountProgressBar;
+
+            const percentageAccountComplete =
+              (hasRankedUpAccount[2] /
+                xpRequiredAccount(timerData.accountLevel + 2)) *
+              100;
+
+            if (
+              percentageAccountComplete >= 50 &&
+              percentageAccountComplete < 90
+            )
+              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
+            else if (
+              percentageAccountComplete >= 25 &&
+              percentageAccountComplete < 50
+            )
+              accountProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
+            else if (percentageAccountComplete >= 99)
+              accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
+            else if (percentageAccountComplete < 25)
+              accountProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
+
+            if (hasRankedUpAccount[0] === true) {
+              hasRankedUpMessage =
+                hasRankedUpMessage +
+                `• New Account Level: \`${
+                  timerData.accountLevel + 1
+                }\`\n• Account XP: \`${
+                  hasRankedUpAccount[2]
+                }\`\n• XP required to reach level ${
+                  timerData.accountLevel + 2
+                }: \`${xpRequiredAccount(
+                  timerData.accountLevel + 2
+                ).toLocaleString()}\`\n• Account Level Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
+                  2
+                )} %]\``;
+
+              sendRankUp = true;
+
+              await timerData.updateOne({
+                accountLevel: timerData.seasonLevel + 1,
+                accountXP: Number(hasRankedUpSeason[2])
+              });
+            }
+
+            leveledUpMessage.setDescription(`${hasRankedUpMessage}`);
+
+            if (sendRankUp)
+              return interaction.followUp({
+                embeds: [leveledUpMessage]
+              });
           }
         }
       }
