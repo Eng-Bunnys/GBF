@@ -957,27 +957,6 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 ephemeral: true
               });
 
-            // Checking if there's an active session
-
-            const noActiveSession = new MessageEmbed()
-              .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colours.ERRORRED)
-              .setDescription(`There are no active sessions.`);
-
-            if (!timerData.intiationTime)
-              return interaction.reply({
-                embeds: [noActiveSession],
-                ephemeral: true
-              });
-
-            /**
-              Example shop prices:
-
-              - Cheapest : Change embed colour : 2k [Should take]
-              - Medium : Math settings [10k]
-
-             */
-
             // Checking if the user is on cooldown
 
             const currentStreak = timerData.dailyStreak;
