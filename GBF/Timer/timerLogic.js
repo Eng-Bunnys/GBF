@@ -16,12 +16,12 @@ function xpRequiredAccount(level) {
 }
 /**
  * @param {*} XP [The required XP to reach the next level]
- * @description [For every 5 minutes spent, 10 XP is given, we use that information to calculate the number of hours]
+ * @description [For every 5 minutes spent, 150 XP is given, we use that information to calculate the number of hours]
  * @returns {Hours} [The hours required to gain enough XP to reach the next level]
  */
 
 function hoursRequired(XP) {
-  let minutesFunction = (5 * XP) / 10;
+  let minutesFunction = (5 * XP) / 150;
   return minutesFunction / 60;
 }
 
@@ -85,12 +85,12 @@ function checkUser(data, message, originalUser, interaction) {
 }
 
 /**
- * @param {*} time - [Time in minutes, each 5 minutes is 10 XP]
+ * @param {*} time - [Time in minutes, each 5 minutes is 150 XP]
  * @returns [Amount of XP rewarded for the time elapsed]
  */
 
 function calculateXP(time) {
-  return Math.floor(time / 5) * 10;
+  return Math.floor(time / 5) * 150;
 }
 
 /**
