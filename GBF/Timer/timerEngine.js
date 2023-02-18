@@ -492,8 +492,8 @@ module.exports = (client) => {
         sendRankUp = true;
 
         await timerData.updateOne({
-          accountLevel: timerData.seasonLevel + 1,
-          accountXP: Number(hasRankedUpSeason[2])
+          accountLevel: timerData.accountLevel + 1,
+          accountXP: Number(hasRankedUpAccount[2])
         });
       }
 
