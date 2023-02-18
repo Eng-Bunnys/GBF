@@ -1024,7 +1024,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 dailyStreak: 1,
                 dunkelCoins: timerData.dunkelCoins + gainedRewardsLost[1],
                 accountXP: timerData.accountXP + gainedRewardsLost[0],
-                seasonXP: timerData.seasonXP + gainedRewardsLost[0]
+                seasonXP: timerData.seasonXP + gainedRewardsLost[0],
+                dailyStreak: new Date(Date.now())
               });
 
               const hasRankedUpSeason = checkRank(
@@ -1131,8 +1132,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 sendRankUp = true;
 
                 await timerData.updateOne({
-                  accountLevel: timerData.seasonLevel + 1,
-                  accountXP: Number(hasRankedUpSeason[2])
+                  accountLevel: timerData.accountLevel + 1,
+                  accountXP: Number(hasRankedUpAccount[2])
                 });
               }
 
@@ -1279,8 +1280,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
               sendRankUp = true;
 
               await timerData.updateOne({
-                accountLevel: timerData.seasonLevel + 1,
-                accountXP: Number(hasRankedUpSeason[2])
+                accountLevel: timerData.accountLevel + 1,
+                accountXP: Number(hasRankedUpAccount[2])
               });
             }
 
