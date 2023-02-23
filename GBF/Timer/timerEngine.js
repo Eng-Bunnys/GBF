@@ -9,7 +9,7 @@ const title = require("../gbfembedmessages.json");
 const colours = require("../GBFColor.json");
 const emojis = require("../GBFEmojis.json");
 
-const timerSchema = require("../schemas/GBF Schemas/timer schema");
+const timerSchema = require("../schemas/User Schemas/Timer Schema");
 
 const { msToTime } = require("../utils/engine");
 
