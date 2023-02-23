@@ -27,11 +27,11 @@ function hoursRequired(XP) {
 
 /**
  * @param {*} streak [The user's current login streak + 1 day]
- * @returns [Default: 20 XP, 5 Coins]
- * @returns [Rewarded XP, Rewarded Coins]
+ * @returns [1, Default: 20 XP, 5 Coins]
+ * @returns [Collection Day, Rewarded XP, Rewarded Coins]
  */
 
-function loginReward(streak) {
+function loginReward(streak = 1) {
   // Getting the day number of the week based of the user's streak
 
   let day;
@@ -40,9 +40,9 @@ function loginReward(streak) {
 
   // XP reward
 
-  let xpReward = streak * 20;
+  let xpReward = streak * 200;
 
-  if (xpReward > 2000) xpReward = 2000;
+  if (xpReward > 20000) xpReward = 20000;
 
   let coinsReward = streak * 5;
 
@@ -57,7 +57,7 @@ function loginReward(streak) {
   if (day !== 7 && day !== 4) coinsReward = 0;
   if (day === 7 || day === 4) xpReward = 0;
 
-  return [Math.floor(xpReward), Math.floor(coinsReward)];
+  return [day, Math.floor(xpReward), Math.floor(coinsReward)];
 }
 
 /**
