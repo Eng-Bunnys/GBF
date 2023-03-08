@@ -14,7 +14,8 @@ const UserProfileSchema = new Schema(
     dailyCooldown: Date,
     //type: Date,
     //default: new Date(Date.now() - 86400000)
-    dailyStreak: Number
+    dailyStreak: Number,
+    extraTimerXP: Number
   },
   {
     collection: "User Profile Data"
