@@ -401,7 +401,7 @@ module.exports = (client) => {
       const hasRankedUpAccount = checkRankAccount(
         timerData.accountLevel,
         timerData.accountXP,
-        timerData.seasonXP + rewardedXP
+        timerData.accountXP + rewardedXP
       );
 
       const leveledUpMessage = new MessageEmbed()
@@ -437,9 +437,7 @@ module.exports = (client) => {
           hasRankedUpMessage +
           `• New Season Level: \`${
             timerData.seasonLevel + 1
-          }\`\n• Season XP: \`${
-            hasRankedUpSeason[2]
-          }\`\n• XP required to reach level ${
+          }\`\n• Season XP: \`${hasRankedUpSeason[2].toLocaleString()}\`\n• XP required to reach level ${
             timerData.seasonLevel + 2
           }: \`${xpRequired(
             timerData.seasonLevel + 2
@@ -475,15 +473,13 @@ module.exports = (client) => {
         accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
       else if (percentageAccountComplete < 25)
         accountProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
-
+      console.log(hasRankedUpAccount);
       if (hasRankedUpAccount[0] === true) {
         hasRankedUpMessage =
           hasRankedUpMessage +
           `• New Account Level: \`${
             timerData.accountLevel + 1
-          }\`\n• Account XP: \`${
-            hasRankedUpAccount[2]
-          }\`\n• XP required to reach level ${
+          }\`\n• Account XP: \`${hasRankedUpAccount[2].toLocaleString()}\`\n• XP required to reach level ${
             timerData.accountLevel + 2
           }: \`${xpRequiredAccount(
             timerData.accountLevel + 2
