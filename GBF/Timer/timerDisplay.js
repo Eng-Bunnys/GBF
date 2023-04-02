@@ -151,6 +151,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
             // This quadrant uses an external function that can be found in GBF's engine
 
             const weeklyAverages = chunkAverage(timerData.sessionLengths, 7);
+            const attendedWeeks = chunkAverage(timerData.sessionLengths, 5);
 
             // It is very likely that there isn't enough data to be able to provide a week's average, so we need to check for that
 
@@ -179,7 +180,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 ] / 3600
               ).toFixed(2)} Hours]\n• Number of weeks: ${
                 weeklyAverages.length
-              }`;
+              }\n• Number of 5 day weeks: ${attendedWeeks.length} (Based off global average school days)`;
             }
 
             // Getting the average start time (Old code)
