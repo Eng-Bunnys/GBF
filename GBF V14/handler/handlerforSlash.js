@@ -1,22 +1,26 @@
-class GBFSlash {
+const { ApplicationCommandOptionType } = require("discord.js");
 
-  constructor(client, {
-    name = "",
-    category = "",
-    description = "",
-    usage = "",
-    examples = "",
-    options = [],
-    defaultPermission = true,
-    devOnly = false,
-    userPermission = [],
-    botPermission = [],
-    cooldown = 0,
-    development,
-    Partner = false,
-    groups = null,
-    subcommands = null
-  }) {
+class GBFSlash {
+  constructor(
+    client,
+    {
+      name = "",
+      category = "",
+      description = "",
+      usage = "",
+      examples = "",
+      options = [],
+      defaultPermission = true,
+      devOnly = false,
+      userPermission = [],
+      botPermission = [],
+      cooldown = 0,
+      development,
+      Partner = false,
+      groups = null,
+      subcommands = null
+    }
+  ) {
     this.client = client;
     this.name = name;
     this.category = category;
@@ -35,10 +39,11 @@ class GBFSlash {
     this.subcommands = subcommands;
 
     if (options && options.length) this.options = options;
-    else if (groups && Object.keys(groups)) this.options = getSubcommandGroupOptions(this.groups);
-    else if (subcommands && Object.keys(subcommands)) this.options = getSubcommandOptions(this.subcommands);
+    else if (groups && Object.keys(groups))
+      this.options = getSubcommandGroupOptions(this.groups);
+    else if (subcommands && Object.keys(subcommands))
+      this.options = getSubcommandOptions(this.subcommands);
   }
-
 }
 
 module.exports = GBFSlash;
@@ -54,15 +59,14 @@ function getSubcommandGroupOptions(groups) {
       options: getSubcommandOptions(groups[name].subcommands),
       userPermission: groups[name].userPermission,
       botPermission: groups[name].botPermission,
-      type: "SUB_COMMAND_GROUP"
-    }
+      type: ApplicationCommandOptionType.SubcommandGroup
+    };
 
     options.push(option);
   }
 
   return options;
 }
-
 
 function getSubcommandOptions(subcommands) {
   const names = Object.keys(subcommands);
@@ -75,8 +79,8 @@ function getSubcommandOptions(subcommands) {
       options: subcommands[name].args,
       userPermission: subcommands[name].userPermission,
       botPermission: subcommands[name].botPermission,
-      type: "SUB_COMMAND"
-    }
+      type: ApplicationCommandOptionType.Subcommand
+    };
 
     options.push(option);
   }
