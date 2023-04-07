@@ -7,7 +7,7 @@ This is the code that GBF uses, powered by Discord.JS v14.
 Has a updated handler, V14 support and all new GBF updates will be found here until V15
 
 ## To-Do:
-[https://airtable.com/shrCjHXAiVjyKraV0]
+[https://airtable.com/shrCjHXAiVjyKraV0](GBF To-Do List)
 
 GBF Development Documents will be released once this is complete
 
