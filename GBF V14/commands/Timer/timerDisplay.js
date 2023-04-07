@@ -4,8 +4,7 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  ApplicationCommandOptionType
+  ButtonStyle
 } = require("discord.js");
 
 const colours = require("../../GBF/GBFColor.json");
