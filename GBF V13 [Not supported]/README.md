@@ -1,7 +1,7 @@
 # GBF Source Code V13
   ![GBF Logo](https://cdn.discordapp.com/attachments/932756227295948910/997240715258101840/GBF_Bot_Logo.png)
 ------------------------
-# WARNING 
+# ⚠️ WARNING ⚠️
 This is GBF's code for Discord.JS v13
 This version of GBF is no longer supported
 The most up to date version of GBF will be in the main readme file
