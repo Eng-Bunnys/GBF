@@ -2,7 +2,8 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  Events
 } = require("discord.js");
 
 const colours = require("../../GBF/GBFColor.json");
@@ -23,7 +24,7 @@ const {
 } = require("../../utils/TimerLogic");
 
 module.exports = (client) => {
-  client.on("interactionCreate", async (interaction) => {
+  client.on(Events.InteractionCreate, async (interaction) => {
     // Checking if the interaction type is a button
 
     if (!interaction.isButton()) return;
