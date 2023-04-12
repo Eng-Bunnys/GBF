@@ -4,7 +4,7 @@ const { textSync } = require("figlet");
 
 const GBFVersion = require("../GBF/Version.json");
 
-const { capitalize } = require("../Engines/Engine");
+const { capitalize } = require("../utils/Engine");
 
 const { Events } = require("discord.js");
 
