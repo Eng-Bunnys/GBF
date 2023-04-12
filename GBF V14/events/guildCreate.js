@@ -4,7 +4,7 @@ const colours = require("../GBF/GBFColor.json");
 
 const { redBright } = require("chalk");
 
-const { guildChannels } = require("../Engines/Engine");
+const { guildChannels } = require("../utils/Engine");
 
 module.exports = (client) => {
   client.on(Events.GuildCreate, async (guild) => {
