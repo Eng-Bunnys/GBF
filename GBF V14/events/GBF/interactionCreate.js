@@ -1,6 +1,6 @@
 const { Developers, Partners } = require("../../config/GBFconfig.json");
 const { Collection, EmbedBuilder, Events } = require("discord.js");
-const { msToTime, missingPermissions } = require("../../Engines/Engine");
+const { msToTime, missingPermissions } = require("../../utils/Engine");
 const cooldowns = new Collection();
 
 const emojis = require("../../GBF/GBFEmojis.json");
