@@ -1,6 +1,7 @@
 {
     "TOKEN": "",
     "MONGOURI": "",
-    "Developers": [],
-    "Partners": [ ]
+    "PREFIX": "!!",
+    "Developers": [""],
+    "Partners": [""]
 }
