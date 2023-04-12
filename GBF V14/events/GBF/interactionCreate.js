@@ -20,25 +20,24 @@ module.exports = (client) => {
         if (!command) return;
 
         if (interaction.inGuild()) {
-          const suspendgif =
-            "https://cdn.discordapp.com/emojis/855834957607075850.gif?v=1";
-
-          const suspendedembed = new EmbedBuilder()
+          const suspendedEmbed = new EmbedBuilder()
             .setTitle(`${emojis.ERROR}`)
             .setDescription(
               `You have been banned from using ${client.user.username}.`
             )
             .setColor(colours.ERRORRED)
-            .setThumbnail(suspendgif);
+            .setThumbnail(
+              "https://cdn.discordapp.com/emojis/855834957607075850.gif?v=1"
+            );
 
           if (blacklistFetch && blacklistFetch.Blacklist) {
             return interaction.reply({
-              embeds: [suspendedembed],
+              embeds: [suspendedEmbed],
               ephemeral: true
             });
           }
 
-          if (command.devOnly && !Partners.includes(interaction.member.id)) {
+          if (command.Partner && !Partners.includes(interaction.member.id)) {
             const PartnerOnly = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't use that`)
               .setDescription(`This command is only available for partners.`)
@@ -50,14 +49,14 @@ module.exports = (client) => {
             });
           }
 
-          if (command.Partner && !Developers.includes(interaction.member.id)) {
-            const PartnerOnly = new EmbedBuilder()
+          if (command.devOnly && !Developers.includes(interaction.member.id)) {
+            const DevOnly = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't use that`)
               .setDescription("This command is only available for developers.")
               .setColor(colours.ERRORRED);
 
             await interaction.reply({
-              embeds: [PartnerOnly],
+              embeds: [DevOnly],
               ephemeral: true
             });
           }
