@@ -1,8 +1,8 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const colours = require("../GBFColor.json");
-const titles = require('../gbfembedmessages.json');
+const titles = require("../GBF/Embed Messages.json");
 
-const ImageGenerating = new MessageEmbed()
+const ImageGenerating = new EmbedBuilder()
   .setTitle(`Generating image... <a:Loading:971730094169141248>`)
   .setColor(colours.DEFAULT)
   .setDescription(
@@ -10,14 +10,14 @@ const ImageGenerating = new MessageEmbed()
   )
   .setTimestamp();
 
-const APIError = new MessageEmbed()
+const APIError = new EmbedBuilder()
   .setTitle(titles.ERROR)
   .setDescription(
     `An error in the API occured, I've already reported it to my developers!\nPlease try again later.`
   )
-  .setColor(colours.ERRORRED)
-  
+  .setColor(colours.ERRORRED);
+
 module.exports = {
   ImageGenerating,
-  APIError,
+  APIError
 };
