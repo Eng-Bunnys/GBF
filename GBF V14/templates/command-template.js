@@ -14,6 +14,7 @@ module.exports = class Template extends Command {
             botPermission: [], 
             devOnly: true, 
             Partner: false, 
+            canNotDisable: false
         });
     }
     async execute({
