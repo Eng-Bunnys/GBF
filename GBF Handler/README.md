@@ -1,4 +1,4 @@
-# GBF Handler
+# GBF Handler [Discord.JS V14, GBF V2.5.0]
 
 ## Info
 This is the latest version of the handler that GBF uses, this is the base of what GBF uses, to find commands and events please go to GBF vN where N is the version of Discord.JS that you use.
