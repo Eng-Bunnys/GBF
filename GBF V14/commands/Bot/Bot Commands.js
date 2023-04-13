@@ -4,7 +4,8 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ActionRowBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ApplicationCommandOptionType
 } = require("discord.js");
 const duration = require("humanize-duration");
 
@@ -245,7 +246,7 @@ module.exports = class BotSub extends SlashCommand {
             {
               name: "error",
               description: "The error code",
-              type: "STRING",
+              type: ApplicationCommandOptionType.String,
               choices: [
                 {
                   name: "NP1",
