@@ -72,8 +72,7 @@ module.exports = class BotSub extends SlashCommand {
               );
 
             const inviteEmbed = new EmbedBuilder()
-
-              .setTitle(`${emojis.VERIFY} GBF Links`)
+              .setTitle(`${emojis.LOGOTRANS} GBF Links`)
               .addFields(
                 {
                   name: "Invite me to your server!",
