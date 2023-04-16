@@ -32,12 +32,14 @@ class GBFClient extends Client {
     );
 
     if (guildCommands.length) {
-      const TestServerMain = await this.guilds.fetch("");
-      //guildCommands
-      await TestServerMain.commands.set(guildCommands);
+      if (this.configs.TestGuilds.length > 0) {
+        for (let i = 0; i < this.configs.TestGuilds.length; i++) {
+          let testServer = await this.guilds.fetch(this.configs.TestGuilds[i]);
+          await testServer.commands.set(guildCommands);
+        }
+      }
     } //globalCommands
-    if (globalCommands.length)
-      await this.application.commands.set(globalCommands);
+    if (globalCommands.length) await this.application.commands.set(globalCommands);
   }
 
   async loadEvents() {
