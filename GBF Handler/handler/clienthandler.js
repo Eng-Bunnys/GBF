@@ -39,7 +39,8 @@ class GBFClient extends Client {
         }
       }
     } //globalCommands
-    if (globalCommands.length) await this.application.commands.set(globalCommands);
+    if (globalCommands.length)
+      await this.application.commands.set(globalCommands);
   }
 
   async loadEvents() {
@@ -102,7 +103,7 @@ function toApplicationCommand(collection) {
       name: s.name,
       description: s.description,
       options: s.options,
-      defaultPermission: s.devOnly ? false : s.defaultPermission
+      defaultPermission: s.development ? false : true
     };
   });
 }
