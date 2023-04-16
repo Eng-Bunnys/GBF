@@ -8,7 +8,7 @@ GBF Handler's setup involves a few steps with many optional features.
 
 1. Setup your config.json file, you can choose to use a .env but you'll have to update the `index.js`, `clienthandler.js` (Found in handler), `interactionCreate.js` & `messageCreate.js`.
 2. Specify the intents you need in your `index.js` file, Guilds is requried while GuidMessages & MessageContent are required if you want to use the legacy command features
-3. To specify your test guilds go to `clienthandler.js` and find the `if (guildCommands.length)` statement, go inside it's block and fetch your server(s) using `const VariableName = await this.guilds.fetch("GuildId");` then set the commands using `await VariableName.commands.set(guildCommands);`
+3. To specify your test guilds go to `GBFconfig.json` in the config folder and specify your test guilds as `TestGuilds: [""]`
 4. Specify your developer & partner ID(s), default prefix in the `GBFconfig.json`
 
 ## Default Commands
