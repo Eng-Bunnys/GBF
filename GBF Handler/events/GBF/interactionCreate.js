@@ -43,7 +43,7 @@ module.exports = (client) => {
               .setDescription(`This command is only available for partners.`)
               .setColor(colours.ERRORRED);
 
-            await interaction.reply({
+            return interaction.reply({
               embeds: [PartnerOnly],
               ephemeral: true
             });
@@ -55,7 +55,7 @@ module.exports = (client) => {
               .setDescription("This command is only available for developers.")
               .setColor(colours.ERRORRED);
 
-            await interaction.reply({
+            return interaction.reply({
               embeds: [DevOnly],
               ephemeral: true
             });
@@ -103,42 +103,49 @@ module.exports = (client) => {
             });
           }
         }
+        /**
+         * @S : Seconds [Unit]
+         * @MS : Millisecond [Unit]
+         */
+        if (
+          !command.devBypass ||
+          (command.devBypass && !Developers.includes(interaction.member.id))
+        ) {
+          const cooldownAmountS = command.cooldown;
+          if (cooldownAmountS) {
+            if (!cooldowns.has(command.name))
+              cooldowns.set(command.name, new Collection());
 
-        const cd = command.cooldown;
-        if (cd) {
-          if (!cooldowns.has(command.name))
-            cooldowns.set(command.name, new Collection());
+            const now = Date.now();
+            const timestamps = cooldowns.get(command.name);
+            const cooldownAmountMS = cooldownAmountS * 1000;
 
-          const now = Date.now();
-          const timestamps = cooldowns.get(command.name);
-          const cooldownAmount = cd * 1000;
+            if (timestamps.has(interaction.user.id)) {
+              const expirationTime =
+                timestamps.get(interaction.user.id) + cooldownAmountMS;
 
-          if (timestamps.has(interaction.user.id)) {
-            const expirationTime =
-              timestamps.get(interaction.user.id) + cooldownAmount;
+              if (now < expirationTime) {
+                const timeLeft = Number((expirationTime - now).toFixed(1));
+                const cooldownembed = new EmbedBuilder()
+                  .setDescription(
+                    `${interaction.user}, please wait ${msToTime(
+                      Number(timeLeft)
+                    )} before reusing the \`${command.name}\` command.`
+                  )
+                  .setColor(colours.ERRORRED);
 
-            if (now < expirationTime) {
-              const timeLeft = expirationTime - now;
-              const exactTime = timeLeft.toFixed(1);
-              const cooldownembed = new EmbedBuilder()
-                .setDescription(
-                  `${interaction.user}, please wait ${msToTime(
-                    exactTime
-                  )} before reusing the \`${command.name}\` command.`
-                )
-                .setColor(colours.ERRORRED);
-
-              return interaction.reply({
-                embeds: [cooldownembed],
-                ephemeral: false
-              });
+                return interaction.reply({
+                  embeds: [cooldownembed],
+                  ephemeral: true
+                });
+              }
             }
+            timestamps.set(interaction.user.id, now);
+            setTimeout(
+              () => timestamps.delete(interaction.user.id),
+              cooldownAmountMS
+            );
           }
-          timestamps.set(interaction.user.id, now);
-          setTimeout(
-            () => timestamps.delete(interaction.user.id),
-            cooldownAmount
-          );
         }
 
         const group = interaction.options.getSubcommandGroup(false);
@@ -184,7 +191,7 @@ module.exports = (client) => {
               .setDescription("Only developers can use this command.")
               .setColor(colours.ERRORRED);
 
-            await interaction.reply({
+            return interaction.reply({
               embeds: [devonlyembed],
               ephemeral: true
             });
@@ -204,7 +211,7 @@ module.exports = (client) => {
               )
               .setColor(colours.ERRORRED);
 
-            await interaction.reply({
+            return interaction.reply({
               embeds: [permissionembed],
               ephemeral: true
             });
@@ -231,40 +238,49 @@ module.exports = (client) => {
               ephemeral: true
             });
           }
+          /**
+           * @S : Seconds [Unit]
+           * @MS : Millisecond [Unit]
+           */
+          if (
+            !command.devBypass ||
+            (command.devBypass && !Developers.includes(interaction.member.id))
+          ) {
+            const cooldownAmountS = command.cooldown;
+            if (cooldownAmountS) {
+              if (!cooldowns.has(command.name))
+                cooldowns.set(command.name, new Collection());
 
-          const cd = command.cooldown;
-          if (cd) {
-            if (!cooldowns.has(command.name))
-              cooldowns.set(command.name, new Collection());
+              const now = Date.now();
+              const timestamps = cooldowns.get(command.name);
+              const cooldownAmountMS = cooldownAmountS * 1000;
 
-            const now = Date.now();
-            const timestamps = cooldowns.get(command.name);
-            const cooldownAmount = cd * 1000;
+              if (timestamps.has(interaction.user.id)) {
+                const expirationTime =
+                  timestamps.get(interaction.user.id) + cooldownAmountMS;
 
-            if (timestamps.has(interaction.author.id)) {
-              const expirationTime =
-                timestamps.get(interaction.author.id) + cooldownAmount;
+                if (now < expirationTime) {
+                  const timeLeft = Number((expirationTime - now).toFixed(1));
+                  const cooldownembed = new EmbedBuilder()
+                    .setDescription(
+                      `${interaction.user}, please wait ${msToTime(
+                        Number(timeLeft)
+                      )} before reusing the \`${command.name}\` command.`
+                    )
+                    .setColor(colours.ERRORRED);
 
-              if (now < expirationTime) {
-                const cooldownembed = new EmbedBuilder()
-                  .setDescription(
-                    `${interaction.user}, wait ${msToTime(
-                      expirationTime - now
-                    )} before using the command!`
-                  )
-                  .setColor(colours.ERRORRED);
-
-                await interaction.reply({
-                  embeds: [cooldownembed],
-                  ephemeral: true
-                });
+                  return interaction.reply({
+                    embeds: [cooldownembed],
+                    ephemeral: true
+                  });
+                }
               }
+              timestamps.set(interaction.user.id, now);
+              setTimeout(
+                () => timestamps.delete(interaction.user.id),
+                cooldownAmountMS
+              );
             }
-            timestamps.set(interaction.author.id, now);
-            setTimeout(
-              () => timestamps.delete(interaction.author.id),
-              cooldownAmount
-            );
           }
         }
         try {
@@ -299,7 +315,7 @@ module.exports = (client) => {
                 )
                 .setColor(colours.ERRORRED);
 
-              await interaction.reply({
+              return interaction.reply({
                 embeds: [permissionembed],
                 ephemeral: true
               });
@@ -321,46 +337,56 @@ module.exports = (client) => {
                 )
                 .setColor(colours.ERRORRED);
 
-              await interaction.reply({
+              return interaction.reply({
                 embeds: [botpermembed],
                 ephemeral: true
               });
             }
 
-            const cd = command.cooldown;
-            if (cd) {
-              if (!cooldowns.has(command.name))
-                cooldowns.set(command.name, new Collection());
+            /**
+             * @S : Seconds [Unit]
+             * @MS : Millisecond [Unit]
+             */
+            if (
+              !command.devBypass ||
+              (command.devBypass && !Developers.includes(interaction.member.id))
+            ) {
+              const cooldownAmountS = command.cooldown;
+              if (cooldownAmountS) {
+                if (!cooldowns.has(command.name))
+                  cooldowns.set(command.name, new Collection());
 
-              const now = Date.now();
-              const timestamps = cooldowns.get(command.name);
-              const cooldownAmount = cd * 1000;
+                const now = Date.now();
+                const timestamps = cooldowns.get(command.name);
+                const cooldownAmountMS = cooldownAmountS * 1000;
 
-              if (timestamps.has(interaction.author.id)) {
-                const expirationTime =
-                  timestamps.get(interaction.author.id) + cooldownAmount;
+                if (timestamps.has(interaction.user.id)) {
+                  const expirationTime =
+                    timestamps.get(interaction.user.id) + cooldownAmountMS;
 
-                if (now < expirationTime) {
-                  const cooldownembed = new EmbedBuilder()
-                    .setDescription(
-                      `${interaction.user}, wait ${msToTime(
-                        expirationTime - now
-                      )} before using the command!`
-                    )
-                    .setColor("#e91e63");
-                  await interaction.reply({
-                    embeds: [cooldownembed],
-                    ephemeral: true
-                  });
+                  if (now < expirationTime) {
+                    const timeLeft = Number((expirationTime - now).toFixed(1));
+                    const cooldownembed = new EmbedBuilder()
+                      .setDescription(
+                        `${interaction.user}, please wait ${msToTime(
+                          Number(timeLeft)
+                        )} before reusing the \`${command.name}\` command.`
+                      )
+                      .setColor(colours.ERRORRED);
+
+                    return interaction.reply({
+                      embeds: [cooldownembed],
+                      ephemeral: true
+                    });
+                  }
                 }
+                timestamps.set(interaction.user.id, now);
+                setTimeout(
+                  () => timestamps.delete(interaction.user.id),
+                  cooldownAmountMS
+                );
               }
-              timestamps.set(interaction.author.id, now);
-              setTimeout(
-                () => timestamps.delete(interaction.author.id),
-                cooldownAmount
-              );
             }
-
             try {
               await command.execute({
                 client,
@@ -398,7 +424,7 @@ module.exports = (client) => {
                   )
                   .setColor(colours.ERRORRED);
 
-                await interaction.reply({
+                return interaction.reply({
                   embeds: [permissionembed],
                   ephemeral: true
                 });
@@ -420,46 +446,59 @@ module.exports = (client) => {
                   )
                   .setColor(colours.ERRORRED);
 
-                await interaction.reply({
+                return interaction.reply({
                   embeds: [botpermembed],
                   ephemeral: true
                 });
               }
 
-              const cd = command.cooldown;
-              if (cd) {
-                if (!cooldowns.has(command.name))
-                  cooldowns.set(command.name, new Collection());
+              /**
+               * @S : Seconds [Unit]
+               * @MS : Millisecond [Unit]
+               */
+              if (
+                !command.devBypass ||
+                (command.devBypass &&
+                  !Developers.includes(interaction.member.id))
+              ) {
+                const cooldownAmountS = command.cooldown;
+                if (cooldownAmountS) {
+                  if (!cooldowns.has(command.name))
+                    cooldowns.set(command.name, new Collection());
 
-                const now = Date.now();
-                const timestamps = cooldowns.get(command.name);
-                const cooldownAmount = cd * 1000;
+                  const now = Date.now();
+                  const timestamps = cooldowns.get(command.name);
+                  const cooldownAmountMS = cooldownAmountS * 1000;
 
-                if (timestamps.has(interaction.author.id)) {
-                  const expirationTime =
-                    timestamps.get(interaction.author.id) + cooldownAmount;
+                  if (timestamps.has(interaction.user.id)) {
+                    const expirationTime =
+                      timestamps.get(interaction.user.id) + cooldownAmountMS;
 
-                  if (now < expirationTime) {
-                    const cooldownembed = new EmbedBuilder()
-                      .setDescription(
-                        `${interaction.user}, wait ${msToTime(
-                          expirationTime - now
-                        )} before using the command!`
-                      )
-                      .setColor("#e91e63");
-                    await interaction.reply({
-                      embeds: [cooldownembed],
-                      ephemeral: true
-                    });
+                    if (now < expirationTime) {
+                      const timeLeft = Number(
+                        (expirationTime - now).toFixed(1)
+                      );
+                      const cooldownembed = new EmbedBuilder()
+                        .setDescription(
+                          `${interaction.user}, please wait ${msToTime(
+                            Number(timeLeft)
+                          )} before reusing the \`${command.name}\` command.`
+                        )
+                        .setColor(colours.ERRORRED);
+
+                      return interaction.reply({
+                        embeds: [cooldownembed],
+                        ephemeral: true
+                      });
+                    }
                   }
+                  timestamps.set(interaction.user.id, now);
+                  setTimeout(
+                    () => timestamps.delete(interaction.user.id),
+                    cooldownAmountMS
+                  );
                 }
-                timestamps.set(interaction.author.id, now);
-                setTimeout(
-                  () => timestamps.delete(interaction.author.id),
-                  cooldownAmount
-                );
               }
-
               try {
                 await command.execute({
                   client,
