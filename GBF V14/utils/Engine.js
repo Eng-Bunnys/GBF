@@ -85,19 +85,20 @@ function msToTime(time, options = {}) {
 /**
  * Returns a string representation of a duration in milliseconds in the format "X Days", "X Hours", "X Minutes", or "X Seconds".
  * @param {number} ms - The duration in milliseconds.
+ * @param {number} round - Choose which decimal place to round the time to
  * @returns {string} A string representation of the duration in the format "X Days", "X Hours", "X Minutes", or "X Seconds".
  *
  * @example
  * const duration = 123456789;
- * const formattedDuration = basicMsToTime(duration);
+ * const formattedDuration = basicMsToTime(duration, 1);
  * console.log(formattedDuration); // Output: "1.5 Days"
  */
 
-function basicMsToTime(ms) {
-  const seconds = (ms / 1000).toFixed(1);
-  const minutes = (ms / (1000 * 60)).toFixed(1);
-  const hours = (ms / (1000 * 60 * 60)).toFixed(1);
-  const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
+function basicMsToTime(ms, round = 1) {
+  const seconds = (ms / 1000).toFixed(round);
+  const minutes = (ms / (1000 * 60)).toFixed(round);
+  const hours = (ms / (1000 * 60 * 60)).toFixed(round);
+  const days = (ms / (1000 * 60 * 60 * 24)).toFixed(round);
 
   if (seconds < 60) {
     return `${seconds} Seconds`;
@@ -348,18 +349,11 @@ function KeyPerms(role) {
     .filter((perm) => role.permissions.has(perm.flag))
     .sort((permA, permB) => Number(permB.flag) - Number(permA.flag));
 
+  if (role.permissions.has(PermissionFlagsBits.Administrator))
+    return "Administrator";
+
   if (role.managed) {
     return "Administrator";
-  } else if (role.permissions.has(PermissionFlagsBits.Administrator)) {
-    return (
-      "Administrator, " +
-      sortedPermissions
-        .filter(
-          (perm) => perm.flag !== BigInt(PermissionFlagsBits.Administrator)
-        )
-        .map((perm) => perm.name)
-        .join(", ")
-    );
   } else {
     return sortedPermissions.length > 0
       ? sortedPermissions.map((perm) => perm.name).join(", ")
@@ -518,13 +512,13 @@ function channelSlowMode(channel) {
  * @example capitalize(string)
  */
 
-function capitalize(string) {
-  return string
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b(\w)/g, (char) => char.toUpperCase());
-}
+const capitalize = (str) => {
+  if (typeof str !== "string") {
+    throw new Error("Argument must be a string");
+  }
 
+  return str.replace(/(?<=(^|\s))(\w)/g, (char) => char.toUpperCase());
+};
 /**
 
 Calculates the BMI scale based on the BMI value.
@@ -783,6 +777,29 @@ function guildChannels(guild) {
     .first();
 }
 
+/**
+ * Gets the last `count` digits of a snowflake as a string.
+ * If the `snowflake` is shorter than `count` digits, returns the entire snowflake.
+ *
+ * @param {string} snowflake The snowflake to get the last digits from.
+ * @param {number} count The number of digits to return.
+ * @returns {string} The last `count` digits of the snowflake, not zero-padded.
+ */
+function getLastDigits(snowflake, count) {
+  return snowflake.slice(-count);
+}
+
+function levelUpReward(level) {
+  const rank = Math.abs(level);
+  const rewardArray = [200, 400, 600, 800, 1200, 1400, 1600, 1800, 2000, 2000];
+
+  let rewardPosition;
+  if (rank % 10 == 0) rewardPosition = 10;
+  else rewardPosition = rank % 10;
+
+  return rewardArray[rewardPosition - 1];
+}
+
 module.exports = {
   randomRange,
   delay,
@@ -808,7 +825,9 @@ module.exports = {
   chunkAverage,
   RPRequiredToLevelUp,
   checkRank,
-  guildChannels
+  guildChannels,
+  getLastDigits,
+  levelUpReward
 };
 
 const timeUnits = {
