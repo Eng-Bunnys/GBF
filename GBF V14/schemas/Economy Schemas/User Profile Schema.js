@@ -2,103 +2,48 @@ const { Schema, model } = require("mongoose");
 
 const UserProfileSchema = new Schema(
   {
-    userId: String,
-    userName: String,
-    userNameInsensitive: String,
-    accountPassword: String,
-    characterName: String,
-    introComplete: {
-      type: Boolean,
-      default: false
-    },
+    userID: String,
     privateProfile: {
       type: Boolean,
       default: false
     },
-    DunkelCoins: {
-      type: Number,
-      default: 250
-    },
-    accountAge: {
-      type: Date,
-      default: Date.now()
-    },
-    dailyCooldown: {
-      type: Date,
-      default: new Date(Date.now() - 86400000)
-    },
-    wheelCooldown: {
-      type: Date,
-      default: new Date(Date.now() - 86400000)
-    },
-    dailyStreak: {
-      type: Number,
-      default: 1
-    },
-    lastTransfer: {
-      type: Date,
-      default: new Date(Date.now() - 3 * 7 * 24 * 60 * 60 * 1000)
-    },
-    lastUsernameChange: {
-      type: Date,
-      default: new Date(Date.now() - 4 * 7 * 24 * 60 * 60 * 1000)
-    },
-    wallet: {
-      type: Number,
-      default: 500
-    },
-    bank: {
+    cash: {
       type: Number,
       default: 0
     },
-    netWorth: {
+    bank: {
+      type: Number,
+      default: 1500
+    },
+    dunkelCoins: {
       type: Number,
       default: 500
     },
     totalEarned: {
       type: Number,
-      default: 500
-    },
-    rank: {
-      type: Number,
-      default: 1
+      default: 1500
     },
     RP: {
       type: Number,
       default: 0
     },
-    totalRPEarned: {
+    Rank: {
       type: Number,
-      default: 0
+      default: 1
     },
     badges: {
       type: Array,
       default: []
     },
-    achievements: {
-      type: Array,
-      default: []
-    },
-    casinoWins: {
-      type: Number,
-      default: 0
-    },
-    casinoLosses: {
-      type: Number,
-      default: 0
-    },
-    casinoBet: {
-      type: Number,
-      default: 0
-    },
-    casinoCashWin: {
-      type: Number,
-      default: 0
-    }
+    dailyCooldown: Date,
+    //type: Date,
+    //default: new Date(Date.now() - 86400000)
+    dailyStreak: Number,
+    extraTimerXP: Number
   },
   {
-    collection: "DunkelLuz User Profile"
+    collection: "User Profile Data"
   }
 );
 
-module.exports = model("DunkelLuz User Profile", UserProfileSchema);
+module.exports = model("User Profile Data", UserProfileSchema);
