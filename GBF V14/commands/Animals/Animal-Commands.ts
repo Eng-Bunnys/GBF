@@ -1,19 +1,18 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const emojis = require("../../GBF/GBFEmojis.json");
-const colours = require("../../GBF/GBFColor.json");
+import emojis from "../../GBF/GBFEmojis.json";
+import colours from "../../GBF/GBFColor.json";
 
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
-const { EmbedBuilder } = require("discord.js");
+import { Client, ColorResolvable, EmbedBuilder } from "discord.js";
 
 module.exports = class AnimalSlash extends SlashCommand {
-  constructor(client) {
+  constructor(client: Client) {
     super(client, {
       name: "animals",
       description: "Get pictures of cute animals!",
       category: "Animals",
-      botPermission: [],
       cooldown: 5,
       development: false,
       subcommands: {
@@ -25,12 +24,12 @@ module.exports = class AnimalSlash extends SlashCommand {
               .setDescription(
                 `Please run \`/error np1\` to know more about the error and how to fix it`
               )
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setTimestamp();
 
             const res = await fetch("http://shibe.online/api/birds");
             const img = (await res.json())[0];
-            const birdembed = new EmbedBuilder()
+            const birdImageEmbed = new EmbedBuilder()
               .setTitle("Chip chirp 🐦")
               .setImage(img)
               .setFooter({
@@ -38,10 +37,10 @@ module.exports = class AnimalSlash extends SlashCommand {
                 iconURL: interaction.user.displayAvatarURL()
               })
               .setTimestamp()
-              .setColor(colours.DEFAULT);
+              .setColor(colours.DEFAULT as ColorResolvable);
             return interaction
               .reply({
-                embeds: [birdembed]
+                embeds: [birdImageEmbed]
               })
               .catch((err) => {
                 console.log(`Bird Command Error: ${err.message}`);
@@ -56,7 +55,7 @@ module.exports = class AnimalSlash extends SlashCommand {
           execute: async ({ client, interaction }) => {
             const res = await fetch("https://dog.ceo/api/breeds/image/random");
             const img = (await res.json()).message;
-            const dogembed = new EmbedBuilder()
+            const dogImageEmbed = new EmbedBuilder()
               .setTitle("What the dog doin! 🐶")
               .setImage(img)
               .setFooter({
@@ -64,10 +63,10 @@ module.exports = class AnimalSlash extends SlashCommand {
                 iconURL: interaction.user.displayAvatarURL()
               })
               .setTimestamp()
-              .setColor(colours.DEFAULT);
+              .setColor(colours.DEFAULT as ColorResolvable);
 
             return interaction.reply({
-              embeds: [dogembed]
+              embeds: [dogImageEmbed]
             });
           }
         },
@@ -77,7 +76,7 @@ module.exports = class AnimalSlash extends SlashCommand {
             const res = await fetch("https://random-d.uk/api/v2/random");
             const img = (await res.json()).url;
 
-            const duckembed = new EmbedBuilder()
+            const duckImageEmbed = new EmbedBuilder()
               .setTitle("Quack! 🦆")
               .setImage(img)
               .setFooter({
@@ -85,9 +84,9 @@ module.exports = class AnimalSlash extends SlashCommand {
                 iconURL: interaction.user.displayAvatarURL()
               })
               .setTimestamp()
-              .setColor(colours.DEFAULT);
+              .setColor(colours.DEFAULT as ColorResolvable);
             return interaction.reply({
-              embeds: [duckembed]
+              embeds: [duckImageEmbed]
             });
           }
         },
@@ -96,7 +95,7 @@ module.exports = class AnimalSlash extends SlashCommand {
           execute: async ({ client, interaction }) => {
             const res = await fetch("https://randomfox.ca/floof/");
             const img = (await res.json()).image;
-            const foxembed = new EmbedBuilder()
+            const foxImageEmbed = new EmbedBuilder()
               .setTitle("Fox! 🦊")
               .setImage(img)
               .setFooter({
@@ -104,10 +103,10 @@ module.exports = class AnimalSlash extends SlashCommand {
                 iconURL: interaction.user.displayAvatarURL()
               })
               .setTimestamp()
-              .setColor(colours.DEFAULT);
+              .setColor(colours.DEFAULT as ColorResolvable);
 
             return interaction.reply({
-              embeds: [foxembed]
+              embeds: [foxImageEmbed]
             });
           }
         }
