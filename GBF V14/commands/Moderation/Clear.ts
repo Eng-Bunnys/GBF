@@ -1,16 +1,18 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import colors from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const {
+import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
-  EmbedBuilder
-} = require("discord.js");
+  EmbedBuilder,
+  Client,
+  ColorResolvable
+} from "discord.js";
 
 module.exports = class ClearCommand extends SlashCommand {
-  constructor(client) {
+  constructor(client: Client) {
     super(client, {
       name: "clear",
       description: "Delete a number of messages",
@@ -28,15 +30,16 @@ module.exports = class ClearCommand extends SlashCommand {
 
       devOnly: false,
       userPermission: [PermissionFlagsBits.ManageMessages],
-      botPermission: [],
-      cooldown: 0,
+      botPermission: [PermissionFlagsBits.ManageMessages],
+      cooldown: 4,
+      devBypass: true,
       development: false,
       Partner: false
     });
   }
 
   async execute({ client, interaction }) {
-    const count = interaction.options.getInteger("amount");
+    const count = interaction.options.getInteger("amount", true);
 
     const messagesToBeDeleted = await interaction.channel.messages.fetch({
       limit: count
@@ -46,7 +49,7 @@ module.exports = class ClearCommand extends SlashCommand {
 
     const successEmbed = new EmbedBuilder()
       .setTitle(`${emojis.VERIFY} Success!`)
-      .setColor(colors.DEFAULT)
+      .setColor(colors.DEFAULT as ColorResolvable)
       .setDescription(`Successfully deleted **${count}** messages`)
       .setFooter({
         text: `This message auto-deletes in 5 seconds`,
