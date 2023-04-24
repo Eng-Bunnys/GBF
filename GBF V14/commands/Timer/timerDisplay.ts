@@ -1,16 +1,18 @@
 const SlashCommand = require("../../utils/slashCommands");
 
-const {
+import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
-} = require("discord.js");
+  ButtonStyle,
+  Client
+} from "discord.js";
 
 const colours = require("../../GBF/GBFColor.json");
 const emojis = require("../../GBF/GBFEmojis.json");
 
 const timerSchema = require("../../schemas/User Schemas/Timer Schema");
+const userSchema = require("../../schemas/User Schemas/User Profile Schema");
 
 const {
   msToTime,
@@ -18,16 +20,16 @@ const {
   twentyFourToTwelve
 } = require("../../utils/Engine");
 
-const {
+import {
   xpRequired,
   xpRequiredAccount,
   hoursRequired
-} = require("../../utils/TimerLogic");
+} from "../../utils/TimerLogic";
 
 const fetch = require("node-fetch");
 
 module.exports = class BasicTimerUI extends SlashCommand {
-  constructor(client) {
+  constructor(client: Client) {
     super(client, {
       name: "timer",
       description: "Track your daily activites using GBF timers",
@@ -58,6 +60,10 @@ module.exports = class BasicTimerUI extends SlashCommand {
               userID: interaction.user.id
             });
 
+            const userData = await userSchema.findOne({
+              userID: interaction.user.id
+            });
+
             const noAccount = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setColor(colours.ERRORRED)
@@ -65,7 +71,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
 
-            if (!timerData || (timerData && !timerData.seasonName))
+            if (!timerData || (timerData && !timerData.seasonName) || !userData)
               return interaction.reply({
                 embeds: [noAccount],
                 ephemeral: true
@@ -76,10 +82,12 @@ module.exports = class BasicTimerUI extends SlashCommand {
               timerData.timeSpent > 0
                 ? msToTime(timerData.timeSpent * 1000)
                 : `0 seconds`;
-            const hrTotalTime = Math.round(timerData.timeSpent / 3600);
+            const hrTotalTime: number = Math.round(timerData.timeSpent / 3600);
             // Getting the average time by dividing the total time by number of starts
-            let avgTotalTime = timerData.timeSpent / timerData.numberOfStarts;
-            let rawTotalTime = timerData.timeSpent / timerData.numberOfStarts;
+            let avgTotalTime: number | string =
+              timerData.timeSpent / timerData.numberOfStarts;
+            let rawTotalTime: number =
+              timerData.timeSpent / timerData.numberOfStarts;
 
             // There is a chance that the average time can be infinity/undefined, so we need to check for this to avoid errors
             // The way this works is the msToTime returns undefined if the value entered is infinity or NaN, so we check for that
@@ -97,7 +105,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 : `In-sufficient data`;
             const hrBreakTime = Math.round(timerData.breakTime / 3600);
 
-            let avgBreakTime = timerData.breakTime / timerData.totalBreaks;
+            let avgBreakTime: any = timerData.breakTime / timerData.totalBreaks;
             let rawBreakTime = timerData.breakTime / timerData.totalBreaks;
 
             if (!msToTime(avgBreakTime * 1000)) {
@@ -107,7 +115,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // Finding the average time between breaks
 
-            let avgBreaks;
+            let avgBreaks: number | string;
 
             if (
               hrTotalTime > 0 &&
@@ -219,14 +227,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
             const seasonRank =
               timerData.seasonLevel > 0 ? timerData.seasonLevel : 1;
 
-            const accountRank =
-              timerData.accountLevel > 0 ? timerData.accountLevel : 1;
+            const accountRank = userData.Rank > 0 ? userData.Rank : 1;
 
             const accountXPrequired = xpRequiredAccount(accountRank + 1);
             const seasonXPrequired = xpRequired(seasonRank + 1);
 
             const hoursNeededAccount = Math.abs(
-              hoursRequired(accountXPrequired - timerData.accountXP)
+              hoursRequired(accountXPrequired - userData.Rank)
             );
             const hoursNeededSeason = Math.abs(
               hoursRequired(seasonXPrequired - timerData.seasonXP)
@@ -259,7 +266,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
             let accountProgressBar;
 
             const percentageAccountComplete =
-              (timerData.accountXP / accountXPrequired) * 100;
+              (userData.RP / accountXPrequired) * 100;
 
             if (
               percentageAccountComplete >= 50 &&
@@ -318,10 +325,10 @@ module.exports = class BasicTimerUI extends SlashCommand {
             ).toLocaleString()} Hours [${Number(
               (hoursNeededSeason * 60).toFixed(2)
             ).toLocaleString()} Minutes]\n\n• Account Level: ${
-              timerData.accountLevel
+              userData.Rank
             }\n• XP to reach level ${
-              timerData.accountLevel + 1
-            }: ${timerData.accountXP.toLocaleString()} / ${accountXPrequired.toLocaleString()}\n${accountProgressBar} [${percentageAccountComplete.toFixed(
+              userData.RP + 1
+            }: ${userData.RP.toLocaleString()} / ${accountXPrequired.toLocaleString()}\n${accountProgressBar} [${percentageAccountComplete.toFixed(
               2
             )}%]\n• Estimated time till next account level up: ${Number(
               hoursNeededAccount.toFixed(2)
@@ -385,7 +392,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 : `In-sufficient data`;
             const hrTotalTime = Math.round(timerData.timeSpent / 3600);
 
-            let avgTotalTime = timerData.timeSpent / timerData.numberOfStarts;
+            let avgTotalTime: number | string =
+              timerData.timeSpent / timerData.numberOfStarts;
             let rawTotalTime = Number(
               (timerData.timeSpent / timerData.numberOfStarts).toFixed(3)
             );
@@ -402,7 +410,8 @@ module.exports = class BasicTimerUI extends SlashCommand {
                 : `In-sufficient data`;
             const hrBreakTime = Math.round(timerData.breakTime / 3600);
 
-            let avgBreakTime = timerData.breakTime / timerData.totalBreaks;
+            let avgBreakTime: number | string =
+              timerData.breakTime / timerData.totalBreaks;
             let rawBreakTime = Number(
               (timerData.breakTime / timerData.totalBreaks).toFixed(3)
             );
@@ -484,11 +493,13 @@ module.exports = class BasicTimerUI extends SlashCommand {
               new ButtonBuilder()
                 .setCustomId("pauseTimer")
                 .setEmoji("⏰")
+                .setDisabled(true)
                 .setLabel("Pause Timer")
                 .setStyle(ButtonStyle.Secondary),
               new ButtonBuilder()
                 .setCustomId("stopTimer")
                 .setEmoji("🕛")
+                .setDisabled(true)
                 .setLabel("Stop Timer")
                 .setStyle(ButtonStyle.Secondary)
             ]);
@@ -822,21 +833,19 @@ module.exports = class BasicTimerUI extends SlashCommand {
 
             // Checking if the user took a break, if they did not we auto set the time to 0
 
-            let breakTime =
+            let breakTime: number =
               timerData.sessionBreakTime > 0 ? timerData.sessionBreakTime : 0;
 
             // This variable stores the human readable break time, we first check if the time is valid
-
             let displayBreakTime = !msToTime(breakTime * 1000)
               ? `0 seconds`
               : `${msToTime(breakTime * 1000)}`;
 
             // Subtracting the break time from the time elapsed to get the true time elapsed
-
-            const timeElapsed =
-              ((Date.now() - timerData.intiationTime.getTime()) / 1000).toFixed(
-                3
-              ) - breakTime;
+            const timeElapsed: string = (
+              (Date.now() - timerData.intiationTime.getTime()) / 1000 -
+              breakTime
+            ).toFixed(3);
 
             const sessionStats = new EmbedBuilder()
               .setTitle(
@@ -847,7 +856,7 @@ module.exports = class BasicTimerUI extends SlashCommand {
               .setColor(colours.DEFAULT)
               .setDescription(
                 `• Time Elapsed: ${msToTime(
-                  Math.abs(timeElapsed * 1000)
+                  Math.abs(Number(timeElapsed) * 1000)
                 )}\n• Total Break Time: ${displayBreakTime}\n• Total Breaks: ${
                   timerData.sessionBreaks
                 }\n\n• Start Time: <t:${Math.round(
