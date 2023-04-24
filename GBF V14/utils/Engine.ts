@@ -1,27 +1,24 @@
-const {
-  PermissionFlagsBits,
-  Role,
-  ChannelType,
-  GuildMember
-} = require("discord.js");
+import { Guild, Snowflake, TextChannel } from "discord.js";
+
+import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
- * @param {number} min - The minimum value.
- * @param {number} max - The maximum value.
- * @returns {number} A random integer between min and max (inclusive).
+ * @param min - The minimum value.
+ * @param max - The maximum value.
+ * @returns A random integer between min and max (inclusive).
  */
-function randomRange(min, max) {
+function randomRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * Delay the execution of the next instruction by a specified number of milliseconds.
  *
- * @param {number} ms - The number of milliseconds to delay the execution.
- * @returns {Promise<void>} A Promise that resolves after the specified delay.
+ * @param ms - The number of milliseconds to delay the execution.
+ * @returns A Promise that resolves after the specified delay.
  */
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -44,8 +41,15 @@ msToTime(5400000);
 msToTime(189000000, { format: 'short', spaces: true, joinString: ' ', unitRounding: 3 });
 */
 
-function msToTime(time, options = {}) {
-  const defaultOptions = {
+interface Options {
+  format?: "long" | "short";
+  spaces?: boolean;
+  joinString?: string;
+  unitRounding?: number;
+}
+
+function msToTime(time: number, options: Options = {}): string | undefined {
+  const defaultOptions: Options = {
     format: "long",
     spaces: false,
     joinString: " ",
@@ -94,17 +98,17 @@ function msToTime(time, options = {}) {
  * console.log(formattedDuration); // Output: "1.5 Days"
  */
 
-function basicMsToTime(ms, round = 1) {
+function basicMsToTime(ms: number, round = 1): string {
   const seconds = (ms / 1000).toFixed(round);
   const minutes = (ms / (1000 * 60)).toFixed(round);
   const hours = (ms / (1000 * 60 * 60)).toFixed(round);
   const days = (ms / (1000 * 60 * 60 * 24)).toFixed(round);
 
-  if (seconds < 60) {
+  if (Number(seconds) < 60) {
     return `${seconds} Seconds`;
-  } else if (minutes < 60) {
+  } else if (Number(minutes) < 60) {
     return `${minutes} Minutes`;
-  } else if (hours < 24) {
+  } else if (Number(hours) < 24) {
     return `${hours} Hours`;
   } else {
     return `${days} Days`;
@@ -129,12 +133,12 @@ resume("Lorem ipsum dolor sit amet", 11);
 resume("Hello", 10);
 */
 
-function resume(text = "", number) {
+function resume(text = "", number: number) {
   if (typeof text !== "string") {
     return "The text parameter must be a string.";
   }
 
-  if (!Number.isInteger(number) || number < 1) {
+  if (number < 1) {
     return "The number parameter must be a positive integer.";
   }
 
@@ -420,55 +424,6 @@ function capitalizeFirstLetter(string) {
 }
 
 /**
-
-Determines the display type of a Discord channel based on its type.
-@param {Discord.Channel} channel - The Discord channel to check.
-@returns {string} The display type of the channel.
-@example
-const channelDisplayType = channelType(interaction.channel);
-console.log(This is a ${channelDisplayType}.); // Returns Text Channel
-*/
-
-function channelType(channel) {
-  if (!channel) return "Error: **Channel is undefined or doesn't exist**";
-
-  let displayType;
-  switch (channel.type) {
-    case "GUILD_TEXT":
-      displayType = "Text Channel";
-      break;
-    case "GUILD_VOICE":
-      displayType = "Voice Channel";
-      break;
-    case "GUILD_CATEGORY":
-      displayType = "Category Channel";
-      break;
-    case "GUILD_NEWS":
-      displayType = "News Channel";
-      break;
-    case "GUILD_NEWS_THREAD":
-      displayType = "News Channel Thread";
-      break;
-    case "GUILD_PUBLIC_THREAD":
-      displayType = "Public Channel Thread";
-      break;
-    case "GUILD_PRIVATE_THREAD":
-      displayType = "Private Channel Thread";
-      break;
-    case "GUILD_STAGE_VOICE":
-      displayType = "Stage Voice Channel";
-      break;
-    case "UNKNOWN":
-      displayType = "⚠ Unknown Channel Type ⚠";
-      break;
-    default:
-      return `Error: unrecognized channel type ${channel.type}`;
-    //displayType = ' ';
-  }
-  return displayType;
-}
-
-/**
  * Returns the slowmode delay for a channel.
  *
  * @param {Discord.TextChannel|Discord.VoiceChannel|Discord.StageChannel} channel - The channel for which to retrieve the slowmode delay.
@@ -693,10 +648,7 @@ return Output: 'Rank must be a positive integer.'
 RPRequiredToLevelUp(-3);
 */
 
-function RPRequiredToLevelUp(rank) {
-  if (!Number.isInteger(rank) || rank <= 0)
-    return "Rank must be a positive integer.";
-
+function RPRequiredToLevelUp(rank: number) {
   return rank * 800 + (rank - 1) * 400;
 }
 
@@ -709,17 +661,20 @@ function RPRequiredToLevelUp(rank) {
  * @returns {Array<boolean, number, number>|string} Returns an array containing a boolean value indicating whether the user has ranked up, the number of levels added, and the remaining RP, or a string indicating that the arguments must be positive numbers.
  */
 
-function checkRank(currentLevel, currentXP, addedXP) {
+function checkRank(
+  currentLevel: number,
+  currentXP: number,
+  addedXP: number
+): [boolean, number, number] {
   let addedLevels = 0;
   let hasRankedUp = false;
 
   const currentRank = Math.abs(currentLevel);
-  const currentRP = Math.abs(currentXP);
   const addedRP = Math.abs(addedXP);
 
-  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels);
 
-  if (currentRank >= 5000) return;
+  if (currentRank >= 5000) return [false, 0, 0];
 
   if (addedRP > requiredRP) {
     hasRankedUp = true;
@@ -734,7 +689,7 @@ function checkRank(currentLevel, currentXP, addedXP) {
         addedLevels--;
         break;
       }
-      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels);
     }
   }
   if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
@@ -742,39 +697,53 @@ function checkRank(currentLevel, currentXP, addedXP) {
   return [hasRankedUp, addedLevels, remainingRP];
 }
 
-function guildChannels(guild) {
-  let channel;
+/**
+ * Attempts to get a guild's general text channel, or any text channel that the bot has permission to send messages to,
+ * optionally searching for channels that match the provided name identity.
+ * @param guild - The guild to search for the text channel in.
+ * @param nameIdentity - Optional. The name-based identity of the text channel to search for.
+ * @returns A `TextChannel` if one is found, or `undefined` if none are found.
+ */
+
+function guildChannels(
+  guild: Guild,
+  NameIdentity = "general" as string
+): TextChannel | undefined {
+  let channel: TextChannel | undefined;
+
   if (guild.channels.cache.has(guild.id)) {
-    channel = guild.channels.cache.get(guild.id);
+    channel = guild.channels.cache.get(guild.id) as TextChannel;
+
     if (
       channel
         .permissionsFor(guild.client.user)
-        .has(PermissionFlagsBits.SendMessages)
+        ?.has(PermissionFlagsBits.SendMessages)
     ) {
-      return guild.channels.cache.get(guild.id);
+      return channel;
     }
   }
 
   channel = guild.channels.cache.find(
     (channel) =>
-      channel.name.includes("general") &&
+      channel.name.toLowerCase().includes(NameIdentity) &&
+      channel.type === ChannelType.GuildText &&
       channel
         .permissionsFor(guild.client.user)
-        .has(PermissionFlagsBits.SendMessages) &&
-      channel.type === ChannelType.GuildText
-  );
+        ?.has(PermissionFlagsBits.SendMessages)
+  ) as TextChannel | undefined;
+
   if (channel) return channel;
 
   return guild.channels.cache
     .filter(
-      (c) =>
-        c.type === ChannelType.GuildText &&
-        c
+      (channel) =>
+        channel.type === ChannelType.GuildText &&
+        channel
           .permissionsFor(guild.client.user)
-          .has(PermissionFlagsBits.SendMessages)
+          ?.has(PermissionFlagsBits.SendMessages)
     )
-    .sort((a, b) => a.position - b.position)
-    .first();
+    .sort((a: TextChannel, b: TextChannel) => a.position - b.position)
+    .first() as TextChannel | undefined;
 }
 
 /**
@@ -785,18 +754,29 @@ function guildChannels(guild) {
  * @param {number} count The number of digits to return.
  * @returns {string} The last `count` digits of the snowflake, not zero-padded.
  */
-function getLastDigits(snowflake, count) {
+function getLastDigits(snowflake: Snowflake, count: number) {
   return snowflake.slice(-count);
 }
 
-function levelUpReward(level) {
+/**
+ * Calculates the reward for a given level.
+ * @param level - The level of the user
+ * @returns The reward for the given level
+ */
+function levelUpReward(level: number): number {
+  // Get the absolute rank of the user (level can be negative)
   const rank = Math.abs(level);
+
+  // The array of rewards for each level
   const rewardArray = [200, 400, 600, 800, 1200, 1400, 1600, 1800, 2000, 2000];
 
-  let rewardPosition;
+  // Calculate the position of the reward in the array based on the modulo of the rank,
+  // if it's a multiple of 10 then the position will be 10
+  let rewardPosition: number;
   if (rank % 10 == 0) rewardPosition = 10;
   else rewardPosition = rank % 10;
 
+  // Return the reward value from the array based on the calculated position
   return rewardArray[rewardPosition - 1];
 }
 
@@ -815,7 +795,6 @@ module.exports = {
   roleInGuildCheck,
   capitalizeFirstLetter,
   channelSlowMode,
-  channelType,
   capitalize,
   BMIScale,
   BMIImperial,
@@ -830,7 +809,11 @@ module.exports = {
   levelUpReward
 };
 
-const timeUnits = {
+interface TimeUnits {
+  [key: string]: string[];
+}
+
+const timeUnits: TimeUnits = {
   s: ["sec(s)", "second(s)"],
   min: ["minute(s)", "m", "min(s)"],
   h: ["hr(s)", "hour(s)"],
@@ -843,7 +826,11 @@ const timeUnits = {
   cen: ["cent(s)", "century", "centuries"]
 };
 
-const timeUnitValues = {
+interface TimeUnitValues {
+  [key: string]: number;
+}
+
+const timeUnitValues: TimeUnitValues = {
   s: 1000,
   min: 1000 * 60,
   h: 1000 * 60 * 60,
@@ -856,7 +843,13 @@ const timeUnitValues = {
   cen: 1000 * 60 * 60 * 24 * 365 * 100
 };
 
-const fullTimeUnitNames = {
+interface TimeUnitNames {
+  [key: string]: {
+    [key: string]: string;
+  };
+}
+
+const fullTimeUnitNames: TimeUnitNames = {
   s: {
     short: "s",
     medium: "sec",
