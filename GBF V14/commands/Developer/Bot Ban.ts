@@ -1,32 +1,32 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const {
+import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ApplicationCommandOptionType
-} = require("discord.js");
+  ApplicationCommandOptionType,
+  Client,
+  ColorResolvable
+} from "discord.js";
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
-const deverloperID = require("../../GBF/Bot Ban Features.json");
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
+import deverloperID from "../../GBF/Bot Ban Features.json";
 
-const botBanSchema = require("../../schemas/GBF Schemas/Bot Ban Schema");
+import botBanSchema from "../../schemas/GBF Schemas/Bot Ban Schema";
 
 module.exports = class botBans extends SlashCommand {
-  constructor(client) {
+  constructor(client: Client) {
     super(client, {
       name: "bot-ban",
       description: "Ban a user from using the bot",
       category: "Developer",
-      userPermission: [],
-      botPermission: [],
       cooldown: 0,
-      development: false,
+      development: true,
       devOnly: true,
       subcommands: {
-        ban: {
+        add: {
           description: "Ban a user from using GBF",
           args: [
             {
@@ -67,10 +67,24 @@ module.exports = class botBans extends SlashCommand {
 
             const newBan = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success`)
-              .setDescription(
-                `**${targetUser.tag}**[${targetUser.id}] has been banned from GBF Services\nReason: ${banReason}\nBanned By: ${interaction.user.tag}`
+              .addFields(
+                {
+                  name: "Target",
+                  value: `${targetUser.tag} (${targetUser.id})`,
+                  inline: true
+                },
+                {
+                  name: "Developer",
+                  value: `${interaction.user.tag} (${interaction.user.id})`,
+                  inline: true
+                },
+                {
+                  name: "Reason:",
+                  value: `${banReason}`,
+                  inline: true
+                }
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setTimestamp()
               .setFooter({
                 text: `GBF Security & Anti-Cheat`,
@@ -90,7 +104,7 @@ module.exports = class botBans extends SlashCommand {
                   deverloperID.GBFBanAppeal
                 })`
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setTimestamp()
               .setFooter({
                 text: `GBF Security & Anti-Cheat`,
@@ -121,7 +135,7 @@ module.exports = class botBans extends SlashCommand {
             });
           }
         },
-        unban: {
+        remove: {
           description: "Unban a user from using GBF",
           args: [
             {
@@ -151,9 +165,9 @@ module.exports = class botBans extends SlashCommand {
             const newUnban = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success`)
               .setDescription(
-                `**${targerUser.tag}**[${targerUser.id}] has been unbanned from GBF Services`
+                `${targerUser.tag} (${targerUser.id}) has been unbanned from GBF Services`
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setTimestamp()
               .setFooter({
                 text: `GBF Security & Anti-Cheat`,
@@ -163,7 +177,7 @@ module.exports = class botBans extends SlashCommand {
             const unBanDm = new EmbedBuilder()
               .setTitle(`📩 You have received a new message`)
               .setDescription(`You have been **unbanned** from GBF Services`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setTimestamp()
               .setFooter({
                 text: `GBF Security & Anti-Cheat`,
