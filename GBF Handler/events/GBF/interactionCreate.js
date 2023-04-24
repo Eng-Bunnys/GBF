@@ -21,16 +21,13 @@ module.exports = (client) => {
 
         if (interaction.inGuild()) {
           const suspendedEmbed = new EmbedBuilder()
-            .setTitle(`${emojis.ERROR}`)
+            .setTitle(`${emojis.ERROR} You can't do that`)
             .setDescription(
               `You have been banned from using ${client.user.username}.`
             )
-            .setColor(colours.ERRORRED)
-            .setThumbnail(
-              "https://cdn.discordapp.com/emojis/855834957607075850.gif?v=1"
-            );
+            .setColor(colours.ERRORRED);
 
-          if (blacklistFetch && blacklistFetch.Blacklist) {
+          if (blacklistFetch) {
             return interaction.reply({
               embeds: [suspendedEmbed],
               ephemeral: true
