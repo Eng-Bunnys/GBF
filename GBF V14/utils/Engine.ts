@@ -8,7 +8,7 @@ import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
  * @param max - The maximum value.
  * @returns A random integer between min and max (inclusive).
  */
-function randomRange(min: number, max: number): number {
+export function randomRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -18,7 +18,7 @@ function randomRange(min: number, max: number): number {
  * @param ms - The number of milliseconds to delay the execution.
  * @returns A Promise that resolves after the specified delay.
  */
-function delay(ms: number): Promise<void> {
+export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -48,7 +48,10 @@ interface Options {
   unitRounding?: number;
 }
 
-function msToTime(time: number, options: Options = {}): string | undefined {
+export function msToTime(
+  time: number,
+  options: Options = {}
+): string | undefined {
   const defaultOptions: Options = {
     format: "long",
     spaces: false,
@@ -98,7 +101,7 @@ function msToTime(time: number, options: Options = {}): string | undefined {
  * console.log(formattedDuration); // Output: "1.5 Days"
  */
 
-function basicMsToTime(ms: number, round = 1): string {
+export function basicMsToTime(ms: number, round = 1): string {
   const seconds = (ms / 1000).toFixed(round);
   const minutes = (ms / (1000 * 60)).toFixed(round);
   const hours = (ms / (1000 * 60 * 60)).toFixed(round);
@@ -133,7 +136,7 @@ resume("Lorem ipsum dolor sit amet", 11);
 resume("Hello", 10);
 */
 
-function resume(text = "", number: number) {
+export function resume(text = "", number: number) {
   if (typeof text !== "string") {
     return "The text parameter must be a string.";
   }
@@ -167,7 +170,7 @@ function resume(text = "", number: number) {
  * const chunks = MessageSplit(messages, 500, ";");
  */
 
-function MessageSplit(message, codeLength, separator = "\n") {
+export function MessageSplit(message, codeLength, separator = "\n") {
   if (!message) return [];
 
   if (!Number.isInteger(codeLength) || codeLength <= 0) {
@@ -214,7 +217,7 @@ const missingPerms = missingPermissions(targetMember, requiredPermissions);
 console.log(missingPerms);
 */
 
-function missingPermissions(targetMember, requiredPermissions) {
+export function missingPermissions(targetMember, requiredPermissions) {
   if (!targetMember || !(targetMember instanceof GuildMember))
     return "Specificed user is not a GuildMember";
 
@@ -231,7 +234,7 @@ function missingPermissions(targetMember, requiredPermissions) {
   return missingPerms;
 }
 
-function removeEmojis(string) {
+export function removeEmojis(string) {
   const emojiRegex =
     /(?:[\u2700-\u27bf]|\ud83c[\udde6-\uddff]{2}|[\ud800-\udbff][\udc00-\udfff]|\u0023-\u0039\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
@@ -248,7 +251,7 @@ const hasNum = hasNumber('abc123'); // returns true
 const noNum = hasNumber('hello world'); // returns false
 */
 
-function hasNumber(str) {
+export function hasNumber(str) {
   return /\d/.test(str);
 }
 
@@ -274,7 +277,7 @@ function hasNumber(str) {
  *		 console.log(`Shuffled people: ${shuffledPeople.map(p => p.name).join(', ')}`); // Random List of People
  */
 
-function Arraytoshuffle(array) {
+export function Arraytoshuffle(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -283,7 +286,7 @@ function Arraytoshuffle(array) {
   return shuffled;
 }
 
-function rolePermissions(targetRole) {
+export function rolePermissions(targetRole) {
   const rolePerms = targetRole.permissions.toArray().map(
     (str) =>
       `${str
@@ -310,7 +313,7 @@ function rolePermissions(targetRole) {
  * console.log(perms);
  */
 
-function KeyPerms(role) {
+export function KeyPerms(role) {
   const permissions = [
     { name: "Administrator", flag: PermissionFlagsBits.Administrator },
     { name: "Manage Server", flag: PermissionFlagsBits.ManageGuild },
@@ -382,7 +385,7 @@ const interaction = interaction
 roleInGuildCheck(roleIds, interaction); // Returns "<@&123456789012345678> <@&234567890123456789>"
 */
 
-function roleInGuildCheck(roleIds, interaction) {
+export function roleInGuildCheck(roleIds, interaction) {
   if (!Array.isArray(roleIds) || roleIds.length === 0) {
     return "Error: **roleIds must be a non-empty array**";
   }
@@ -415,7 +418,7 @@ capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
 capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
 */
 
-function capitalizeFirstLetter(string) {
+export function capitalizeFirstLetter(string) {
   if (!string || !string.trim().length) {
     return "Error: **Input string is empty or undefined.**";
   }
@@ -434,7 +437,7 @@ function capitalizeFirstLetter(string) {
  * channelSlowMode(interaction.channel);
  */
 
-function channelSlowMode(channel) {
+export function channelSlowMode(channel) {
   if (!channel) return "Error: **Channel is undefined or doesn't exist**";
 
   const slowModeOptions = {
@@ -467,15 +470,15 @@ function channelSlowMode(channel) {
  * @example capitalize(string)
  */
 
-const capitalize = (str) => {
+export function capitalize(str: string): string {
   if (typeof str !== "string") {
     throw new Error("Argument must be a string");
   }
 
   return str.replace(/(?<=(^|\s))(\w)/g, (char) => char.toUpperCase());
-};
-/**
+}
 
+/**
 Calculates the BMI scale based on the BMI value.
 @param {number} bmi - The BMI value.
 @returns {string} The corresponding BMI scale.
@@ -484,7 +487,7 @@ BMIScale(18.5); // returns 'Normal'
 BMIScale(16); // returns 'Severe Thinness'
 */
 
-function BMIScale(bmi) {
+export function BMIScale(bmi) {
   let scale;
   switch (true) {
     case bmi < 16:
@@ -532,11 +535,11 @@ BMIImperial(150, 68)
 BMIMetric(68, 1.73)
 */
 
-function BMIImperial(weight, height) {
+export function BMIImperial(weight, height) {
   return (weight * 703) / (height * height);
 }
 
-function BMIMetric(weight, height) {
+export function BMIMetric(weight, height) {
   return weight / (height * height);
 }
 
@@ -565,7 +568,7 @@ twentyFourToTwelve(24)
 twentyFourToTwelve(-1)
 */
 
-function twentyFourToTwelve(hours) {
+export function twentyFourToTwelve(hours) {
   if (isNaN(hours) || hours < 0 || hours > 23) return;
 
   let displayTime;
@@ -599,7 +602,7 @@ function twentyFourToTwelve(hours) {
  * @returns {array} [[...], [...]]
  */
 
-function chunkAverage(array, size) {
+export function chunkAverage(array, size) {
   let renderedChunk;
   let chunkSum = 0;
 
@@ -648,7 +651,7 @@ return Output: 'Rank must be a positive integer.'
 RPRequiredToLevelUp(-3);
 */
 
-function RPRequiredToLevelUp(rank: number) {
+export function RPRequiredToLevelUp(rank: number) {
   return rank * 800 + (rank - 1) * 400;
 }
 
@@ -661,9 +664,8 @@ function RPRequiredToLevelUp(rank: number) {
  * @returns {Array<boolean, number, number>|string} Returns an array containing a boolean value indicating whether the user has ranked up, the number of levels added, and the remaining RP, or a string indicating that the arguments must be positive numbers.
  */
 
-function checkRank(
+export function checkRank(
   currentLevel: number,
-  currentXP: number,
   addedXP: number
 ): [boolean, number, number] {
   let addedLevels = 0;
@@ -705,7 +707,7 @@ function checkRank(
  * @returns A `TextChannel` if one is found, or `undefined` if none are found.
  */
 
-function guildChannels(
+export function guildChannels(
   guild: Guild,
   NameIdentity = "general" as string
 ): TextChannel | undefined {
@@ -754,7 +756,7 @@ function guildChannels(
  * @param {number} count The number of digits to return.
  * @returns {string} The last `count` digits of the snowflake, not zero-padded.
  */
-function getLastDigits(snowflake: Snowflake, count: number) {
+export function getLastDigits(snowflake: Snowflake, count: number) {
   return snowflake.slice(-count);
 }
 
@@ -763,7 +765,7 @@ function getLastDigits(snowflake: Snowflake, count: number) {
  * @param level - The level of the user
  * @returns The reward for the given level
  */
-function levelUpReward(level: number): number {
+export function levelUpReward(level: number): number {
   // Get the absolute rank of the user (level can be negative)
   const rank = Math.abs(level);
 
@@ -779,35 +781,6 @@ function levelUpReward(level: number): number {
   // Return the reward value from the array based on the calculated position
   return rewardArray[rewardPosition - 1];
 }
-
-module.exports = {
-  randomRange,
-  delay,
-  msToTime,
-  resume,
-  MessageSplit,
-  missingPermissions,
-  removeEmojis,
-  hasNumber,
-  Arraytoshuffle,
-  rolePermissions,
-  KeyPerms,
-  roleInGuildCheck,
-  capitalizeFirstLetter,
-  channelSlowMode,
-  capitalize,
-  BMIScale,
-  BMIImperial,
-  BMIMetric,
-  basicMsToTime,
-  twentyFourToTwelve,
-  chunkAverage,
-  RPRequiredToLevelUp,
-  checkRank,
-  guildChannels,
-  getLastDigits,
-  levelUpReward
-};
 
 interface TimeUnits {
   [key: string]: string[];
