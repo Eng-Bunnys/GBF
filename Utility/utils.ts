@@ -1,25 +1,24 @@
-const { EmbedBuilder, PermissionFlagsBits, Role } = require("discord.js");
+import { Guild, Snowflake, TextChannel } from "discord.js";
 
-const fetch = require("node-fetch");
-
+import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
- * @param {number} min - The minimum value.
- * @param {number} max - The maximum value.
- * @returns {number} A random integer between min and max (inclusive).
+ * @param min - The minimum value.
+ * @param max - The maximum value.
+ * @returns A random integer between min and max (inclusive).
  */
-function randomRange(min, max) {
+export function randomRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * Delay the execution of the next instruction by a specified number of milliseconds.
  *
- * @param {number} ms - The number of milliseconds to delay the execution.
- * @returns {Promise<void>} A Promise that resolves after the specified delay.
+ * @param ms - The number of milliseconds to delay the execution.
+ * @returns A Promise that resolves after the specified delay.
  */
-function delay(ms) {
+export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -42,65 +41,77 @@ msToTime(5400000);
 msToTime(189000000, { format: 'short', spaces: true, joinString: ' ', unitRounding: 3 });
 */
 
-function msToTime(time, options = {}) {
-    
-const defaultOptions = {
-    format: 'long',
-    spaces: false,
-    joinString: ' ',
-    unitRounding: 100
-};
-    
-  options = Object.assign({}, defaultOptions, options);
-    
-    let timeStr = '';
-    let nr = 0;
-
-if (typeof time !== 'number' || time < 0) {
-  return undefined;
+interface Options {
+  format?: "long" | "short";
+  spaces?: boolean;
+  joinString?: string;
+  unitRounding?: number;
 }
 
- for (let i = Object.keys(timeUnitValues).length - 1; i >= 0; i--) {
+export function msToTime(
+  time: number,
+  options: Options = {}
+): string | undefined {
+  const defaultOptions: Options = {
+    format: "long",
+    spaces: false,
+    joinString: " ",
+    unitRounding: 100
+  };
+
+  options = Object.assign({}, defaultOptions, options);
+
+  let timeStr = "";
+  let nr = 0;
+
+  if (typeof time !== "number" || time < 0) {
+    return undefined;
+  }
+
+  for (let i = Object.keys(timeUnitValues).length - 1; i >= 0; i--) {
     let key = Object.keys(timeUnitValues)[i];
-    if (key === 'a') continue;
+    if (key === "a") continue;
 
     let ctime = time / timeUnitValues[key];
     if (ctime >= 1) {
       if ((options.unitRounding || 100) < ++nr) break;
 
       ctime = Math.floor(ctime);
-      timeStr += `${ctime} ${fullTimeUnitNames[key][options.format]}${ctime !== 1 && options.format !== 'short' ? 's' : ''}${options.spaces ? ' ' : options.joinString}`;
+      timeStr += `${ctime} ${fullTimeUnitNames[key][options.format]}${
+        ctime !== 1 && options.format !== "short" ? "s" : ""
+      }${options.spaces ? " " : options.joinString}`;
       time -= ctime * timeUnitValues[key];
     }
   }
 
   timeStr = timeStr.trim();
-  if (timeStr === '') return undefined;
+  if (timeStr === "") return undefined;
   return timeStr;
 }
 
 /**
  * Returns a string representation of a duration in milliseconds in the format "X Days", "X Hours", "X Minutes", or "X Seconds".
  * @param {number} ms - The duration in milliseconds.
+ * @param {number} round - Choose which decimal place to round the time to
  * @returns {string} A string representation of the duration in the format "X Days", "X Hours", "X Minutes", or "X Seconds".
  *
  * @example
  * const duration = 123456789;
- * const formattedDuration = betterMSToTime(duration);
+ * const formattedDuration = basicMsToTime(duration, 1);
  * console.log(formattedDuration); // Output: "1.5 Days"
  */
 
-function betterMSToTime(ms) {
-  const seconds = (ms / 1000).toFixed(1);
-  const minutes = (ms / (1000 * 60)).toFixed(1);
-  const hours = (ms / (1000 * 60 * 60)).toFixed(1);
-  const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
+export function basicMsToTime(ms: number, round = 1): string {
+  const seconds = (ms / 1000).toFixed(round);
+  const minutes = (ms / (1000 * 60)).toFixed(round);
+  const hours = (ms / (1000 * 60 * 60)).toFixed(round);
+  const days = (ms / (1000 * 60 * 60 * 24)).toFixed(round);
 
-  if (seconds < 60) {
+  if (Number(seconds) < 60) {
     return `${seconds} Seconds`;
-  } else if (minutes < 60) {
+  } else if (Number(minutes) < 60) {
     return `${minutes} Minutes`;
-  } else if (hours < 24) {
+  } else if (Number(hours) < 24) {
     return `${hours} Hours`;
   } else {
     return `${days} Days`;
@@ -125,18 +136,18 @@ resume("Lorem ipsum dolor sit amet", 11);
 resume("Hello", 10);
 */
 
-function resume(text = '', number) {
-    if (typeof text !== 'string') {
-      return "The text parameter must be a string."
-    }
-    
-    if (!Number.isInteger(number) || number < 1) {
-      return "The number parameter must be a positive integer."
-    }
-    
-    const str = text.length > number ? `${text.substring(0, number)}...` : text;
-    return str;
+export function resume(text = "", number: number) {
+  if (typeof text !== "string") {
+    return "The text parameter must be a string.";
   }
+
+  if (number < 1) {
+    return "The number parameter must be a positive integer.";
+  }
+
+  const str = text.length > number ? `${text.substring(0, number)}...` : text;
+  return str;
+}
 
 /**
  * Splits a message into smaller chunks to fit within a specific code length, with an optional separator.
@@ -159,32 +170,34 @@ function resume(text = '', number) {
  * const chunks = MessageSplit(messages, 500, ";");
  */
 
-function MessageSplit(message, codeLength, separator = '\n') {
-    if (!message) return [];
+export function MessageSplit(message, codeLength, separator = "\n") {
+  if (!message) return [];
 
-    if (!Number.isInteger(codeLength) || codeLength <= 0) {
-      return 'Code length must be a positive integer'
+  if (!Number.isInteger(codeLength) || codeLength <= 0) {
+    return "Code length must be a positive integer";
+  }
+
+  const arrayNeeded = [];
+
+  if (Array.isArray(message)) {
+    message = message.join(separator);
+  }
+
+  if (message.length > codeLength) {
+    for (const substring of message.match(
+      new RegExp(`(.|\\n){1,${codeLength}}`, "g")
+    ) || []) {
+      const position = substring.lastIndexOf(separator);
+      arrayNeeded.push(substring.substring(0, position));
+      message = substring.substring(position + separator.length);
     }
+  }
 
-    const arrayNeeded = [];
+  if (message.length > 0) {
+    arrayNeeded.push(message);
+  }
 
-    if (Array.isArray(message)) {
-        message = message.join(separator);
-    }
-
-    if (message.length > codeLength) {
-        for (const substring of message.match(new RegExp(`(.|\\n){1,${codeLength}}`, 'g')) || []) {
-            const position = substring.lastIndexOf(separator);
-            arrayNeeded.push(substring.substring(0, position));
-            message = substring.substring(position + separator.length);
-        }
-    }
-
-    if (message.length > 0) {
-        arrayNeeded.push(message);
-    }
-
-    return arrayNeeded;
+  return arrayNeeded;
 }
 
 /**
@@ -204,24 +217,28 @@ const missingPerms = missingPermissions(targetMember, requiredPermissions);
 console.log(missingPerms);
 */
 
-function missingPermissions(targetMember, requiredPermissions) {
-  if (!targetMember || !(targetMember instanceof GuildMember)) {
-    return "Invalid target member"
-  }
+export function missingPermissions(targetMember, requiredPermissions) {
+  if (!targetMember || !(targetMember instanceof GuildMember))
+    return "Specificed user is not a GuildMember";
 
-  if (!Array.isArray(requiredPermissions) || requiredPermissions.some(p => typeof p !== "string")) {
-    return "Invalid required permissions array"
-  }
+  const missingPerms = targetMember.permissions
+    .missing(requiredPermissions)
+    .map(
+      (str) =>
+        `\`${str
+          .replace(/_/g, " ")
+          .toLowerCase()
+          .replace(/\b(\w)/g, (char) => char.toUpperCase())}\``
+    );
 
-  const missingPerms = targetMember.permissions.missing(requiredPermissions).map(str => `\`${str.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, char => char.toUpperCase())}\``);
-    
-  return missingPerms.length > 1 ? `${missingPerms.slice(0, -1).join(", ")} and ${missingPerms.slice(-1)[0]}` : `${missingPerms[0]}`;
+  return missingPerms;
 }
 
-function removeEmojis(string) {
-    const emojiRegex = /(?:[\u2700-\u27bf]|\ud83c[\udde6-\uddff]{2}|[\ud800-\udbff][\udc00-\udfff]|\u0023-\u0039\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
+export function removeEmojis(string) {
+  const emojiRegex =
+    /(?:[\u2700-\u27bf]|\ud83c[\udde6-\uddff]{2}|[\ud800-\udbff][\udc00-\udfff]|\u0023-\u0039\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
-    return string.replace(emojiRegex, "");
+  return string.replace(emojiRegex, "");
 }
 
 /**
@@ -234,8 +251,8 @@ const hasNum = hasNumber('abc123'); // returns true
 const noNum = hasNumber('hello world'); // returns false
 */
 
-function hasNumber(str) {
-    return /\d/.test(str);
+export function hasNumber(str) {
+  return /\d/.test(str);
 }
 
 /**
@@ -260,7 +277,7 @@ function hasNumber(str) {
  *		 console.log(`Shuffled people: ${shuffledPeople.map(p => p.name).join(', ')}`); // Random List of People
  */
 
-function Arraytoshuffle(array) {
+export function Arraytoshuffle(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -269,12 +286,13 @@ function Arraytoshuffle(array) {
   return shuffled;
 }
 
-function rolePermissions(targetRole) {
-    
-  const rolePerms = targetRole.permissions.toArray().map((str) =>
-    `${str.replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b(\w)/g, (char) => char.toUpperCase())}`
+export function rolePermissions(targetRole) {
+  const rolePerms = targetRole.permissions.toArray().map(
+    (str) =>
+      `${str
+        .replace(/_/g, " ")
+        .toLowerCase()
+        .replace(/\b(\w)/g, (char) => char.toUpperCase())}`
   );
 
   return rolePerms.length > 1
@@ -284,10 +302,10 @@ function rolePermissions(targetRole) {
 
 /**
  * Returns the permissions of a role as a string, with the most powerful permission listed first.
- * 
+ *
  * @param {Role} role - The role whose permissions will be listed.
  * @returns {string} A string listing the permissions of the role.
- * 
+ *
  * @example
  * // Returns "Administrator, Manage Server, Kick Members"
  * const role = interaction.guild.roles.cache.find(role => role.name === "Moderator");
@@ -295,8 +313,7 @@ function rolePermissions(targetRole) {
  * console.log(perms);
  */
 
-function KeyPerms(role) {
-
+export function KeyPerms(role) {
   const permissions = [
     { name: "Administrator", flag: PermissionFlagsBits.Administrator },
     { name: "Manage Server", flag: PermissionFlagsBits.ManageGuild },
@@ -306,11 +323,17 @@ function KeyPerms(role) {
     { name: "Ban Members", flag: PermissionFlagsBits.BanMembers },
     { name: "Manage Nicknames", flag: PermissionFlagsBits.ManageNicknames },
     { name: "Change Nickname", flag: PermissionFlagsBits.ChangeNickname },
-    { name: "Manage Emojis & Stickers", flag: PermissionFlagsBits.ManageEmojisAndStickers },
+    {
+      name: "Manage Emojis & Stickers",
+      flag: PermissionFlagsBits.ManageEmojisAndStickers
+    },
     { name: "Manage Webhooks", flag: PermissionFlagsBits.ManageWebhooks },
     { name: "Manage Messages", flag: PermissionFlagsBits.ManageMessages },
     { name: "Mention Everyone", flag: PermissionFlagsBits.MentionEveryone },
-    { name: "Use External Emojis", flag: PermissionFlagsBits.UseExternalEmojis },
+    {
+      name: "Use External Emojis",
+      flag: PermissionFlagsBits.UseExternalEmojis
+    },
     { name: "Add Reactions", flag: PermissionFlagsBits.AddReactions },
     { name: "Mute Members", flag: PermissionFlagsBits.MuteMembers },
     { name: "Deafen Members", flag: PermissionFlagsBits.DeafenMembers },
@@ -319,24 +342,29 @@ function KeyPerms(role) {
     { name: "View Audit Log", flag: PermissionFlagsBits.ViewAuditLog },
     { name: "Send Messages", flag: PermissionFlagsBits.SendMessages },
     { name: "Attach Files", flag: PermissionFlagsBits.AttachFiles },
-    { name: "Read Message History", flag: PermissionFlagsBits.ReadMessageHistory },
-    { name: "Create Instant Invite", flag: PermissionFlagsBits.CreateInstantInvite }
+    {
+      name: "Read Message History",
+      flag: PermissionFlagsBits.ReadMessageHistory
+    },
+    {
+      name: "Create Instant Invite",
+      flag: PermissionFlagsBits.CreateInstantInvite
+    }
   ];
-  
+
   const sortedPermissions = permissions
-  .filter(perm => role.permissions.has(perm.flag))
-  .sort((permA, permB) => Number(permB.flag) - Number(permA.flag))
+    .filter((perm) => role.permissions.has(perm.flag))
+    .sort((permA, permB) => Number(permB.flag) - Number(permA.flag));
+
+  if (role.permissions.has(PermissionFlagsBits.Administrator))
+    return "Administrator";
 
   if (role.managed) {
     return "Administrator";
-
-  } else if (role.permissions.has(PermissionFlagsBits.Administrator)) {
-
-    return "Administrator, " + sortedPermissions.filter(perm => perm.flag !== BigInt(PermissionFlagsBits.Administrator))
-    .map(perm => perm.name)
-    .join(", ");
   } else {
-    return sortedPermissions.length > 0 ? sortedPermissions.map(perm => perm.name).join(", ") : "No permissions";
+    return sortedPermissions.length > 0
+      ? sortedPermissions.map((perm) => perm.name).join(", ")
+      : "No permissions";
   }
 }
 
@@ -357,21 +385,21 @@ const interaction = interaction
 roleInGuildCheck(roleIds, interaction); // Returns "<@&123456789012345678> <@&234567890123456789>"
 */
 
-function roleInGuildCheck(roleIds, interaction) {
+export function roleInGuildCheck(roleIds, interaction) {
   if (!Array.isArray(roleIds) || roleIds.length === 0) {
-    return "Error: **roleIds must be a non-empty array**"
+    return "Error: **roleIds must be a non-empty array**";
   }
 
   const roleMentions = roleIds
-    .filter(roleId => {
+    .filter((roleId) => {
       const role = interaction.guild.roles.cache.get(roleId);
       return role !== undefined;
     })
-    .map(roleId => `<@&${roleId}>`)
+    .map((roleId) => `<@&${roleId}>`)
     .join(" ");
 
   if (roleMentions.length === 0) {
-    return "Error: **No valid roles were provided**"
+    return "Error: **No valid roles were provided**";
   }
 
   return roleMentions;
@@ -390,63 +418,12 @@ capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
 capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
 */
 
-function capitalizeFirstLetter(string) {
+export function capitalizeFirstLetter(string) {
   if (!string || !string.trim().length) {
-    return 'Error: **Input string is empty or undefined.**';
+    return "Error: **Input string is empty or undefined.**";
   }
 
   return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-/**
-
-Determines the display type of a Discord channel based on its type.
-@param {Discord.Channel} channel - The Discord channel to check.
-@returns {string} The display type of the channel.
-@example
-const channelDisplayType = channelType(interaction.channel);
-console.log(This is a ${channelDisplayType}.); // Returns Text Channel
-*/
-
-function channelType(channel) {
-  if (!channel) {
-    return "Error: **Channel is undefined or doesn't exist**"
-  }
-
-  let displayType;
-  switch (channel.type) {
-    case 'GUILD_TEXT':
-      displayType = 'Text Channel';
-      break;
-    case 'GUILD_VOICE':
-      displayType = 'Voice Channel';
-      break;
-    case 'GUILD_CATEGORY':
-      displayType = 'Category Channel';
-      break;
-    case 'GUILD_NEWS':
-      displayType = 'News Channel';
-      break;
-    case 'GUILD_NEWS_THREAD':
-      displayType = 'News Channel Thread';
-      break;
-    case 'GUILD_PUBLIC_THREAD':
-      displayType = 'Public Channel Thread';
-      break;
-    case 'GUILD_PRIVATE_THREAD':
-      displayType = 'Private Channel Thread';
-      break;
-    case 'GUILD_STAGE_VOICE':
-      displayType = 'Stage Voice Channel';
-      break;
-    case 'UNKNOWN':
-      displayType = '⚠ Unknown Channel Type ⚠';
-      break;
-    default:
-      return `Error: unrecognized channel type ${channel.type}`
-      //displayType = ' ';
-  }
-  return displayType;
 }
 
 /**
@@ -460,30 +437,30 @@ function channelType(channel) {
  * channelSlowMode(interaction.channel);
  */
 
-function channelSlowMode(channel) {
-  if (!channel) {
-    return "Error: **Channel is undefined or doesn't exist**";
-  }
+export function channelSlowMode(channel) {
+  if (!channel) return "Error: **Channel is undefined or doesn't exist**";
 
   const slowModeOptions = {
-    0: 'No Slowmode',
-    5: '5s',
-    10: '10s',
-    15: '15s',
-    30: '30s',
-    60: '1m',
-    120: '2m',
-    300: '5m',
-    600: '10m',
-    900: '15m',
-    1800: '30m',
-    3600: '1h',
-    7200: '2h',
-    21600: '6h'
+    0: "No Slowmode",
+    5: "5s",
+    10: "10s",
+    15: "15s",
+    30: "30s",
+    60: "1m",
+    120: "2m",
+    300: "5m",
+    600: "10m",
+    900: "15m",
+    1800: "30m",
+    3600: "1h",
+    7200: "2h",
+    21600: "6h"
   };
 
   const delay = channel.rateLimitPerUser;
-  return slowModeOptions.hasOwnProperty(delay) ? slowModeOptions[delay] : "Unknown Slowmode"; // I am using hasOwnProperty just in case to avoid returning "Unknown Slowmode" if the delay value is undefined.
+  return slowModeOptions.hasOwnProperty(delay)
+    ? slowModeOptions[delay]
+    : "Unknown Slowmode";
 }
 
 /**
@@ -493,15 +470,15 @@ function channelSlowMode(channel) {
  * @example capitalize(string)
  */
 
-function capitalize(string) {
-  return string
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b(\w)/g, (char) => char.toUpperCase());
+export function capitalize(str: string): string {
+  if (typeof str !== "string") {
+    throw new Error("Argument must be a string");
+  }
+
+  return str.replace(/(?<=(^|\s))(\w)/g, (char) => char.toUpperCase());
 }
 
 /**
-
 Calculates the BMI scale based on the BMI value.
 @param {number} bmi - The BMI value.
 @returns {string} The corresponding BMI scale.
@@ -510,35 +487,35 @@ BMIScale(18.5); // returns 'Normal'
 BMIScale(16); // returns 'Severe Thinness'
 */
 
-function BMIScale(bmi) {
+export function BMIScale(bmi) {
   let scale;
   switch (true) {
     case bmi < 16:
-      scale = '**Severe Thinness**';
+      scale = "**Severe Thinness**";
       break;
     case bmi >= 16 && bmi <= 17:
-      scale = '**Moderate Thinness**';
+      scale = "**Moderate Thinness**";
       break;
     case bmi >= 17 && bmi <= 18.5:
-      scale = '**Mild Thinness**';
+      scale = "**Mild Thinness**";
       break;
     case bmi >= 18.5 && bmi <= 25:
-      scale = '**Normal**';
+      scale = "**Normal**";
       break;
     case bmi >= 25 && bmi <= 30:
-      scale = '**Overweight**';
+      scale = "**Overweight**";
       break;
     case bmi >= 30 && bmi <= 35:
-      scale = '**Obese Class I**';
+      scale = "**Obese Class I**";
       break;
     case bmi >= 35 && bmi <= 40:
-      scale = '**Obese Class II**';
+      scale = "**Obese Class II**";
       break;
     case bmi > 40:
-      scale = '**Obese Class III**';
+      scale = "**Obese Class III**";
       break;
     default:
-      scale = 'Invalid BMI value';
+      scale = "Invalid BMI value";
       break;
   }
   return scale;
@@ -558,37 +535,12 @@ BMIImperial(150, 68)
 BMIMetric(68, 1.73)
 */
 
-function BMIImperial(weight, height) {
+export function BMIImperial(weight, height) {
   return (weight * 703) / (height * height);
 }
 
-function BMIMetric(weight, height) {
+export function BMIMetric(weight, height) {
   return weight / (height * height);
-}
-
-/**
- * Checks if a given text contains profanity using the Luminabot API.
- * @async
- * @param {string} text - The text to check for profanity.
- * @returns {Promise<boolean>} - A promise that resolves to true if the text contains profanity, false otherwise.
- * @throws {Error} - If there was an error fetching the profanity API.
- */
-
-function hasProfanity(text) {
-  let functionResponse;
-  try {
-    fetch(`https://luminabot.xyz/api/json/containsprofanity?text=${text}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data.isSwear);
-        if (data.isSwear === "false") functionResponse = false;
-        else functionResponse = true;
-      });
-  } catch (err) {
-    console.log(err);
-    functionResponse = false;
-  }
-  return functionResponse;
 }
 
 /**
@@ -616,48 +568,67 @@ twentyFourToTwelve(24)
 twentyFourToTwelve(-1)
 */
 
-function twentyFourToTwelve(hours) {
+export function twentyFourToTwelve(hours) {
   if (isNaN(hours) || hours < 0 || hours > 23) return;
 
   let displayTime;
-  
+
   if (hours < 12) {
     if (hours === 0) {
       displayTime = `12:00 AM`;
     } else {
-      displayTime = `${hours.toFixed(0)}:${(hours % 1 * 60).toFixed(0).padStart(2, '0')} AM`;
+      displayTime = `${hours.toFixed(0)}:${((hours % 1) * 60)
+        .toFixed(0)
+        .padStart(2, "0")} AM`;
     }
   } else {
     hours -= 12;
     if (hours === 0) {
       displayTime = `12:00 PM`;
     } else {
-      displayTime = `${hours.toFixed(0)}:${(hours % 1 * 60).toFixed(0).padStart(2, '0')} PM`;
+      displayTime = `${hours.toFixed(0)}:${((hours % 1) * 60)
+        .toFixed(0)
+        .padStart(2, "0")} PM`;
     }
   }
-  
+
   return displayTime;
 }
 
-function chunkAverage(chunkArray, size = 7) {
-  const mainChunks = [];
-  const backupChunks = [];
-  const averageChunks = [];
+/**
+ *
+ * @param array [Numbers array that contains the data you want to split]
+ * @param size [The maximum number of elements in each array]
+ * @returns [[...], [...]]
+ */
+export function chunkAverage(array: number[], size: number): number[] {
+  let renderedChunk: number[];
+  let chunkSum = 0;
+
+  const chunkArray = [...array];
+  const mainChunk: number[][] = [];
+  const averageChunks: number[] = [];
+
+  const backupChunks: number[][] = [];
+
+  const splitIndex = !Number.isNaN(size) ? size : 7;
 
   while (chunkArray.length > 0) {
-    const renderedChunk = chunkArray.splice(0, size);
-    renderedChunk.length === size
-      ? mainChunks.push(renderedChunk)
-      : backupChunks.push(renderedChunk);
+    renderedChunk = chunkArray.splice(0, splitIndex);
+
+    if (renderedChunk.length === splitIndex) mainChunk.push(renderedChunk);
+    else backupChunks.push(renderedChunk);
   }
 
-  for (let i = 0; i < mainChunks.length || i < backupChunks.length; i++) {
-    const chunkSum = mainChunks.length
-      ? mainChunks[i].reduce((partialSum, a) => partialSum + a, 0)
-      : backupChunks[i].reduce((partialSum, a) => partialSum + a, 0);
-    averageChunks.push(chunkSum);
+  for (let j = 0; j < mainChunk.length || j < backupChunks.length; j++) {
+    if (mainChunk.length) {
+      chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
+      averageChunks.push(chunkSum);
+    } else {
+      chunkSum = backupChunks[j].reduce((partialSum, a) => partialSum + a, 0);
+      averageChunks.push(chunkSum);
+    }
   }
-
   return averageChunks;
 }
 
@@ -677,11 +648,7 @@ return Output: 'Rank must be a positive integer.'
 RPRequiredToLevelUp(-3);
 */
 
-function RPRequiredToLevelUp(rank) {
-  if (!Number.isInteger(rank) || rank <= 0) {
-    return 'Rank must be a positive integer.'
-  }
-
+export function RPRequiredToLevelUp(rank: number) {
   return rank * 800 + (rank - 1) * 400;
 }
 
@@ -694,17 +661,19 @@ function RPRequiredToLevelUp(rank) {
  * @returns {Array<boolean, number, number>|string} Returns an array containing a boolean value indicating whether the user has ranked up, the number of levels added, and the remaining RP, or a string indicating that the arguments must be positive numbers.
  */
 
-function checkRank(currentRank, currentRP, addedRP) {
-  if (currentRank < 0 || currentRP < 0 || addedRP < 0) {
-    return 'Arguments must be positive numbers.'
-  }
-
+export function checkRank(
+  currentLevel: number,
+  addedXP: number
+): [boolean, number, number] {
   let addedLevels = 0;
   let hasRankedUp = false;
 
-  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+  const currentRank = Math.abs(currentLevel);
+  const addedRP = Math.abs(addedXP);
 
-  if (currentRank >= 5000) return [false, 0, addedRP];
+  let requiredRP = RPRequiredToLevelUp(currentRank + addedLevels);
+
+  if (currentRank >= 5000) return [false, 0, 0];
 
   if (addedRP > requiredRP) {
     hasRankedUp = true;
@@ -719,7 +688,7 @@ function checkRank(currentRank, currentRP, addedRP) {
         addedLevels--;
         break;
       }
-      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels, currentRP);
+      requiredRP = RPRequiredToLevelUp(currentRank + addedLevels);
     }
   }
   if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
@@ -727,35 +696,94 @@ function checkRank(currentRank, currentRP, addedRP) {
   return [hasRankedUp, addedLevels, remainingRP];
 }
 
-module.exports = {
-  randomRange,
-  delay,
-  msToTime,
-  resume,
-  MessageSplit,
-  missingPermissions,
-  removeEmojis,
-  hasNumber,
-  Arraytoshuffle,
-  rolePermissions,
-  KeyPerms,
-  roleInGuildCheck,
-  capitalizeFirstLetter,
-  channelSlowMode,
-  channelType,
-  capitalize,
-  BMIScale,
-  BMIImperial,
-  BMIMetric,
-  betterMSToTime,
-  hasProfanity,
-  twentyFourToTwelve,
-  chunkAverage,
-  RPRequiredToLevelUp,
-  checkRank
-};
+/**
+ * Attempts to get a guild's general text channel, or any text channel that the bot has permission to send messages to,
+ * optionally searching for channels that match the provided name identity.
+ * @param guild - The guild to search for the text channel in.
+ * @param nameIdentity - Optional. The name-based identity of the text channel to search for.
+ * @returns A `TextChannel` if one is found, or `undefined` if none are found.
+ */
 
-const timeUnits = {
+export function guildChannels(
+  guild: Guild,
+  NameIdentity = "general" as string
+): TextChannel | undefined {
+  let channel: TextChannel | undefined;
+
+  if (guild.channels.cache.has(guild.id)) {
+    channel = guild.channels.cache.get(guild.id) as TextChannel;
+
+    if (
+      channel
+        .permissionsFor(guild.client.user)
+        ?.has(PermissionFlagsBits.SendMessages)
+    ) {
+      return channel;
+    }
+  }
+
+  channel = guild.channels.cache.find(
+    (channel) =>
+      channel.name.toLowerCase().includes(NameIdentity) &&
+      channel.type === ChannelType.GuildText &&
+      channel
+        .permissionsFor(guild.client.user)
+        ?.has(PermissionFlagsBits.SendMessages)
+  ) as TextChannel | undefined;
+
+  if (channel) return channel;
+
+  return guild.channels.cache
+    .filter(
+      (channel) =>
+        channel.type === ChannelType.GuildText &&
+        channel
+          .permissionsFor(guild.client.user)
+          ?.has(PermissionFlagsBits.SendMessages)
+    )
+    .sort((a: TextChannel, b: TextChannel) => a.position - b.position)
+    .first() as TextChannel | undefined;
+}
+
+/**
+ * Gets the last `count` digits of a snowflake as a string.
+ * If the `snowflake` is shorter than `count` digits, returns the entire snowflake.
+ *
+ * @param {string} snowflake The snowflake to get the last digits from.
+ * @param {number} count The number of digits to return.
+ * @returns {string} The last `count` digits of the snowflake, not zero-padded.
+ */
+export function getLastDigits(snowflake: Snowflake, count: number) {
+  return snowflake.slice(-count);
+}
+
+/**
+ * Calculates the reward for a given level.
+ * @param level - The level of the user
+ * @returns The reward for the given level
+ */
+export function levelUpReward(level: number): number {
+  // Get the absolute rank of the user (level can be negative)
+  const rank = Math.abs(level);
+
+  // The array of rewards for each level
+  const rewardArray = [200, 400, 600, 800, 1200, 1400, 1600, 1800, 2000, 2000];
+
+  // Calculate the position of the reward in the array based on the modulo of the rank,
+  // if it's a multiple of 10 then the position will be 10
+  let rewardPosition: number;
+  if (rank % 10 == 0) rewardPosition = 10;
+  else rewardPosition = rank % 10;
+
+  // Return the reward value from the array based on the calculated position
+  return rewardArray[rewardPosition - 1];
+}
+
+interface TimeUnits {
+  [key: string]: string[];
+}
+
+const timeUnits: TimeUnits = {
   s: ["sec(s)", "second(s)"],
   min: ["minute(s)", "m", "min(s)"],
   h: ["hr(s)", "hour(s)"],
@@ -768,7 +796,11 @@ const timeUnits = {
   cen: ["cent(s)", "century", "centuries"]
 };
 
-const timeUnitValues = {
+interface TimeUnitValues {
+  [key: string]: number;
+}
+
+const timeUnitValues: TimeUnitValues = {
   s: 1000,
   min: 1000 * 60,
   h: 1000 * 60 * 60,
@@ -781,7 +813,13 @@ const timeUnitValues = {
   cen: 1000 * 60 * 60 * 24 * 365 * 100
 };
 
-const fullTimeUnitNames = {
+interface TimeUnitNames {
+  [key: string]: {
+    [key: string]: string;
+  };
+}
+
+const fullTimeUnitNames: TimeUnitNames = {
   s: {
     short: "s",
     medium: "sec",
