@@ -7,9 +7,9 @@
 - GBF Handler Updated is found in the GBF Folders under name handler
 ➜ The GBF Handler does not have an npm package so to use it you'll have to install it from here and set it up, instructions are found in the README
 
-### Warning
-Notes explaining everything are found in the **js** versions, the **ts** versions do not contain notes explaining what is going on since I won't explain everything twice
-
-## More Information will be added here once available
+## Languages Used:
+- TypeScript 
+- JavaScript
+- JSON
 
 Made by .Bunnys
