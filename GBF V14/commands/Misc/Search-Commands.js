@@ -9,11 +9,8 @@ const SlashCommand = require("../../utils/slashCommands");
 
 const colors = require("../../GBF/GBFColor.json");
 const emojis = require("../../GBF/GBFEmojis.json");
-const weather = require("weather-js");
 
 const fetch = require("node-fetch");
-
-const malScraper = require("mal-scraper");
 
 module.exports = class Search extends SlashCommand {
   constructor(client) {
@@ -46,7 +43,7 @@ module.exports = class Search extends SlashCommand {
                     "x-rapidapi-host":
                       "mashape-community-urban-dictionary.p.rapidapi.com",
                     "x-rapidapi-key":
-                      "YOUR KEY GOES HERE"
+                      "693ff5fa5dmsh9a0687dcd36d548p19344cjsn67a5f0097ced"
                   }
                 }
               ).then((response) => response.json());
@@ -134,83 +131,6 @@ module.exports = class Search extends SlashCommand {
                 ephemeral: true
               });
             }
-          }
-        },
-        anime: {
-          description: "Shows info about an anime",
-          args: [
-            {
-              name: "anime",
-              type: ApplicationCommandOptionType.String,
-              description: "The anime that you want to search",
-              required: true
-            }
-          ],
-          execute: async ({ client, interaction }) => {
-            const search = interaction.options.getString("anime");
-
-            const data = await malScraper.getInfoFromName(`${search}`);
-
-            const malEmbed = new EmbedBuilder()
-              .setAuthor({
-                name: `My Anime List search result for ${search}`
-                  .split(",")
-                  .join(" "),
-                iconURL: interaction.user.displayAvatarURL({
-                  dynamic: true,
-                  size: 512
-                })
-              })
-              .setThumbnail(data.picture)
-              .setColor("#e91e63")
-              .addField("Premiered", `\`${data.premiered}\``, true)
-              .addField("Broadcast", `\`${data.broadcast}\``, true)
-              .addField("Genres", `\`${data.genres}\``, true)
-              .addField("English Title", `\`${data.englishTitle}\``, true)
-              .addField("Japanese Title", `\`${data.japaneseTitle}\``, true)
-              .addField("Type", `\`${data.type}\``, true)
-              .addField("Episodes", `\`${data.episodes}\``, true)
-              .addField("Rating", `\`${data.rating}\``, true)
-              .addField("Aired", `\`${data.aired}\``, true)
-              .addField("Score", `\`${data.score}\``, true)
-              .addField("Favorite", `\`${data.favorites}\``, true)
-              .addField("Ranked", `\`${data.ranked}\``, true)
-              .addField("Duration", `\`${data.duration}\``, true)
-              .addField("Studios", `\`${data.studios}\``, true)
-              .addField("Popularity", `\`${data.popularity}\``, true)
-              .addField("Members", `\`${data.members}\``, true)
-              .addField("Score Stats", `\`${data.scoreStats}\``, true)
-              .addField("Source", `\`${data.source}\``, true)
-              .addField("Synonyms", `\`${data.synonyms}\``, true)
-              .addField("Status", `\`${data.status}\``, true)
-              .addField("Identifier", `\`${data.id}\``, true)
-              .addField("Link", data.url, true)
-              .setFooter({
-                text: `Requested by: ${interaction.user.tag}`,
-                iconURL: interaction.user.displayAvatarURL()
-              });
-
-            const linkToAnime = new ButtonBuilder()
-              .setStyle(ButtonStyle.Link)
-              .setLabel(data.englishTitle)
-              .setURL(data.url);
-
-            const buttonRow = new ActionRowBuilder().addComponents([
-              linkToAnime
-            ]);
-
-            await interaction
-              .reply({
-                embeds: [malEmbed],
-                components: [buttonRow]
-              })
-              .catch((err) => {
-                console.log(`Anime Command Error: ${err.message}`);
-                return interaction.reply({
-                  content: `I can't find ${search}, try to use it's real name if your using an abbreviation`,
-                  ephemeral: true
-                });
-              });
           }
         },
         wiki: {
@@ -362,150 +282,6 @@ module.exports = class Search extends SlashCommand {
             await interaction.reply({
               embeds: [worldClock]
             });
-          }
-        },
-        weather: {
-          description: "Shows the weather in a certain location",
-          args: [
-            {
-              name: "unit",
-              type: ApplicationCommandOptionType.String,
-              description: `F or C`,
-              choices: [
-                {
-                  name: "Celsius",
-                  value: "C"
-                },
-                {
-                  name: "Fahrenheit",
-                  value: "F"
-                }
-              ],
-              required: true
-            },
-            {
-              name: "location",
-              type: ApplicationCommandOptionType.String,
-              description: `The place that you want to get its temp.`,
-              required: true
-            }
-          ],
-          execute: async ({ client, interaction }) => {
-            const unit = interaction.options.getString("unit");
-            const location = interaction.options.getString("location");
-
-            const erE = new EmbedBuilder()
-              .setTitle(`Invalid Location 🌎`)
-              .setColor(colors.ERRORRED)
-              .setDescription(
-                `Are you sure that \`${location}\` is a real place 🤔`
-              );
-
-            if (unit === "C") {
-              weather.find(
-                {
-                  search: location,
-                  degreeType: "C"
-                },
-                function (error, result) {
-                  if (error)
-                    return interaction.reply({
-                      content:
-                        `I ran into an error: ` +
-                        error +
-                        `\nPlease check back another time (If the error code is 500 then there is a server side issue)`,
-                      ephemeral: true
-                    });
-
-                  if (result === undefined || result.length === 0)
-                    return interaction.reply({
-                      embeds: [erE],
-                      ephemeral: true
-                    });
-
-                  let current = result[0].current;
-                  let location = result[0].location;
-
-                  const weatherinfoC = new EmbedBuilder()
-                    .setAuthor({
-                      name: `Weather forecast for ${current.observationpoint}`
-                    })
-                    .setDescription(`**${current.skytext}**`)
-                    .setColor("#e91e63")
-                    .addField("Timezone", `UTC${location.timezone}`, true)
-                    .addField("Degree Type", "Celsius", true)
-                    .addField("Temperature", `${current.temperature}°`, true)
-                    .addField("Wind", current.winddisplay, true)
-                    .addField("Feels like", `${current.feelslike}°`, true)
-                    .addField("Humidity", `${current.humidity}%`, true)
-                    .setThumbnail(current.imageUrl);
-
-                  interaction
-                    .reply({
-                      embeds: [weatherinfoC]
-                    })
-                    .catch((err) => {
-                      return interaction.reply({
-                        content:
-                          "Seems like there was something wrong with the API, Please check back later!",
-                        ephemeral: true
-                      });
-                    });
-                }
-              );
-            } else if (unit === "F") {
-              weather.find(
-                {
-                  search: location,
-                  degreeType: "F"
-                },
-                function (error, result) {
-                  if (error)
-                    returninteraction.reply({
-                      content:
-                        `I ran into an error: ` +
-                        error +
-                        `\nPlease check back another time (If the error code is 500 then there is a server side issue)`,
-                      ephemeral: true
-                    });
-
-                  if (result === undefined || result.length === 0)
-                    return interaction.reply({
-                      embeds: [erE],
-                      ephemeral: true
-                    });
-
-                  let current = result[0].current;
-                  let location = result[0].location;
-
-                  const weatherinfoF = new EmbedBuilder()
-                    .setAuthor({
-                      name: `Weather forecast for ${current.observationpoint}`
-                    })
-                    .setDescription(`**${current.skytext}**`)
-                    .setColor("#e91e63")
-                    .addField("Timezone", `UTC${location.timezone}`, true)
-                    .addField("Degree Type", "Fahrenheit", true)
-                    .addField("Temperature", `${current.temperature}°`, true)
-                    .addField("Wind", current.winddisplay, true)
-                    .addField("Feels like", `${current.feelslike}°`, true)
-                    .addField("Humidity", `${current.humidity}%`, true)
-                    .setThumbnail(current.imageUrl);
-
-                  interaction
-                    .reply({
-                      embeds: [weatherinfoF]
-                    })
-                    .catch((err) => {
-                      return interaction.reply({
-                        content:
-                          "Seems like there was something wrong with the API, Please check back later!",
-                        ephemeral: true
-                      });
-                    });
-                }
-              );
-            }
           }
         }
       }
