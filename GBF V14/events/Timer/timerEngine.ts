@@ -1,29 +1,31 @@
-const {
+import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Events
-} = require("discord.js");
+  Events,
+  BaseClient,
+  ColorResolvable
+} from "discord.js";
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const timerSchema = require("../../schemas/User Schemas/Timer Schema");
-const bankSchema = require("../../schemas/User Schemas/User Profile Schema");
+import timerSchema from "../../schemas/User Schemas/Timer Schema";
+import bankSchema from "../../schemas/User Schemas/User Profile Schema";
 
-const { msToTime } = require("../../utils/Engine");
+import { msToTime } from "../../utils/Engine";
 
-const {
+import {
   xpRequired,
   xpRequiredAccount,
   checkUser,
   calculateXP,
   checkRank,
   checkRankAccount
-} = require("../../utils/TimerLogic");
+} from "../../utils/TimerLogic";
 
-module.exports = (client) => {
+module.exports = (client: BaseClient) => {
   client.on(Events.InteractionCreate, async (interaction) => {
     // Checking if the interaction type is a button
 
@@ -62,7 +64,7 @@ module.exports = (client) => {
 
     const noAccount = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} 404 Not Found`)
-      .setColor(colours.ERRORRED)
+      .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(
         `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>.`
       );
@@ -90,7 +92,7 @@ module.exports = (client) => {
 
     const noMessageData = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} 403 Forbidden`)
-      .setColor(colours.ERRORRED)
+      .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(
         `You can't use that button, to create your own use </timer initiate:1068210539689414777>.`
       );
@@ -109,7 +111,7 @@ module.exports = (client) => {
 
     const noMessage = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} 404-1 Not Found`)
-      .setColor(colours.ERRORRED)
+      .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(
         `The session initiation message tied to this account was not found, please use</timer initiate:1068210539689414777> to start a new session or create a new initiation message.`
       );
@@ -118,7 +120,7 @@ module.exports = (client) => {
 
     const invalidPermissions = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} 403-1 Forbidden`)
-      .setColor(colours.ERRORRED)
+      .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(
         `You can't use that, create your own using </timer registry:1068210539689414777>.`
       );
@@ -190,7 +192,7 @@ module.exports = (client) => {
 
       const timerAlreadyOn = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} Error Starting Session`)
-        .setColor(colours.ERRORRED)
+        .setColor(colours.ERRORRED as ColorResolvable)
         .setDescription(`The timer is already on.`);
 
       if (timerData.intiationTime) {
@@ -212,7 +214,7 @@ module.exports = (client) => {
 
       const timerStarted = new EmbedBuilder()
         .setTitle(`${emojis.VERIFY} Success`)
-        .setColor(colours.DEFAULT)
+        .setColor(colours.DEFAULT as ColorResolvable)
         .setDescription(
           `Timer started ${interaction.user.username}, best of luck.`
         );
@@ -312,7 +314,7 @@ module.exports = (client) => {
 
       const timerAlreadyOff = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} Error Stopping Session`)
-        .setColor(colours.ERRORRED)
+        .setColor(colours.ERRORRED as ColorResolvable)
         .setDescription(`Specified session has already ended.`)
         .setFooter({
           text: `Session Number: ${timerData.numberOfStarts}`
@@ -333,17 +335,19 @@ module.exports = (client) => {
 
       // Getting the total break time
 
-      const breakTime =
+      const breakTime: number =
         timerData.sessionBreakTime > 0 ? timerData.sessionBreakTime : 0;
 
       // Calculating the time between the current date and the time when the session started then subtracting it from the break time
+      let timeElapsed: number | string = (
+        (Date.now() - timerData.intiationTime.getTime()) / 1000 -
+        breakTime
+      ).toFixed(3);
 
-      let timeElapsed =
-        ((Date.now() - timerData.intiationTime.getTime()) / 1000).toFixed(3) -
-        breakTime;
+      if (Number(timeElapsed) <= 0)
+        timeElapsed = Math.abs(Math.abs(Number(timeElapsed)) - breakTime);
 
-      if (timeElapsed <= 0)
-        timeElapsed = Math.abs(Math.abs(timeElapsed) - breakTime);
+      timeElapsed = Number(timeElapsed);
 
       // Calculating the average break time
       // Here we don't check if the numerator is 0 since 0 / Number = 0 while Number / 0 is undefined
@@ -377,142 +381,57 @@ module.exports = (client) => {
 
       // Calculating the XP given
 
-      const rewardedXP = Math.round(calculateXP(timeElapsed / 60));
+      const rewardedXP = Math.round(calculateXP(Number(timeElapsed) / 60));
 
       await timerData.updateOne({
-        seasonXP: timerData.seasonXP + rewardedXP,
-        accountXP: timerData.accountXP + rewardedXP
+        seasonXP: timerData.seasonXP + rewardedXP
+      });
+
+      await userData.updateOne({
+        RP: userData.RP + rewardedXP
       });
 
       let rankUpEmoji;
 
       // Checking who has the higher level
 
-      let highestLevel =
-        timerData.seasonLevel > timerData.accountLevel
-          ? timerData.seasonLevel
-          : timerData.accountLevel;
-
-      highestLevel++;
-
-      if (highestLevel <= 25) rankUpEmoji = `<a:W_:805604232354332704>`;
-      else if (highestLevel > 25 && highestLevel <= 50)
-        rankUpEmoji = `<a:blackSpin:1025851052442005594>`;
-      else if (highestLevel > 50 && highestLevel <= 75)
-        rankUpEmoji = `<a:redSpin:1025851361583173773>`;
-      else if (highestLevel > 75 && highestLevel < 100)
-        rankUpEmoji = `<a:pinkSpin:1025851222068052101>`;
-      else if (highestLevel === 100)
-        rankUpEmoji = `<a:100_Streak_Badge:963696947015864340>`;
-      else if (highestLevel > 100)
-        rankUpEmoji = `<a:donutSpin:1025851417421955204>`;
-
       // Checking if the user leveled up or not
 
-      const hasRankedUpSeason = checkRank(
+      const hasRankedUpSeason: Array<number | boolean> = checkRank(
         timerData.seasonLevel,
         timerData.seasonXP,
         timerData.seasonXP + rewardedXP
       );
 
-      const hasRankedUpAccount = checkRankAccount(
-        timerData.accountLevel,
-        timerData.accountXP,
-        timerData.accountXP + rewardedXP
+      const hasRankedUpAccount: Array<number | boolean> = checkRankAccount(
+        userData.Rank,
+        userData.RP,
+        userData.RP + rewardedXP
       );
-
-      const leveledUpMessage = new EmbedBuilder()
-        .setTitle(`${rankUpEmoji} Ranked Up`)
-        .setColor(colours.DEFAULT);
-
-      let hasRankedUpMessage = ``;
-
-      // If the user's seasonal level has increased
 
       // Creating a variable to determine if we send the level up message or not
 
-      let sendRankUp = false;
-
-      // Creating a progress bar
-
-      let seasonProgressBar;
-
-      const percentageSeasonComplete =
-        (hasRankedUpSeason[2] / xpRequired(timerData.seasonLevel + 2)) * 100;
-
-      if (percentageSeasonComplete >= 50 && percentageSeasonComplete < 90)
-        seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
-      else if (percentageSeasonComplete >= 25 && percentageSeasonComplete < 50)
-        seasonProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
-      else if (percentageSeasonComplete >= 99)
-        seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
-      else if (percentageSeasonComplete < 25)
-        seasonProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
-
-      if (hasRankedUpSeason[0] === true) {
-        hasRankedUpMessage =
-          hasRankedUpMessage +
-          `• New Season Level: \`${
-            timerData.seasonLevel + 1
-          }\`\n• Season XP: \`${hasRankedUpSeason[2].toLocaleString()}\`\n• XP required to reach level ${
-            timerData.seasonLevel + 2
-          }: \`${xpRequired(
-            timerData.seasonLevel + 2
-          ).toLocaleString()}\`\n• Season Level Progress: ${seasonProgressBar} \`[${percentageSeasonComplete.toFixed(
-            2
-          )} %]\`\n\n`;
-
-        sendRankUp = true;
-
-        await timerData.updateOne({
-          seasonLevel: timerData.seasonLevel + 1,
-          seasonXP: Number(hasRankedUpSeason[2])
-        });
-      }
+      if (hasRankedUpSeason[0] === true)
+        await client.emit(
+          "playerLevelUp",
+          interaction,
+          interaction.user,
+          "seasonLevel",
+          hasRankedUpSeason[1],
+          hasRankedUpSeason[2]
+        );
 
       // Doing the same thing but for the account level
 
-      let accountProgressBar;
-
-      const percentageAccountComplete =
-        (hasRankedUpAccount[2] /
-          xpRequiredAccount(timerData.accountLevel + 2)) *
-        100;
-
-      if (percentageAccountComplete >= 50 && percentageAccountComplete < 90)
-        accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightEmpty}`;
-      else if (
-        percentageAccountComplete >= 25 &&
-        percentageAccountComplete < 50
-      )
-        accountProgressBar = `${emojis.leftFull}${emojis.middleEmpty}${emojis.rightEmpty}`;
-      else if (percentageAccountComplete >= 99)
-        accountProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.rightFull}`;
-      else if (percentageAccountComplete < 25)
-        accountProgressBar = `${emojis.leftEmpty}${emojis.middleEmpty}${emojis.rightEmpty}`;
-      console.log(hasRankedUpAccount);
-      if (hasRankedUpAccount[0] === true) {
-        hasRankedUpMessage =
-          hasRankedUpMessage +
-          `• New Account Level: \`${
-            timerData.accountLevel + 1
-          }\`\n• Account XP: \`${hasRankedUpAccount[2].toLocaleString()}\`\n• XP required to reach level ${
-            timerData.accountLevel + 2
-          }: \`${xpRequiredAccount(
-            timerData.accountLevel + 2
-          ).toLocaleString()}\`\n• Account Level Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
-            2
-          )} %]\``;
-
-        sendRankUp = true;
-
-        await timerData.updateOne({
-          accountLevel: timerData.accountLevel + 1,
-          accountXP: Number(hasRankedUpAccount[2])
-        });
-      }
-
-      leveledUpMessage.setDescription(`${hasRankedUpMessage}`);
+      if (hasRankedUpAccount[0] === true)
+        await client.emit(
+          "playerLevelUp",
+          interaction,
+          interaction.user,
+          "accountLevel",
+          hasRankedUpAccount[1],
+          hasRankedUpAccount[2]
+        );
 
       // Making the description here so it's easier to update
 
@@ -569,7 +488,7 @@ module.exports = (client) => {
 
       const longestSession = new EmbedBuilder()
         .setTitle(`${emojis.VERIFY} New Longest Session`)
-        .setColor(colours.DEFAULT)
+        .setColor(colours.DEFAULT as ColorResolvable)
         .setDescription(
           ` ${
             interaction.user.username
@@ -593,7 +512,7 @@ module.exports = (client) => {
             timerData.sessionTopic ? timerData.sessionTopic : ""
           }`
         )
-        .setColor(colours.DEFAULT)
+        .setColor(colours.DEFAULT as ColorResolvable)
         .setDescription(`${interaction.user.username}\n\n${embedDescription}`)
         .setFooter({
           text: `Good Job`
@@ -609,19 +528,9 @@ module.exports = (client) => {
         components: [mainButtonsRowDA]
       });
 
-      if (sendRankUp === true) {
-        await interaction.reply({
-          content: `<@${timerData.userID}>`,
-          embeds: [leveledUpMessage]
-        });
-
-        return interaction.followUp({
-          embeds: [sessionStats]
-        });
-      } else
-        return interaction.reply({
-          embeds: [sessionStats]
-        });
+      return interaction.reply({
+        embeds: [sessionStats]
+      });
     } else if (interaction.customId === "pauseTimer") {
       const statusCheck = checkUser(
         timerData,
@@ -686,11 +595,22 @@ module.exports = (client) => {
           .setStyle(2)
       ]);
 
-      // Checking if the timer is already paused
+      // Checking if the timer is already paused & off
+
+      const timerOff = new EmbedBuilder()
+        .setTitle(`${emojis.ERROR} Error Stopping Session`)
+        .setColor(colours.ERRORRED as ColorResolvable)
+        .setDescription(`The timer is not on.`);
+
+      if (!timerData.intiationTime)
+        return interaction.reply({
+          embeds: [timerOff],
+          ephemeral: true
+        });
 
       const timerAlreadyPaused = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't do that`)
-        .setColor(colours.ERRORRED)
+        .setColor(colours.ERRORRED as ColorResolvable)
         .setDescription(
           ` ${interaction.user.username} the timer is already paused.`
         );
@@ -716,7 +636,7 @@ module.exports = (client) => {
 
       const timerPaused = new EmbedBuilder()
         .setTitle(`${emojis.VERIFY} Success`)
-        .setColor(colours.DEFAULT)
+        .setColor(colours.DEFAULT as ColorResolvable)
         .setDescription(
           `${interaction.user.username}\n\nThe timer has been paused, time elapsed from now till un-pause time won't be counted.\nTo un-pause use the buttons on the [original message](https://discord.com/channels/${interaction.guild.id}/${interaction.channel.id}/${timerData.messageID} "Easter egg number 2!")`
         );
@@ -770,7 +690,7 @@ module.exports = (client) => {
 
       const timerNotPaused = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't do that`)
-        .setColor(colours.ERRORRED)
+        .setColor(colours.ERRORRED as ColorResolvable)
         .setDescription(`The timer is not paused.`);
 
       const mainButtonsRowDS = new ActionRowBuilder().addComponents([
@@ -820,7 +740,7 @@ module.exports = (client) => {
 
       const timerUnpaused = new EmbedBuilder()
         .setTitle(`${emojis.VERIFY} Success`)
-        .setColor(colours.DEFAULT)
+        .setColor(colours.DEFAULT as ColorResolvable)
         .setDescription(
           `${
             interaction.user.username
