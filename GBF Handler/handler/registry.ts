@@ -1,8 +1,8 @@
-const { lstatSync, readdirSync } = require("fs");
-const { join } = require("path");
-const Command = require("../utils/command");
+import { lstatSync, readdirSync } from "fs";
+import { join } from "path";
+import Command from "../utils/command";
 
-async function registerCommands(client, ...dirs) {
+export async function registerCommands(client, ...dirs: string[]) {
   for (const dir of dirs) {
     let files = await readdirSync(join(__dirname, dir));
 
@@ -15,7 +15,9 @@ async function registerCommands(client, ...dirs) {
       else {
         if (file.endsWith(".js") || file.endsWith(".ts")) {
           try {
-            let cmdModule = new (require(join(__dirname, dir, file)))(client);
+            let cmdModule = new (require(join(__dirname, dir, file)).default)(
+              client
+            );
 
             if (cmdModule instanceof Command) {
               const { name, aliases } = cmdModule;
@@ -26,7 +28,7 @@ async function registerCommands(client, ...dirs) {
                     __dirname,
                     dir,
                     file
-                  )}' command doesn't have a name, Please double check the code!`
+                  )}' command doesn't have a name. Please double check the code!`
                 );
                 continue;
               }
@@ -37,14 +39,14 @@ async function registerCommands(client, ...dirs) {
                     __dirname,
                     dir,
                     file
-                  )}) command name has already been added, Please double check the code!`
+                  )}) command name has already been added. Please double check the code!`
                 );
                 continue;
               }
 
               client.commands.set(name, cmdModule);
               if (aliases)
-                aliases.map((alias) => client.aliases.set(alias, name));
+                aliases.map((alias) => client.aliases!.set(alias, name));
             } else {
               const { name } = cmdModule;
 
@@ -54,7 +56,7 @@ async function registerCommands(client, ...dirs) {
                     __dirname,
                     dir,
                     file
-                  )}' command doesn't have a name, Please double check the code!`
+                  )}' command doesn't have a name. Please double check the code!`
                 );
                 continue;
               }
@@ -65,7 +67,7 @@ async function registerCommands(client, ...dirs) {
                     __dirname,
                     dir,
                     file
-                  )}) slash command name has already been added, Please double check the code!`
+                  )}) slash command name has already been added. Please double check the code!`
                 );
                 continue;
               }
@@ -79,7 +81,3 @@ async function registerCommands(client, ...dirs) {
     }
   }
 }
-
-module.exports = {
-  registerCommands
-};
