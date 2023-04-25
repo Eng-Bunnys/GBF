@@ -12,6 +12,7 @@ class GBFCmd {
   readonly devOnly: boolean;
   readonly development: boolean;
   readonly devBypass: boolean;
+  readonly dmEnabled: boolean;
   readonly Partner: boolean;
   readonly args: any[];
 
@@ -30,6 +31,7 @@ class GBFCmd {
       devOnly = false,
       devBypass = false,
       development = false,
+      dmEnabled = false,
       Partner = false,
       args = []
     }: {
@@ -45,6 +47,7 @@ class GBFCmd {
       devOnly?: boolean;
       devBypass?: boolean;
       development?: boolean;
+      dmEnabled?: boolean;
       Partner?: boolean;
       args?: any[];
     }
@@ -62,6 +65,7 @@ class GBFCmd {
     this.devOnly = devOnly;
     this.devBypass = devBypass;
     this.development = development;
+    this.dmEnabled = dmEnabled;
     this.Partner = Partner;
     this.args = args;
   }
