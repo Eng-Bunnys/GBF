@@ -1,20 +1,22 @@
-const { redBright, whiteBright, underline } = require("chalk");
+import chalk, { redBright, whiteBright, underline } from "chalk";
 
-const { textSync } = require("figlet");
+import figlet, { textSync } from "figlet";
 
-const GBFVersion = require("../GBF/Version.json");
+import { capitalize } from "../utils/Engine";
 
-const { capitalize } = require("../utils/Engine");
+import { Client, Events } from "discord.js";
 
-const { Events } = require("discord.js");
+import GBFVersion from "../GBF/Version.json";
 
-module.exports = (client) => {
+module.exports = (client: Client) => {
   client.on(Events.ClientReady, async () => {
-    const totalUsers =
-      client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
+    const totalUsers = client.guilds.cache.reduce(
+      (acc, guild) => acc + guild.memberCount,
+      0
+    );
 
     client.user.setPresence({
-      activities: [{ name: "GBF Bot", type: 2 }],
+      activities: [{ name: "GBF 2.5.0", type: 2 }],
       status: "online"
     });
 
@@ -39,14 +41,14 @@ module.exports = (client) => {
         `> Total app users: ${totalUsers.toLocaleString()}\n> Total Servers: ${client.guilds.cache.size.toLocaleString()}\n---------------------------------\n` +
           `> Discord Verified: ${
             client.user.verified ? "Yes" : "No"
-          }\n---------------------------------\n` +
+          }\n---------------------------------` +
           `\n> Presence: ${capitalize(
             client.user.presence.status
           )}\n> Status: ${client.user.presence.activities[0].name}`
       )
     );
 
-    process.on("unhandledRejection", (reason, promise) => {
+    process.on("unhandledRejection", (reason: any, promise: Promise<any>) => {
       console.log(
         "[ERROR] Unhandled Rejection at: Promise ",
         promise,
