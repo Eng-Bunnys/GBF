@@ -8,7 +8,7 @@ import {
   Message
 } from "discord.js";
 
-import { msToTime, missingPermissions } from "../../utils/Engine";
+import { msToTime, missingPermissions, capitalize } from "../../utils/Engine";
 
 import {
   Developers,
@@ -24,18 +24,21 @@ import blacklistSchema from "../../schemas/GBF Schemas/Bot Ban Schema";
 import guildConfigSchema from "../../schemas/GBF Schemas/Prefix Schema";
 
 const cooldowns = new Collection();
-
 module.exports = (client) => {
   client.on(Events.MessageCreate, async (message: Message) => {
-    if (message.author.bot || message.channel.type === ChannelType.DM) return;
+    if (message.author.bot) return;
 
     const blacklistData = await blacklistSchema.findOne({
       userId: message.author.id
     });
 
-    const guildData = await guildConfigSchema.findOne({
-      guildID: message.guild.id
-    });
+    let guildData;
+
+    if (message.channel.type !== ChannelType.DM) {
+      guildData = await guildConfigSchema.findOne({
+        guildID: message.guild.id
+      });
+    } else guildData = null;
 
     const suspendedEmbed = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
@@ -69,10 +72,21 @@ module.exports = (client) => {
       .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(`${command.name} is disabled globally`);
 
-    if (!TestGuilds.includes(message.guild.id))
+    if (command.development && !TestGuilds.includes(message.guild.id))
       return message.reply({
         embeds: [testOnlyCommand]
       });
+
+    if (!command.dmEnabled && message.channel.type === ChannelType.DM) {
+      const dmDisabled = new EmbedBuilder()
+        .setTitle(`${emojis.ERROR} You can't do that`)
+        .setColor(colours.ERRORRED as ColorResolvable)
+        .setDescription(`${capitalize(command.name)} is disabled in DMs.`);
+
+      return message.reply({
+        embeds: [dmDisabled]
+      });
+    }
 
     if (command.devOnly && !Developers.includes(message.author.id)) {
       const DevOnly = new EmbedBuilder()
@@ -96,46 +110,48 @@ module.exports = (client) => {
       });
     }
 
-    if (
-      command.userPermission &&
-      !message.member.permissions.has(command.userPermission, true)
-    ) {
-      const MissingUserPerms = new EmbedBuilder()
-        .setTitle("Missing Permissions")
-        .setDescription(
-          `${
-            message.author.username
-          }, You are missing the following permissions: ${missingPermissions(
-            message.member,
-            command.userPermission
-          )}`
-        )
-        .setColor(colours.ERRORRED as ColorResolvable);
+    if (message.channel.type !== ChannelType.DM) {
+      if (
+        command.userPermission &&
+        !message.member.permissions.has(command.userPermission, true)
+      ) {
+        const MissingUserPerms = new EmbedBuilder()
+          .setTitle("Missing Permissions")
+          .setDescription(
+            `${
+              message.author.username
+            }, You are missing the following permissions: ${missingPermissions(
+              message.member,
+              command.userPermission
+            )}`
+          )
+          .setColor(colours.ERRORRED as ColorResolvable);
 
-      return message.reply({
-        embeds: [MissingUserPerms]
-      });
-    }
+        return message.reply({
+          embeds: [MissingUserPerms]
+        });
+      }
 
-    if (
-      command.botPermission &&
-      !message.channel
-        .permissionsFor(message.guild.members.me)
-        .has(command.botPermission, true)
-    ) {
-      const missingPermBot = new EmbedBuilder()
-        .setTitle("Missing Permissions")
-        .setDescription(
-          `I am missing the following permissions: ${missingPermissions(
-            message.guild.members.me,
-            command.botPermission
-          )}`
-        )
-        .setColor(colours.ERRORRED as ColorResolvable);
+      if (
+        command.botPermission &&
+        !message.channel
+          .permissionsFor(message.guild.members.me)
+          .has(command.botPermission, true)
+      ) {
+        const missingPermBot = new EmbedBuilder()
+          .setTitle("Missing Permissions")
+          .setDescription(
+            `I am missing the following permissions: ${missingPermissions(
+              message.guild.members.me,
+              command.botPermission
+            )}`
+          )
+          .setColor(colours.ERRORRED as ColorResolvable);
 
-      return message.reply({
-        embeds: [missingPermBot]
-      });
+        return message.reply({
+          embeds: [missingPermBot]
+        });
+      }
     }
 
     /**
