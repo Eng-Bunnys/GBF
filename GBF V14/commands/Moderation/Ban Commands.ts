@@ -1,22 +1,26 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
-const BanSchema = require("../../schemas/Moderation Schemas/Ban Schema");
+import colors from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const ServerSettings = require("../../schemas/Moderation Schemas/Server Settings");
-const CommandLinks = require("../../GBF/GBFCommands.json");
+import BanSchema from "../../schemas/Moderation Schemas/Ban Schema";
+import ServerSettings from "../../schemas/Moderation Schemas/Server Settings";
+import CommandLinks from "../../GBF/GBFCommands.json";
 
-const {
+import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
-  EmbedBuilder
-} = require("discord.js");
+  EmbedBuilder,
+  ColorResolvable,
+  GuildMember,
+  User,
+  Client
+} from "discord.js";
 
-const { getLastDigits, msToTime } = require("../../utils/Engine");
+import { getLastDigits, msToTime } from "../../utils/Engine";
 
 module.exports = class BanCommands extends SlashCommand {
-  constructor(client) {
+  constructor(client: Client) {
     super(client, {
       name: "ban",
       description: "Ban or unban a user from this server",
@@ -24,6 +28,7 @@ module.exports = class BanCommands extends SlashCommand {
       botPermission: [PermissionFlagsBits.BanMembers],
       cooldown: 0,
       development: true,
+      dmEnabled: false,
       subcommands: {
         create: {
           description: "Ban a user from this server",
@@ -49,7 +54,7 @@ module.exports = class BanCommands extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetUser = interaction.options.getUser("member");
+            const targetUser = interaction.options.getUser("member", true);
             const banReason =
               interaction.options.getString("reason") || "No Reason Specified";
             const deleteDays =
@@ -57,7 +62,7 @@ module.exports = class BanCommands extends SlashCommand {
 
             const UserAlreadyBanned = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The specified user is already banned from ${interaction.guild.name}`
               );
@@ -72,14 +77,13 @@ module.exports = class BanCommands extends SlashCommand {
                 });
             }
 
-            const targetMember = await interaction.guild.members.cache.get(
-              targetUser.id
-            );
+            const targetMember: GuildMember =
+              await interaction.guild.members.cache.get(targetUser.id);
 
             if (targetMember) {
               const ownerBan = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
-                .setColor(colors.ERRORRED)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setDescription(`You can't ban the owner of this server!`);
 
               if (targetMember.id === interaction.guild.ownerId)
@@ -90,7 +94,7 @@ module.exports = class BanCommands extends SlashCommand {
 
               const selfBan = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
-                .setColor(colors.ERRORRED)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setDescription(`You cannot ban yourself.`);
 
               if (targetMember.id === interaction.user.id)
@@ -101,7 +105,7 @@ module.exports = class BanCommands extends SlashCommand {
 
               const botBan = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
-                .setColor(colors.ERRORRED)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setDescription(`I can't ban myself from this server!`);
 
               if (targetMember.id === client.user.id)
@@ -117,7 +121,7 @@ module.exports = class BanCommands extends SlashCommand {
 
             const adminBan = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `I can't ban an admin, if you'd like to turn off this feature please change it in the bot server settings using ${CommandLinks.ServerSettings}`
               );
@@ -133,17 +137,17 @@ module.exports = class BanCommands extends SlashCommand {
                 ephemeral: true
               });
 
-            const botPosition =
+            const botPosition: number =
               interaction.guild.members.me.roles.highest.position;
-            const targetPosition = targetMember.roles.highest.position;
+            const targetPosition: number = targetMember.roles.highest.position;
 
             if (interaction.member.id !== interaction.guild.ownerId) {
-              const commandAuthorPosition =
+              const commandAuthorPosition: number =
                 interaction.member.roles.highest.position;
 
               const authorLower = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
-                .setColor(colors.ERRORRED)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setDescription(
                   `${targetMember.user.username}'s position is higher or equal to yours.`
                 );
@@ -157,7 +161,7 @@ module.exports = class BanCommands extends SlashCommand {
 
             const botLower = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `${targetMember.user.username}'s position is higher or equal to mine.`
               );
@@ -173,11 +177,14 @@ module.exports = class BanCommands extends SlashCommand {
               guildId: interaction.guild.id
             });
 
-            const caseIDIdentifier = getLastDigits(interaction.guild.id, 3);
+            const caseIDIdentifier: string = getLastDigits(
+              interaction.guild.id,
+              3
+            );
 
             const userBanned = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} User Banned`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFields(
                 {
                   name: "Moderator:",
@@ -224,7 +231,7 @@ module.exports = class BanCommands extends SlashCommand {
             if (serverSettingsDocs && serverSettingsDocs.BanDM) {
               const DMBan = new EmbedBuilder()
                 .setTitle(`You've been banned from ${interaction.guild.name}`)
-                .setColor(colors.DEFAULT)
+                .setColor(colors.DEFAULT as ColorResolvable)
                 .setDescription(
                   `You've been banned from ${interaction.guild.name} by ${interaction.user.username} for the following reason(s): ${banReason}`
                 )
@@ -311,8 +318,8 @@ module.exports = class BanCommands extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetUser = interaction.options.getUser("user");
-            const unbanReason =
+            const targetUser: User = interaction.options.getUser("user", true);
+            const unbanReason: string =
               interaction.options.getString("reason") || "No Reason Specified";
 
             const targetMember = await interaction.guild.members.cache.get(
@@ -321,7 +328,7 @@ module.exports = class BanCommands extends SlashCommand {
 
             const targetNotBanned = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The specified user is not banned in ${interaction.guild.name}`
               );
@@ -351,7 +358,7 @@ module.exports = class BanCommands extends SlashCommand {
 
             const userUnbanned = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} User Unbanned`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFields(
                 {
                   name: "Moderator:",
