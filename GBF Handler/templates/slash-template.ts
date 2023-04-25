@@ -26,6 +26,7 @@ export default class Name extends SlashCommand {
       botPermission: [],
       cooldown: 0,
       development: true,
+      dmEnabled: false,
       Partner: true
     });
   }
