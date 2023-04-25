@@ -17,8 +17,6 @@ import bankSchema from "../../schemas/User Schemas/User Profile Schema";
 import { msToTime } from "../../utils/Engine";
 
 import {
-  xpRequired,
-  xpRequiredAccount,
   checkUser,
   calculateXP,
   checkRank,
