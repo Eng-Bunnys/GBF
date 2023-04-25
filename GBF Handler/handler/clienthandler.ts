@@ -1,33 +1,36 @@
-const { Client, Collection } = require("discord.js");
-const { connect } = require("mongoose");
-const { registerCommands } = require("./registry");
-const { lstatSync, readdirSync } = require("fs");
-const { join } = require("path");
+import { ApplicationCommandData, Client, Collection } from "discord.js";
+import { connect } from "mongoose";
+import { registerCommands } from "./registry";
+import { lstatSync, readdirSync } from "fs";
+import { join } from "path";
+import GBFSlash from "./handlerforSlash";
 
-class GBFClient extends Client {
+export default class GBFClient extends Client {
+  public readonly commands: Collection<string, unknown> = new Collection();
+  public readonly slashCommands: Collection<string, unknown> = new Collection();
+  public readonly buttonCommands: Collection<string, unknown> =
+    new Collection();
+  public readonly selectCmds: Collection<string, unknown> = new Collection();
+  public readonly contextCmds: Collection<string, unknown> = new Collection();
+  public readonly aliases: Collection<string, unknown> = new Collection();
+  public readonly events: Collection<string, unknown> = new Collection();
+  public readonly configs: any = require("../config/GBFconfig.json");
+
   constructor(options) {
     super(options);
-    this.commands = new Collection();
-    this.slashCommands = new Collection();
-    this.buttonCommands = new Collection();
-    this.selectCmds = new Collection();
-    this.contextCmds = new Collection();
-    this.aliases = new Collection();
-    this.events = new Collection();
-    this.configs = require("../config/GBFconfig.json");
   }
 
-  async loadCommands() {
+  public async loadCommands(): Promise<void> {
     if (!this.application?.owner) await this.application?.fetch();
 
     await registerCommands(this, "../commands");
 
-    const guildCommands = toApplicationCommand(
-      this.slashCommands.filter((s) => s.development),
+    const guildCommands: ApplicationCommandData[] = toApplicationCommand(
+      this.slashCommands.filter((s: GBFSlash) => s.development),
       this
     );
-    const globalCommands = toApplicationCommand(
-      this.slashCommands.filter((s) => !s.development),
+    const globalCommands: ApplicationCommandData[] = toApplicationCommand(
+      this.slashCommands.filter((s: GBFSlash) => !s.development),
       this
     );
 
@@ -38,13 +41,15 @@ class GBFClient extends Client {
           await testServer.commands.set(guildCommands);
         }
       }
-    } //globalCommands
-    if (globalCommands.length)
+    }
+
+    if (globalCommands.length) {
       await this.application.commands.set(globalCommands);
+    }
   }
 
-  async loadEvents() {
-    const readEvents = (dir) => {
+  public async loadEvents(): Promise<void> {
+    const readEvents = (dir: string) => {
       const files = readdirSync(join(__dirname, dir));
       for (const file of files) {
         const stat = lstatSync(join(__dirname, dir, file));
@@ -55,8 +60,8 @@ class GBFClient extends Client {
           if (typeof event !== "function") {
             console.log(`"${file}" does not have a "client" feature`);
           } else {
-            this.events.set(event);
-            event(this);
+            this.events.set(event.name, event as GlobalEventHandlers);
+            event(this, this.configs);
           }
         }
       }
@@ -95,9 +100,7 @@ class GBFClient extends Client {
   }
 }
 
-module.exports = GBFClient;
-
-function toApplicationCommand(collection) {
+function toApplicationCommand(collection, bot) {
   return collection.map((s) => {
     return {
       name: s.name,
