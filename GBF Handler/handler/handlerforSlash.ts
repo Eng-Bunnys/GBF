@@ -15,6 +15,7 @@ interface GBFSlashOptions {
   botPermission?: string[];
   cooldown?: number;
   development?: boolean;
+  dmEnabled?: boolean;
   groups?: any;
   subcommands?: any;
 }
@@ -35,6 +36,7 @@ class GBFSlash {
   readonly botPermission: string[];
   readonly cooldown: number;
   readonly development?: boolean;
+  readonly dmEnabled?: boolean;
   readonly groups?: any;
   readonly subcommands?: any;
 
@@ -53,7 +55,8 @@ class GBFSlash {
     this.userPermission = options.userPermission || [];
     this.botPermission = options.botPermission || [];
     this.cooldown = options.cooldown || 0;
-    this.development = options.development;
+    this.development = options.development || false;
+    this.dmEnabled = options.dmEnabled || false;
     this.groups = options.groups ?? null;
     this.subcommands = options.subcommands ?? null;
 
