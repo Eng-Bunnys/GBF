@@ -1,0 +1,34 @@
+const SlashCommand = require("../utils/slashCommands").default;
+
+import { ApplicationCommandOptionType, Client } from "discord.js";
+
+export default class Name extends SlashCommand {
+  constructor(client: Client) {
+    super(client, {
+      name: "name",
+      category: "category",
+      description: "description",
+      usage: "usage",
+      examples: "example",
+
+      options: [
+        {
+          name: "text",
+          description: "Hello World",
+          type: ApplicationCommandOptionType.String,
+          required: true
+        }
+      ],
+
+      devOnly: true,
+      devBypass: true,
+      userPermission: [],
+      botPermission: [],
+      cooldown: 0,
+      development: true,
+      Partner: true
+    });
+  }
+
+  async execute({ client, interaction }) {}
+}
