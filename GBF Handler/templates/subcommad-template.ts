@@ -1,12 +1,9 @@
-const SlashCommand = require("../utils/slashCommands");
+const SlashCommand = require("../utils/slashCommands").default;
 
-const {
-  ApplicationCommandOptionType,
-  PermissionFlagsBits
-} = require("discord.js");
+import { ApplicationCommandOptionType, Client } from "discord.js";
 
-module.exports = class Tests extends SlashCommand {
-  constructor(client) {
+export default class Tests extends SlashCommand {
+  constructor(client: Client) {
     super(client, {
       name: "",
       description: "",
@@ -31,4 +28,4 @@ module.exports = class Tests extends SlashCommand {
       }
     });
   }
-};
+}
