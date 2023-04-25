@@ -1,8 +1,9 @@
-import { PermissionFlagsBits } from "discord.js";
-import Command from "../utils/command";
+const Command = require("../utils/command").default;
 
-module.exports = class LegacyCommand extends Command {
-  constructor(client) {
+import { Client } from "discord.js";
+
+export default class LegacyCommand extends Command {
+  constructor(client: Client) {
     super(client, {
       name: "",
       aliases: [],
@@ -25,4 +26,4 @@ module.exports = class LegacyCommand extends Command {
       content: `Test`
     });
   }
-};
+}
