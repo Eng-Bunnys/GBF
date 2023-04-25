@@ -18,6 +18,7 @@ export default class LegacyCommand extends Command {
       devBypass: false,
       Partner: false,
       development: false,
+      dmEnabled: false,
       canNotDisable: false
     });
   }
