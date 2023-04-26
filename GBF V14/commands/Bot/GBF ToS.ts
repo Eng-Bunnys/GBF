@@ -1,12 +1,12 @@
-const SlashCommand = require("../../utils/slashCommands");
+const SlashCommand = require("../../utils/slashCommands").default;
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const { EmbedBuilder } = require("discord.js");
+import { Client, ColorResolvable, EmbedBuilder } from "discord.js";
 
-module.exports = class GBF_ToS extends SlashCommand {
-  constructor(client) {
+export default class GBF_ToS extends SlashCommand {
+  constructor(client: Client) {
     super(client, {
       name: "gbf-tos",
       category: "Bot",
@@ -24,7 +24,7 @@ module.exports = class GBF_ToS extends SlashCommand {
   async execute({ client, interaction }) {
     const ToS_Embed = new EmbedBuilder()
       .setTitle(`${emojis.LOGOTRANS} GBF Terms of service and privacy policy`)
-      .setColor(colours.DEFAULT)
+      .setColor(colours.DEFAULT as ColorResolvable)
       .addFields(
         {
           name: `GBF Bot`,
@@ -57,4 +57,4 @@ module.exports = class GBF_ToS extends SlashCommand {
       ephemeral: true
     });
   }
-};
+}
