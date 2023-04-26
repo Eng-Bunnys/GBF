@@ -1,19 +1,24 @@
-const SlashCommand = require("../../utils/slashCommands");
+const SlashCommand = require("../../utils/slashCommands").default;
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import colors from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const {
+import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
   ChannelType,
-  EmbedBuilder
-} = require("discord.js");
+  EmbedBuilder,
+  Client,
+  GuildTextBasedChannel,
+  VoiceBasedChannel,
+  ColorResolvable,
+  Role
+} from "discord.js";
 
-const { basicMsToTime } = require("../../utils/Engine");
+import { basicMsToTime } from "../../utils/Engine";
 
-module.exports = class ChannelCommands extends SlashCommand {
-  constructor(client) {
+export default class ChannelCommands extends SlashCommand {
+  constructor(client: Client) {
     super(client, {
       name: "channel",
       description: "Channel moderation related commands",
@@ -29,11 +34,7 @@ module.exports = class ChannelCommands extends SlashCommand {
               name: "channel",
               description: "The channel that you want to lock",
               type: ApplicationCommandOptionType.Channel,
-              channelTypes: [
-                ChannelType.GuildText,
-                ChannelType.GuildAnnouncement,
-                ChannelType.GuildVoice
-              ]
+              channelTypes: [ChannelType.GuildText, ChannelType.GuildVoice]
             },
             {
               name: "role",
@@ -47,20 +48,20 @@ module.exports = class ChannelCommands extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetChannel =
+            const targetChannel: GuildTextBasedChannel | VoiceBasedChannel =
               interaction.options.getChannel("channel") || interaction.channel;
-            const targetRole =
+            const targetRole: Role =
               interaction.options.getRole("role") || interaction.guild.id;
-            const lockReason =
+            const lockReason: string =
               interaction.options.getString("reason") || "No Reason Specified";
 
-            let displayRole;
+            let displayRole: string;
             if (targetRole === interaction.guild.id) displayRole = `@everyone`;
             else displayRole = `<@&${targetRole.id}>`;
 
             const ChannelAlreadyLocked = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The channel is already locked for ${displayRole}`
               )
@@ -80,7 +81,7 @@ module.exports = class ChannelCommands extends SlashCommand {
 
             const channelLocked = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Channel Locked`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setDescription(
                 `Successfully locked ${targetChannel} for ${displayRole}`
               )
@@ -102,7 +103,10 @@ module.exports = class ChannelCommands extends SlashCommand {
                 ],
                 lockReason
               );
-            } else {
+            } else if (
+              targetChannel.type === ChannelType.GuildText ||
+              targetChannel.type === ChannelType.GuildAnnouncement
+            ) {
               await targetChannel.permissionOverwrites.set(
                 [
                   {
@@ -148,21 +152,21 @@ module.exports = class ChannelCommands extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetChannel =
+            const targetChannel: GuildTextBasedChannel | VoiceBasedChannel =
               interaction.options.getChannel("channel") || interaction.channel;
-            const targetRole =
+            const targetRole: Role =
               interaction.options.getRole("role") || interaction.guild.id;
-            const unlockReason =
+            const unlockReason: string =
               interaction.options.getString("reason") || "No Reason Specified";
 
-            let displayRole;
+            let displayRole: string;
             if (targetRole !== interaction.guild.id)
               displayRole = `<@&${targetRole.id}>`;
             else displayRole = `@everyone`;
 
             const ChannelAlreadyUnlocked = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The channel is already unlocked for ${displayRole}`
               )
@@ -182,7 +186,7 @@ module.exports = class ChannelCommands extends SlashCommand {
 
             const channelUnlocked = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Channel Unlocked`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setDescription(
                 `Successfully unlocked ${targetChannel} for ${displayRole}`
               )
@@ -204,7 +208,10 @@ module.exports = class ChannelCommands extends SlashCommand {
                 ],
                 unlockReason
               );
-            } else {
+            } else if (
+              targetChannel.type === ChannelType.GuildText ||
+              targetChannel.type === ChannelType.GuildAnnouncement
+            ) {
               await targetChannel.permissionOverwrites.set(
                 [
                   {
@@ -302,15 +309,15 @@ module.exports = class ChannelCommands extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const slowmodeDuration = Number(
+            const slowmodeDuration: number = Number(
               interaction.options.getString("slowmode")
             );
-            const targetChannel =
+            const targetChannel: GuildTextBasedChannel =
               interaction.options.getChannel("channel") || interaction.channel;
 
             const SuccessEmbed = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success!`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -342,4 +349,4 @@ module.exports = class ChannelCommands extends SlashCommand {
       }
     });
   }
-};
+}
