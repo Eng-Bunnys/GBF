@@ -1,4 +1,4 @@
-const SlashCommand = require("../../utils/slashCommands");
+const SlashCommand = require("../../utils/slashCommands").default;
 
 import {
   EmbedBuilder,
@@ -28,7 +28,7 @@ import {
 
 const fetch = require("node-fetch");
 
-module.exports = class BasicTimerUI extends SlashCommand {
+export default class BasicTimerUI extends SlashCommand {
   constructor(client: Client) {
     super(client, {
       name: "timer",
@@ -948,4 +948,4 @@ module.exports = class BasicTimerUI extends SlashCommand {
       }
     });
   }
-};
+}
