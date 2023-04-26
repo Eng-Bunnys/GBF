@@ -1,36 +1,39 @@
-const SlashCommand = require("../../utils/slashCommands");
+const SlashCommand = require("../../utils/slashCommands").default;
 
-const {
+import {
   EmbedBuilder,
   ButtonBuilder,
   ActionRowBuilder,
   ButtonStyle,
-  ApplicationCommandOptionType
-} = require("discord.js");
-const duration = require("humanize-duration");
+  ApplicationCommandOptionType,
+  Client,
+  ColorResolvable,
+  Guild
+} from "discord.js";
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import duration from "humanize-duration";
 
-const np1 =
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
+
+const NP1 =
   "API error, After sometime has passed you can try again and it should be working";
-const db2 =
+const DB2 =
   "Database error, If it is related to the server menu please rerun the command and it will work";
-const perm3 =
+const PERM3 =
   "Permission error, The bot does not have the required permissions to do a certain action";
-const perm4 =
+const PERM4 =
   "Permission error, The user does not have the required perimissions to run a certain command";
-const ban5 = "User has been banned from using the bot";
-const toggle6 = "Command has been disabled from the server";
+const BAN5 = "User has been banned from using the bot";
+const TOGGLE6 = "Command has been disabled from the server";
 const UnknownBanE = `The user is not banned in the server`;
 
-module.exports = class BotSub extends SlashCommand {
-  constructor(client) {
+export default class BotSub extends SlashCommand {
+  constructor(client: Client) {
     super(client, {
       name: "bot",
       description: "General bot commands",
       category: "Bot-Info",
-      botPermission: [],
       cooldown: 0,
       development: false,
       subcommands: {
@@ -105,7 +108,7 @@ module.exports = class BotSub extends SlashCommand {
                   inline: true
                 }
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -125,7 +128,7 @@ module.exports = class BotSub extends SlashCommand {
               .setDescription(
                 `Please run \`/error np1\` to know more about the error and how to fix it`
               )
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setTimestamp();
 
             let uptime = duration(client.uptime, {
@@ -136,7 +139,7 @@ module.exports = class BotSub extends SlashCommand {
             const UptimeEmbed = new EmbedBuilder()
               .setTitle(`${client.user.username}'s uptime`)
               .setDescription(uptime)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -146,7 +149,7 @@ module.exports = class BotSub extends SlashCommand {
               .reply({
                 embeds: [UptimeEmbed]
               })
-              .catch((err) => {
+              .catch((err: Error) => {
                 console.log(`Uptime Command Error: ${err.message}`);
                 return interaction.reply({
                   embeds: [NP1ErrorEmbed],
@@ -158,17 +161,20 @@ module.exports = class BotSub extends SlashCommand {
         users: {
           description: "See GBF's user stats",
           execute: async ({ client, interaction }) => {
-            let totalNumberOfUsers = [];
-            await client.guilds.cache.map((guild) => {
-              totalNumberOfUsers.push(guild.memberCount);
-              return totalNumberOfUsers;
+            let totalUsersArray: Array<number> = [];
+            await client.guilds.cache.map((guild: Guild) => {
+              totalUsersArray.push(guild.memberCount);
+              return totalUsersArray;
             });
-            totalNumberOfUsers =
-              totalNumberOfUsers.reduce((a, b) => a + b, 0);
 
-            const totalServers = client.guilds.cache.size;
+            let totalNumberOfUsers: number =
+              totalUsersArray.reduce((a, b) => a + b, 0);
 
-            const averageUsers = (totalNumberOfUsers / totalServers).toFixed(0);
+            const totalServers: number = client.guilds.cache.size;
+
+            const averageUsers: number = Number(
+              (totalNumberOfUsers / totalServers).toFixed(0)
+            );
 
             const displayButtons = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
@@ -209,7 +215,7 @@ module.exports = class BotSub extends SlashCommand {
                   inline: true
                 }
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -232,7 +238,7 @@ module.exports = class BotSub extends SlashCommand {
                   Date.now() - interaction.createdTimestamp
                 )}ms\`\nAPI Latency: \`${Math.round(client.ws.ping)}ms\``
               )
-              .setColor(colours.DEFAULT);
+              .setColor(colours.DEFAULT as ColorResolvable);
 
             return interaction.reply({
               embeds: [pingEmbed]
@@ -284,90 +290,93 @@ module.exports = class BotSub extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const errorType = interaction.options.getString("error");
+            const errorType: string = interaction.options.getString(
+              "error",
+              true
+            );
 
             if (errorType === "np1") {
-              const np1error = new EmbedBuilder()
+              const np1Error = new EmbedBuilder()
                 .setTitle("NP1 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${np1}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${NP1}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [np1error]
+                embeds: [np1Error]
               });
             } else if (errorType === "db2") {
-              const db2error = new EmbedBuilder()
+              const db2Error = new EmbedBuilder()
                 .setTitle("DB2 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${db2}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${DB2}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [db2error]
+                embeds: [db2Error]
               });
             } else if (errorType === "perm3") {
-              const perm3error = new EmbedBuilder()
+              const perm3Error = new EmbedBuilder()
                 .setTitle("PERM3 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${perm3}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${PERM3}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [perm3error]
+                embeds: [perm3Error]
               });
             } else if (errorType === "perm4") {
-              const perm4error = new EmbedBuilder()
+              const perm4Error = new EmbedBuilder()
                 .setTitle("PERM4 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${perm4}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${PERM4}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [perm4error]
+                embeds: [perm4Error]
               });
             } else if (errorType === "ban5") {
-              const ban5error = new EmbedBuilder()
+              const ban5Error = new EmbedBuilder()
                 .setTitle("BAN5 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${ban5}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${BAN5}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [ban5error]
+                embeds: [ban5Error]
               });
             } else if (errorType === "toggle6") {
-              const toggle6error = new EmbedBuilder()
+              const toggle6Error = new EmbedBuilder()
                 .setTitle("TOGGLE6 Error")
-                .setColor(colours.DEFAULT)
-                .setDescription(`⚠ ${toggle6}`)
+                .setColor(colours.DEFAULT as ColorResolvable)
+                .setDescription(`⚠ ${TOGGLE6}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [toggle6error]
+                embeds: [toggle6Error]
               });
             } else if (errorType === "UnknownBanE") {
               const UnknownBanEerror = new EmbedBuilder()
                 .setTitle("UnknownBanE Error")
-                .setColor(colours.DEFAULT)
+                .setColor(colours.DEFAULT as ColorResolvable)
                 .setDescription(`⚠ ${UnknownBanE}`)
                 .setFooter({
                   text: `If the error continues and the error is NOT a ban or toggle please contact support`,
@@ -380,10 +389,9 @@ module.exports = class BotSub extends SlashCommand {
             } else if (errorType === "list") {
               const valuetext = `\`Please use the slash list to choose the error\``;
 
-              const listembed = new EmbedBuilder()
-
+              const listEmbed = new EmbedBuilder()
                 .setTitle("GBF ERRORS")
-                .setColor(colours.DEFAULT)
+                .setColor(colours.DEFAULT as ColorResolvable)
                 .setTimestamp()
                 .addFields(
                   {
@@ -421,7 +429,7 @@ module.exports = class BotSub extends SlashCommand {
                 });
 
               return interaction.reply({
-                embeds: [listembed]
+                embeds: [listEmbed]
               });
             }
           }
@@ -429,4 +437,4 @@ module.exports = class BotSub extends SlashCommand {
       }
     });
   }
-};
+}
