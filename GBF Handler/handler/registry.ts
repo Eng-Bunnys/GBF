@@ -1,8 +1,9 @@
 import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import Command from "../utils/command";
+import GBFClient from "./clienthandler";
 
-export async function registerCommands(client, ...dirs: string[]) {
+export async function registerCommands(client: GBFClient, ...dirs: string[]) {
   for (const dir of dirs) {
     let files = await readdirSync(join(__dirname, dir));
 
