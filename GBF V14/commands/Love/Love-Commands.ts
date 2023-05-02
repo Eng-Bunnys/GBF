@@ -1,31 +1,40 @@
-const SlashCommand = require("../../utils/slashCommands");
-const title = require("../../GBF/Embed Messages.json");
-const colors = require("../../GBF/GBFColor.json");
+const SlashCommand = require("../../utils/slashCommands").default;
 
-const {
+import colors from "../../GBF/GBFColor.json";
+
+import {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  ApplicationCommandOptionType
-} = require("discord.js");
+  ApplicationCommandOptionType,
+  Client,
+  User,
+  ColorResolvable,
+  Interaction,
+  CommandInteraction,
+  ComponentType
+} from "discord.js";
 
-const client = require("nekos.life");
+import client from "nekos.life";
 
 const { sfw } = new client();
 
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
-const { delay } = require("../../utils/engine");
+import { delay } from "../../utils/Engine";
 
-module.exports = class LoveCommand extends SlashCommand {
-  constructor(client) {
+interface ExecuteFunction {
+  client: Client;
+  interaction: CommandInteraction;
+}
+
+export default class LoveCommand extends SlashCommand {
+  constructor(client: Client) {
     super(client, {
       name: "love",
       description: "Love commands like Hug, Kiss etc",
       category: "Love",
-      userPermission: [],
-      botPermission: [],
       cooldown: 4,
       development: false,
       subcommands: {
@@ -39,8 +48,8 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             const res = await fetch("https://api.waifu.pics/sfw/bite");
             const img = (await res.json()).url;
@@ -49,7 +58,7 @@ module.exports = class LoveCommand extends SlashCommand {
               .setTitle("Ummm")
               .setDescription(`**<@${interaction.user.id}> bit themselves??**`)
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -61,7 +70,7 @@ module.exports = class LoveCommand extends SlashCommand {
                 `**<@${interaction.user.id}> bites ${mentionedUser}**`
               )
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -72,7 +81,7 @@ module.exports = class LoveCommand extends SlashCommand {
                 .reply({
                   embeds: [selfBite]
                 })
-                .catch((err) => {
+                .catch((err: Error) => {
                   return interaction.reply({
                     content:
                       "Seems like there was something wrong with the API, Please check back later!"
@@ -83,7 +92,7 @@ module.exports = class LoveCommand extends SlashCommand {
                 .reply({
                   embeds: [mainEmbed]
                 })
-                .catch((err) => {
+                .catch((err: Error) => {
                   return interaction.reply({
                     content:
                       "Seems like there was something wrong with the API, Please check back later!"
@@ -102,31 +111,26 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             const res = await fetch("https://api.waifu.pics/sfw/bonk");
             const img = (await res.json()).url;
 
-            const weirdargs = new EmbedBuilder()
-
-              .setTitle(
-                title.ERROR,
-                `Error: User is lonely <:PepeLaugh:755582130175868979>`
-              )
+            const selfBonk = new EmbedBuilder()
+              .setTitle(`Error: User is lonely <:PepeLaugh:755582130175868979>`)
               .setDescription(
                 `Please mention someone who's not you <:facepalm:705007575745298453>`
               )
-              .setColor(colors.ERRORRED);
+              .setColor(colors.ERRORRED as ColorResolvable);
 
-            const mainembed = new EmbedBuilder()
-
+            const BonkEmbed = new EmbedBuilder()
               .setTitle(`BONK <:BONK:864267943206715453>`)
               .setDescription(
                 `**<@${interaction.user.id}> bonks ${mentionedUser}**`
               )
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -134,14 +138,14 @@ module.exports = class LoveCommand extends SlashCommand {
 
             if (mentionedUser.id === interaction.user.id) {
               return interaction.reply({
-                embeds: [weirdargs]
+                embeds: [selfBonk]
               });
             } else {
               return interaction
                 .reply({
-                  embeds: [mainembed]
+                  embeds: [BonkEmbed]
                 })
-                .catch((err) => {
+                .catch((err: Error) => {
                   return interaction.reply({
                     content:
                       "Seems like there was something wrong with the API, Please check back later!"
@@ -160,34 +164,32 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             const res = await fetch("https://api.waifu.pics/sfw/bully");
             const img = (await res.json()).url;
 
             if (mentionedUser.id === interaction.user.id) {
-              const weirdargs = new EmbedBuilder()
-
-                .setTitle(title.ERROR, ` Error: User has no friends to bully`)
+              const selfBully = new EmbedBuilder()
+                .setTitle(`Error: User has no friends to bully`)
                 .setDescription(
                   `Mention someone that is not <@${interaction.user.id}> to bully!\n\`Mention someone that's not you lol\``
                 )
-                .setColor(colors.ERRORRED);
+                .setColor(colors.ERRORRED as ColorResolvable);
 
               return interaction.reply({
-                embeds: [weirdargs]
+                embeds: [selfBully]
               });
             }
 
-            const mainembed = new EmbedBuilder()
-
+            const BullyEmbed = new EmbedBuilder()
               .setTitle("WTH")
               .setDescription(
                 `**<@${interaction.user.id}> bullies ${mentionedUser}**`
               )
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -195,12 +197,14 @@ module.exports = class LoveCommand extends SlashCommand {
 
             return interaction
               .reply({
-                embeds: [mainembed]
+                embeds: [BullyEmbed]
               })
-              .catch((err) => {
+              .catch((err: Error) => {
+                console.log(`Love Bully Command Error:\n${err.message}`);
                 return interaction.reply({
                   content:
-                    "Seems like there was something wrong with the API, Please check back later!"
+                    "Seems like there was something wrong with the API, Please check back later!",
+                  ephemeral: true
                 });
               });
           }
@@ -215,43 +219,40 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
-            let slaplink = await sfw.slap();
+            const slaplink = await sfw.slap();
 
-            let link = await sfw.cuddle();
+            const link = await sfw.cuddle();
 
-            const norealuser = new EmbedBuilder()
-
-              .setTitle(title.ERROR, ` Error: User is lonely`)
+            const SelfCuddle = new EmbedBuilder()
+              .setTitle(`Error: User is lonely`)
               .setDescription(
                 "Hey if you don't have anyone to cuddle you could always cuddle me! <:trollface:838959517965353060>"
               )
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const hugbot = new EmbedBuilder()
-
+            const BotHug = new EmbedBuilder()
               .setTitle("Ewwwwww get away from me")
               .setDescription(`**<@!${interaction.user.id}> TOUCHED ME!!!**`)
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(slaplink.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const cuddleEmbed = new EmbedBuilder()
-
+            const CuddleEmbed = new EmbedBuilder()
               .setTitle("Cuddles!")
               .setDescription(
                 `**<@!${interaction.user.id}> is cuddling with ${mentionedUser}**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
@@ -260,18 +261,18 @@ module.exports = class LoveCommand extends SlashCommand {
 
             if (interaction.user.id === mentionedUser.id) {
               return interaction.reply({
-                embeds: [norealuser]
+                embeds: [SelfCuddle]
               });
             }
 
             if (mentionedUser.id === client.user.id) {
               return interaction.reply({
-                embeds: [hugbot]
+                embeds: [BotHug]
               });
             }
 
             return interaction.reply({
-              embeds: [cuddleEmbed]
+              embeds: [CuddleEmbed]
             });
           }
         },
@@ -285,39 +286,37 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             const res = await fetch("https://api.waifu.pics/sfw/handhold");
             const img = (await res.json()).url;
 
             if (mentionedUser.id === interaction.user.id) {
-              const userisweird = new EmbedBuilder()
-
+              const SelfHold = new EmbedBuilder()
                 .setTitle("Ummm...")
                 .setDescription(
                   `**<@${interaction.user.id}> held hands with themselves??**`
                 )
                 .setImage(img)
-                .setColor(colors.DEFAULT)
+                .setColor(colors.DEFAULT as ColorResolvable)
                 .setFooter({
                   text: `Requested by: ${interaction.user.tag}`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [userisweird]
+                embeds: [SelfHold]
               });
             }
 
-            const mainembed = new EmbedBuilder()
-
+            const HoldEmbed = new EmbedBuilder()
               .setTitle("So cute!")
               .setDescription(
                 `**<@${interaction.user.id}> is holding hands with ${mentionedUser}**`
               )
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -325,9 +324,10 @@ module.exports = class LoveCommand extends SlashCommand {
 
             return interaction
               .reply({
-                embeds: [mainembed]
+                embeds: [HoldEmbed]
               })
-              .catch((err) => {
+              .catch((err: Error) => {
+                console.log(`Love Hold Command Error:\n${err.message}`);
                 return interaction.reply({
                   content:
                     "Seems like there was something wrong with the API, Please check back later!"
@@ -345,37 +345,34 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             let link = await sfw.kiss();
             let slaplink = await sfw.slap();
 
-            const norealuser = new EmbedBuilder()
-
-              .setTitle(title.ERROR, ` Error: User is lonely`)
+            const SelfKiss = new EmbedBuilder()
+              .setTitle(`Error: User is lonely`)
               .setDescription("lol")
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const hugbot = new EmbedBuilder()
-
+            const BotKiss = new EmbedBuilder()
               .setTitle("Ewwwwww get away from me")
               .setDescription(
                 `**<@!${interaction.user.id}> TRIED TO KISS ME!!!**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(slaplink.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const kissEmbed = new EmbedBuilder()
-
+            const KissEmbed = new EmbedBuilder()
               .setTitle("So cute!")
               .setDescription(
                 `**<@${interaction.user.id}> kissed ${mentionedUser}**`
@@ -389,18 +386,18 @@ module.exports = class LoveCommand extends SlashCommand {
 
             if (interaction.user.id === mentionedUser.id) {
               return interaction.reply({
-                embeds: [norealuser]
+                embeds: [SelfKiss]
               });
             }
 
             if (mentionedUser.id === client.user.id) {
               return interaction.reply({
-                embeds: [hugbot]
+                embeds: [BotKiss]
               });
             }
 
             return interaction.reply({
-              embeds: [kissEmbed]
+              embeds: [KissEmbed]
             });
           }
         },
@@ -414,46 +411,42 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             let slaplink = await sfw.slap();
 
             let link = await sfw.hug();
 
-            const norealuser = new EmbedBuilder()
-
+            const SelfHug = new EmbedBuilder()
               .setTitle(
-                title.ERROR,
-                ` Error: User can't find someone to hug <:PepeLaugh:755582130175868979>`
+                `Error: User can't find someone to hug <:PepeLaugh:755582130175868979>`
               )
               .setDescription(
                 `You could always hug me <:pleadingface:799827859505807380>`
               )
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const hugbot = new EmbedBuilder()
-
+            const BotHug = new EmbedBuilder()
               .setTitle("Ewwwwww get away from me")
               .setDescription(`**<@!${interaction.user.id}> TOUCHED ME!!!**`)
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(slaplink.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const hugEmbed = new EmbedBuilder()
-
+            const HugEmbed = new EmbedBuilder()
               .setTitle("So cute!")
               .setDescription(
                 `**<@!${interaction.user.id}> is hugging ${mentionedUser}**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
@@ -462,18 +455,18 @@ module.exports = class LoveCommand extends SlashCommand {
 
             if (interaction.user.id === mentionedUser.id) {
               return interaction.reply({
-                embeds: [norealuser]
+                embeds: [SelfHug]
               });
             }
 
             if (mentionedUser.id === client.user.id) {
               return interaction.reply({
-                embeds: [hugbot]
+                embeds: [BotHug]
               });
             }
 
             return interaction.reply({
-              embeds: [hugEmbed]
+              embeds: [HugEmbed]
             });
           }
         },
@@ -487,36 +480,34 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
-            let link = await sfw.poke();
+            const link = await sfw.poke();
 
             if (mentionedUser.id === interaction.user.id) {
-              let errorembed2 = new EmbedBuilder()
-
+              const SelfPoke = new EmbedBuilder()
                 .setTitle("Um okay")
                 .setDescription(
                   "You poked yourself! Now please mention another user"
                 )
-                .setColor("#FF0000")
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setFooter({
                   text: `Requested by: ${interaction.user.tag}`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
 
               return interaction.reply({
-                embeds: [errorembed2]
+                embeds: [SelfPoke]
               });
             }
 
-            let pokeEmbed = new EmbedBuilder()
-
+            const PokeEmbed = new EmbedBuilder()
               .setTitle("Poke!")
               .setDescription(
                 `**<@!${interaction.user.id}> is poking ${mentionedUser}**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
@@ -525,12 +516,14 @@ module.exports = class LoveCommand extends SlashCommand {
 
             return interaction
               .reply({
-                embeds: [pokeEmbed]
+                embeds: [PokeEmbed]
               })
-              .catch((err) => {
-                console.log(err + ` Poke command`);
+              .catch((err: Error) => {
+                console.log(`Love Poke Command Error:\n${err.message}`);
                 return interaction.reply({
-                  embeds: [errorembedx]
+                  content:
+                    "Seems like there was something wrong with the API, Please check back later!",
+                  ephemeral: true
                 });
               });
           }
@@ -552,29 +545,23 @@ module.exports = class LoveCommand extends SlashCommand {
               required: false
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const shipTarget1 = interaction.options.getUser("user");
-            const shipTarget2 =
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const shipTarget1: User = interaction.options.getUser("user");
+            const shipTarget2: User =
               interaction.options.getUser("user-two") || interaction.user;
+
+            const shipPercentage = Math.floor(Math.random() * 100);
 
             const shipEmbed = new EmbedBuilder()
               .setTitle(
-                "<a:flyinghearts:833542646579462164> | MatchMaking | <a:flyinghearts:833542646579462164>"
+                "<a:flyinghearts:833542646579462164> | Matchmaking | <a:flyinghearts:833542646579462164>"
               )
-              .setDescription(
-                `
-                            🔻 | ${shipTarget1} \n🔺 | ${shipTarget2}
-                            `
-              )
+              .setDescription(`🔻 | ${shipTarget1} \n🔺 | ${shipTarget2}`)
               .setColor("#ff007f")
-              .addField(
-                "MatchMaking Result",
-                `
-                              Their love-score is ${Math.floor(
-                                Math.random() * 100
-                              )}%! 💘
-                            `
-              )
+              .addFields({
+                name: "Matchmaking Result:",
+                value: ` Their love-score is ${shipPercentage}%! 💘`
+              })
               .setFooter({
                 text: `They call me cupid 💘`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -595,43 +582,41 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             let link = await sfw.slap();
 
-            const slapEmbed = new EmbedBuilder()
-
+            const SlapEmbed = new EmbedBuilder()
               .setTitle("Ouch!")
               .setDescription(
                 `**<@!${interaction.user.id}> slapped ${mentionedUser}**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const slapEmbed2 = new EmbedBuilder()
-
+            const ResponseSlap = new EmbedBuilder()
               .setTitle("Ouch!")
               .setDescription(
                 `**${mentionedUser} slapped <@!${interaction.user.id}> back!**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const errorEmbed = new EmbedBuilder()
-              .setTitle("I ran into an error! <:error:822091680605011978>")
+            const SelfSlap = new EmbedBuilder()
+              .setTitle(`...`)
               .setDescription(
                 "You slapped yourself congrats! Now please mention someone!"
               )
-              .setColor("#FF0000");
+              .setColor(colors.DEFAULT as ColorResolvable);
 
             const slapButton = new ButtonBuilder()
               .setCustomId("slap")
@@ -639,37 +624,33 @@ module.exports = class LoveCommand extends SlashCommand {
               .setLabel(`Slap ${interaction.user.username} back`)
               .setStyle(ButtonStyle.Danger);
 
-            const slapButtonD = new ButtonBuilder()
-              .setCustomId("slapD")
-              .setEmoji("🤚")
-              .setLabel(`Slap ${interaction.user.username} back`)
-              .setStyle(ButtonStyle.Danger)
-              .setDisabled(true);
+            const slapButtonD = slapButton.setDisabled(true);
 
-            const slapRow = new ActionRowBuilder().addComponents([slapButton]);
-            const slapRowD = new ActionRowBuilder().addComponents([
-              slapButtonD
-            ]);
+            const slapRow: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([slapButton]);
+            const slapRowD: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([slapButtonD]);
 
             if (mentionedUser.id === interaction.user.id) {
               return interaction.reply({
-                embeds: [errorEmbed]
+                embeds: [SelfSlap]
               });
             } else {
               await interaction.reply({
-                embeds: [slapEmbed],
+                embeds: [SlapEmbed],
                 components: [slapRow]
               });
             }
 
-            const filter = (i) => {
+            const filter = (i: Interaction) => {
               return i.user.id === mentionedUser.id;
             };
 
             const collector =
               interaction.channel.createMessageComponentCollector({
                 filter,
-                idle: 20000
+                idle: 20000,
+                componentType: ComponentType.Button
               });
 
             collector.on("collect", async (i) => {
@@ -678,10 +659,11 @@ module.exports = class LoveCommand extends SlashCommand {
 
               if (i.customId === "slap") {
                 if (i.user.id === mentionedUser.id) {
-                  return await i.editReply({
-                    embeds: [slapEmbed2],
+                  await i.editReply({
+                    embeds: [ResponseSlap],
                     components: [slapRowD]
                   });
+                  return;
                 } else {
                   await interaction.followUp({
                     content: `**${i.user.username}** you cannot use that, only **${mentionedUser.username}** can use this button!`,
@@ -690,8 +672,8 @@ module.exports = class LoveCommand extends SlashCommand {
                 }
               }
 
-              collector.on("end", async (end, reason) => {
-                return interaction.editReply({
+              collector.on("end", async () => {
+                interaction.editReply({
                   components: [slapRowD]
                 });
               });
@@ -708,34 +690,33 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             let link = await sfw.tickle();
 
-            const tickleEmbed = new EmbedBuilder()
-
+            const TickleEmbed = new EmbedBuilder()
               .setTitle("Tickle!")
               .setDescription(
                 `**<@!${interaction.user.id}> is tickling ${mentionedUser}**`
               )
-              .setColor("#e91e63")
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setImage(link.url)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
-            const errorEmbed = new EmbedBuilder()
+            const SelfTickle = new EmbedBuilder()
               .setTitle("I ran into an error! <:error:822091680605011978>")
               .setDescription(
                 "You tickled yourself congrats! Now please mention someone"
               )
-              .setColor("#FF0000");
+              .setColor(colors.ERRORRED as ColorResolvable);
 
             if (mentionedUser.id === interaction.user.id) {
               return interaction.reply({
-                embeds: [errorEmbed]
+                embeds: [SelfTickle]
               });
             }
 
@@ -744,22 +725,16 @@ module.exports = class LoveCommand extends SlashCommand {
               .setLabel("Tickle fight!")
               .setStyle(ButtonStyle.Primary);
 
-            const fightRow = new ActionRowBuilder().addComponents([
-              tickleFight
-            ]);
+            const fightRow: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([tickleFight]);
 
-            const tickleFightD = new ButtonBuilder()
-              .setCustomId("fight")
-              .setLabel("Tickle fight!")
-              .setStyle(ButtonStyle.Primary)
-              .setDisabled(true);
+            const tickleFightD = tickleFight.setDisabled(true);
 
-            const fightRowD = new ActionRowBuilder().addComponents([
-              tickleFightD
-            ]);
+            const fightRowD: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([tickleFightD]);
 
             await interaction.reply({
-              embeds: [tickleEmbed],
+              embeds: [TickleEmbed],
               components: [fightRow]
             });
 
@@ -768,7 +743,8 @@ module.exports = class LoveCommand extends SlashCommand {
             const collector =
               interaction.channel.createMessageComponentCollector({
                 filter,
-                time: 15000
+                time: 15000,
+                componentType: ComponentType.Button
               });
 
             collector.on("collect", async (i) => {
@@ -782,13 +758,12 @@ module.exports = class LoveCommand extends SlashCommand {
               }, 14850); //14850
 
               if (i.customId === "fight") {
-                const tickleEmbed2 = new EmbedBuilder()
-
+                const ResponseTickle = new EmbedBuilder()
                   .setTitle("Tickle!")
                   .setDescription(
                     `**${mentionedUser} tickled <@${interaction.user.id}> back, TICKLE FIGHT!**`
                   )
-                  .setColor("#e91e63")
+                  .setColor(colors.DEFAULT as ColorResolvable)
                   .setImage(link.url)
                   .setFooter({
                     text: `Requested by: ${interaction.user.tag}`,
@@ -796,8 +771,8 @@ module.exports = class LoveCommand extends SlashCommand {
                   });
 
                 if (i.user.id === mentionedUser.id) {
-                  return interaction.editReply({
-                    embeds: [tickleEmbed2],
+                  interaction.editReply({
+                    embeds: [ResponseTickle],
                     components: [fightRowD]
                   });
                 } else {
@@ -820,33 +795,33 @@ module.exports = class LoveCommand extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const mentionedUser = interaction.options.getUser("user");
+          execute: async ({ client, interaction }: ExecuteFunction) => {
+            const mentionedUser: User = interaction.options.getUser("user");
 
             const res = await fetch("https://api.waifu.pics/sfw/kick");
             const img = (await res.json()).url;
 
             if (mentionedUser.id === interaction.user.id) {
-              const NoMention = new EmbedBuilder()
+              const SelfKick = new EmbedBuilder()
                 .setTitle("Um okay")
                 .setDescription(
                   "You kicked yourself! Now please mention another user"
                 )
-                .setColor("#FF0000");
+                .setColor(colors.DEFAULT as ColorResolvable);
 
               return interaction.reply({
-                embeds: [NoMention],
+                embeds: [SelfKick],
                 ephemeral: true
               });
             }
 
-            const mainembed = new EmbedBuilder()
+            const KickEmbed = new EmbedBuilder()
               .setTitle("Ouch!")
               .setDescription(
                 `**<@${interaction.user.id}> kicks ${mentionedUser}**`
               )
               .setImage(img)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.tag}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -854,9 +829,10 @@ module.exports = class LoveCommand extends SlashCommand {
 
             return interaction
               .reply({
-                embeds: [mainembed]
+                embeds: [KickEmbed]
               })
-              .catch((err) => {
+              .catch((err: Error) => {
+                console.log(`Love Kick Command Error:\n${err.message}`);
                 return interaction.reply({
                   content:
                     "Seems like there was something wrong with the API, Please check back later!",
@@ -868,4 +844,4 @@ module.exports = class LoveCommand extends SlashCommand {
       }
     });
   }
-};
+}
