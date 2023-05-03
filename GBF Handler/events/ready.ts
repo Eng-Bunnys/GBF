@@ -8,7 +8,7 @@ import { Client, Events } from "discord.js";
 
 import GBFVersion from "../GBF/Version.json";
 
-module.exports = (client: Client) => {
+export default function botReady(client: Client) {
   client.on(Events.ClientReady, async () => {
     const totalUsers = client.guilds.cache.reduce(
       (acc, guild) => acc + guild.memberCount,
@@ -57,4 +57,4 @@ module.exports = (client: Client) => {
       );
     });
   });
-};
+}
