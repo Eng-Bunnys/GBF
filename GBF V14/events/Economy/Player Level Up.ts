@@ -1,21 +1,21 @@
-const { EmbedBuilder } = require("discord.js");
+import { Client, ColorResolvable, EmbedBuilder } from "discord.js";
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
-const CommandLinks = require("../../GBF/GBFCommands.json");
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
+import CommandLinks from "../../GBF/GBFCommands.json";
 
-const timerSchema = require("../../schemas/User Schemas/Timer Schema");
-const bankSchema = require("../../schemas/User Schemas/User Profile Schema");
+import timerSchema from "../../schemas/User Schemas/Timer Schema";
+import userSchema from "../../schemas/User Schemas/User Profile Schema";
 
-const { xpRequired, xpRequiredAccount } = require("../../utils/TimerLogic");
+import { xpRequired, xpRequiredAccount } from "../../utils/TimerLogic";
 
-const { levelUpReward } = require("../../utils/Engine");
+import { levelUpReward } from "../../utils/Engine";
 
-module.exports = (client) => {
+export default function playerLevelUp(client: Client) {
   client.on(
     "playerLevelUp",
     async (interaction, player, type, extraLevels, remainingRP) => {
-      const userProfile = await bankSchema.findOne({
+      const userProfile = await userSchema.findOne({
         userID: player.id
       });
 
@@ -25,20 +25,20 @@ module.exports = (client) => {
 
       const noData = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} Oops`)
-        .setColor(colours.ERRORRED)
+        .setColor(colours.ERRORRED as ColorResolvable)
         .setDescription(
           `No data related to your user ID [${player.id}] could be found.\nCreate a free account using ${CommandLinks.TimerRegister}`
         );
 
       if (!userProfile || !timerProfile)
-        return interaction.reply({
+        return interaction.channel.send({
           embeds: [noData],
           ephemeral: true
         });
 
-      function rankUpEmoji(level) {
-        let rankUpEmoji;
-        switch (level) {
+      function rankUpEmoji(level: number) {
+        let rankUpEmoji: string;
+        switch (true) {
           case level <= 25:
             rankUpEmoji = `<a:W_:805604232354332704>`;
           case level > 25 && level <= 50:
@@ -58,7 +58,7 @@ module.exports = (client) => {
       }
 
       if (type === "seasonLevel") {
-        let seasonProgressBar;
+        let seasonProgressBar: string;
 
         const percentageSeasonComplete =
           (remainingRP / xpRequired(timerProfile.seasonLevel + 2)) * 100;
@@ -79,17 +79,15 @@ module.exports = (client) => {
           levelUpReward(timerProfile.seasonLevel + 1)
         );
 
-        const levelUpMessage = `• New Season Level: \`${
-          timerProfile.seasonLevel + extraLevels != 0 ? extraLevels : 1
-        } ${
-          extraLevels != 0 ? "[Number of level ups: " + extraLevels : ""
-        }\`\n• Season XP: \`${remainingRP.toLocaleString()}\`\n• XP required to reach level ${
+        const levelUpMessage = `• New Season Level: ${
+          timerProfile.seasonLevel + Number(extraLevels != 0 ? extraLevels : 1)
+        }\n• Season XP: \`${remainingRP.toLocaleString()}\`\n• XP required to reach level ${
           timerProfile.seasonLevel + extraLevels != 0 ? extraLevels : 2
         }: \`${xpRequired(
           timerProfile.seasonLevel + extraLevels != 0 ? extraLevels : 2
         ).toLocaleString()}\`\n• Season Level Progress: ${seasonProgressBar} \`[${percentageSeasonComplete.toFixed(
           2
-        )} %]\n• Cash Earned: ${rankUpReward}`;
+        )} %]\`\n• Cash Earned: \`₲${rankUpReward.toLocaleString()}\``;
 
         const rankedUp = new EmbedBuilder()
           .setTitle(
@@ -98,8 +96,11 @@ module.exports = (client) => {
                 Number(extraLevels != 0 ? extraLevels : 1)
             )} Ranked Up [Season]`
           )
-          .setColor(colours.DEFAULT)
-          .setDescription(`${levelUpMessage}`);
+          .setColor(colours.DEFAULT as ColorResolvable)
+          .setDescription(`${levelUpMessage}`)
+          .setFooter({
+            text: `Number of rank ups: ${extraLevels != 0 ? extraLevels : 1}`
+          });
 
         await userProfile.updateOne({
           bank: userProfile.bank + rankUpReward,
@@ -113,12 +114,12 @@ module.exports = (client) => {
           seasonXP: Number(remainingRP)
         });
 
-        return interaction.reply({
+        return interaction.channel.send({
           content: `${player}`,
           embeds: [rankedUp]
         });
       } else if (type === "accountLevel") {
-        let accountProgressBar;
+        let accountProgressBar: string;
 
         const percentageAccountComplete =
           (remainingRP / xpRequiredAccount(userProfile.Rank + 2)) * 100;
@@ -137,17 +138,15 @@ module.exports = (client) => {
 
         const rankUpReward = Number(levelUpReward(userProfile.Rank + 1)) * 2;
 
-        const levelUpMessage = `• New Rank: \`${
-          userProfile.Rank + extraLevels != 0 ? extraLevels : 1
-        } ${
-          extraLevels != 0 ? "[Number of rank ups: " + extraLevels : ""
-        }\`\n• RP: \`${remainingRP.toLocaleString()}\`\n• RP required to reach rank ${
+        const levelUpMessage = `• New Rank: ${
+          userProfile.Rank + Number(extraLevels != 0 ? extraLevels : 1)
+        }\n• RP: \`${remainingRP.toLocaleString()}\`\n• RP required to reach rank ${
           userProfile.Rank + extraLevels != 0 ? extraLevels : 2
         }: \`${xpRequiredAccount(
           userProfile.Rank + extraLevels != 0 ? extraLevels : 2
         ).toLocaleString()}\`\n•Account Rank Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
           2
-        )} %]\n• Cash Earned: ${rankUpReward}`;
+        )} %]\`\n• Cash Earned: \`₲${rankUpReward}\``;
 
         const rankedUp = new EmbedBuilder()
           .setTitle(
@@ -155,8 +154,11 @@ module.exports = (client) => {
               userProfile.Rank + Number(extraLevels != 0 ? extraLevels : 1)
             )} Ranked Up [Account]`
           )
-          .setColor(colours.DEFAULT)
-          .setDescription(`${levelUpMessage}`);
+          .setColor(colours.DEFAULT as ColorResolvable)
+          .setDescription(`${levelUpMessage}`)
+          .setFooter({
+            text: `Number of rank ups: ${extraLevels != 0 ? extraLevels : 1}`
+          });
 
         await userProfile.updateOne({
           Rank: userProfile.Rank + Number(extraLevels != 0 ? extraLevels : 1),
@@ -165,11 +167,11 @@ module.exports = (client) => {
           totalEarned: userProfile.totalEarned + rankUpReward
         });
 
-        return interaction.reply({
+        return interaction.channel.send({
           content: `${player}`,
           embeds: [rankedUp]
         });
       }
     }
   );
-};
+}
