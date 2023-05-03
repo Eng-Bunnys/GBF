@@ -26,12 +26,10 @@ export default class GBFClient extends Client {
     await registerCommands(this, "../commands");
 
     const guildCommands: ApplicationCommandData[] = toApplicationCommand(
-      this.slashCommands.filter((s: GBFSlash) => s.development),
-      this
+      this.slashCommands.filter((s: GBFSlash) => s.development)
     );
     const globalCommands: ApplicationCommandData[] = toApplicationCommand(
-      this.slashCommands.filter((s: GBFSlash) => !s.development),
-      this
+      this.slashCommands.filter((s: GBFSlash) => !s.development)
     );
 
     if (guildCommands.length) {
@@ -56,13 +54,22 @@ export default class GBFClient extends Client {
         if (stat.isDirectory()) {
           readEvents(join(dir, file));
         } else {
-          const event = require(join(__dirname, dir, file));
-          if (typeof event !== "function") {
-            console.log(`"${file}" does not have a "client" feature`);
-          } else {
-            this.events.set(event.name, event as GlobalEventHandlers);
-            event(this, this.configs);
+          const eventModule = require(join(__dirname, dir, file));
+          const eventFunction =
+            typeof eventModule === "function"
+              ? eventModule
+              : eventModule.default;
+
+          if (typeof eventFunction !== "function") {
+            console.log(`"${file}" does not have a callable default export`);
+            continue;
           }
+
+          this.events.set(
+            eventFunction.name,
+            eventFunction as GlobalEventHandlers
+          );
+          eventFunction(this, this.configs);
         }
       }
     };
@@ -70,7 +77,7 @@ export default class GBFClient extends Client {
     readEvents("../events");
   }
 
-  async login(token) {
+  async login(token: string) {
     await connect(this.configs.MONGOURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -100,7 +107,7 @@ export default class GBFClient extends Client {
   }
 }
 
-function toApplicationCommand(collection, bot) {
+function toApplicationCommand(collection) {
   return collection.map((s) => {
     return {
       name: s.name,
