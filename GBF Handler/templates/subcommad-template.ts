@@ -1,6 +1,15 @@
 const SlashCommand = require("../utils/slashCommands").default;
 
-import { ApplicationCommandOptionType, Client } from "discord.js";
+import {
+  ApplicationCommandOptionType,
+  Client,
+  CommandInteraction
+} from "discord.js";
+
+interface IExecute {
+  client: Client;
+  interaction: CommandInteraction;
+}
 
 export default class Tests extends SlashCommand {
   constructor(client: Client) {
@@ -23,7 +32,7 @@ export default class Tests extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {}
+          execute: async ({ client, interaction }: IExecute) => {}
         }
       }
     });
