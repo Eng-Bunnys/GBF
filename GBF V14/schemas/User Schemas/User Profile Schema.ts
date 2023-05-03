@@ -2,10 +2,12 @@ import { Schema, model, Document } from "mongoose";
 
 interface IUserProfileData extends Document {
   userID: string;
+  friends: [string];
   characterProfile: {
     characterName: string;
     characterSex: string;
   };
+  creationDate: Date;
   privateProfile: boolean;
   cash: number;
   bank: number;
@@ -33,6 +35,8 @@ interface IUserProfileData extends Document {
 const UserProfileSchema = new Schema<IUserProfileData>(
   {
     userID: String,
+    creationDate: Date,
+    friends: [String],
     characterProfile: {
       characterName: String,
       characterSex: String
