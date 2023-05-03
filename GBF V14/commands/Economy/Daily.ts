@@ -1,4 +1,4 @@
-const SlashCommand = require("../../utils/slashCommands").defualt;
+const SlashCommand = require("../../utils/slashCommands").default;
 
 import { EmbedBuilder, Client, ColorResolvable } from "discord.js";
 
