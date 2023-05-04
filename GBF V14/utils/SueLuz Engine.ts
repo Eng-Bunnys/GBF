@@ -52,3 +52,102 @@ export function getTasksCompleted(tasksCompleted: ITasksCompleted): {
   // Return an object with the formatted task list and total percentage
   return { taskList: result, totalPercentage };
 }
+
+/**
+ * An interface representing an object containing boolean values
+ */
+type ObjectOfBooleans = Record<string, boolean>;
+
+/**
+ * Returns the percentage of true values in a given object containing boolean values
+ * @param obj - The object to calculate true value percentage for
+ * @returns The percentage of true values in the object as a number
+ */
+export function getTruePercentage(obj: ObjectOfBooleans): number {
+  // Extract the values of the input object into an array
+  const values = Object.values(obj);
+
+  // Filter the true values from the array of values and create a new array of only true values
+  const trueValues = values.filter((value) => value === true);
+
+  // Compute the ratio of true values to total values, multiply by 100 to get percentage
+  const truePercentage = (trueValues.length / values.length) * 100;
+
+  // Return the calculated true value percentage
+  return truePercentage;
+}
+
+export function genderString(gender: string): string {
+  if (gender === "M") return "Male";
+  if (gender === "F") return "Fe-Male";
+  if (gender === "T") return "Other";
+}
+
+interface IPaymentResult {
+  paymentType: "wallet" | "bank";
+  remainingBalance?: number;
+  errorMessage?: string;
+}
+
+export function processPayment(
+  preferredMethod: string,
+  walletBalance: number,
+  bankBalance: number,
+  transactionPrice: number
+): IPaymentResult {
+  if (bankBalance < transactionPrice && walletBalance < transactionPrice)
+    return {
+      paymentType: null,
+      remainingBalance: null,
+      errorMessage: "Insufficient funds"
+    };
+
+  if (preferredMethod !== "wallet" && preferredMethod !== "bank")
+    return {
+      paymentType: null,
+      remainingBalance: null,
+      errorMessage: "Invalid payment method"
+    };
+
+  if (preferredMethod === "wallet" && walletBalance >= transactionPrice)
+    return {
+      paymentType: "wallet",
+      remainingBalance: (walletBalance -= transactionPrice),
+      errorMessage: null
+    };
+
+  if (preferredMethod === "bank" && bankBalance >= transactionPrice)
+    return {
+      paymentType: "bank",
+      remainingBalance: (bankBalance -= transactionPrice),
+      errorMessage: null
+    };
+
+  if (
+    preferredMethod === "wallet" &&
+    walletBalance < transactionPrice &&
+    bankBalance >= transactionPrice
+  )
+    return {
+      paymentType: "bank",
+      remainingBalance: (bankBalance -= transactionPrice),
+      errorMessage: null
+    };
+
+  if (
+    preferredMethod === "bank" &&
+    bankBalance < transactionPrice &&
+    walletBalance >= transactionPrice
+  )
+    return {
+      paymentType: "wallet",
+      remainingBalance: (walletBalance -= transactionPrice),
+      errorMessage: null
+    };
+  else
+    return {
+      paymentType: null,
+      remainingBalance: null,
+      errorMessage: "Payment failed"
+    };
+}
