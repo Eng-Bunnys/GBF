@@ -151,3 +151,33 @@ export function processPayment(
       errorMessage: "Payment failed"
     };
 }
+
+/**
+ * Generates a simple arithmetic problem consisting of three random numbers and two random operators.
+ * @returns an object containing the generated equation and its solution.
+ */
+export function generateSimpleArithmeticProblem(): {
+  equation: string;
+  solution: number;
+} {
+  const firstNumber: number = Math.floor(Math.random() * 9) + 1;
+  const secondNumber: number = Math.floor(Math.random() * 9) + 1;
+  const thirdNumber: number = Math.floor(Math.random() * 9) + 1;
+
+  const operators: string[] = ["+", "-", "*", "/"];
+  const firstOperator: string =
+    operators[Math.floor(Math.random() * operators.length)];
+  let secondOperator: string =
+    operators[Math.floor(Math.random() * operators.length)];
+  do {
+    secondOperator = operators[Math.floor(Math.random() * operators.length)];
+  } while (firstOperator == secondOperator);
+
+  const generatedEquation: string = `${firstNumber}${firstOperator}${secondNumber}${secondOperator}${thirdNumber}`;
+  const solution: number = Math.round(eval(generatedEquation));
+
+  return {
+    equation: generatedEquation,
+    solution: solution
+  };
+}
