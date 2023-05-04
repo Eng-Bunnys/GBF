@@ -60,7 +60,7 @@ export default function playerLevelUp(client: Client) {
       if (type === "seasonLevel") {
         let seasonProgressBar: string;
 
-        const percentageSeasonComplete =
+        const percentageSeasonComplete: number =
           (remainingRP / xpRequired(timerProfile.seasonLevel + 2)) * 100;
 
         if (percentageSeasonComplete >= 50 && percentageSeasonComplete < 90)
@@ -146,7 +146,7 @@ export default function playerLevelUp(client: Client) {
           userProfile.Rank + extraLevels != 0 ? extraLevels : 2
         ).toLocaleString()}\`\n•Account Rank Progress: ${accountProgressBar} \`[${percentageAccountComplete.toFixed(
           2
-        )} %]\`\n• Cash Earned: \`₲${rankUpReward}\``;
+        )} %]\`\n• Cash Earned: \`₲${rankUpReward.toLocaleString()}\``;
 
         const rankedUp = new EmbedBuilder()
           .setTitle(
