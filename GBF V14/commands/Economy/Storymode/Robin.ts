@@ -179,6 +179,9 @@ export default class RobinStoryMissions extends SlashCommand {
           description:
             "You and Robin take over a small shop and turn it into a small business",
           execute: async ({ client, interaction }: IExecute) => {
+            let hackPassed: boolean = false;
+            let wrongCameraShot: boolean = false;
+
             const userData = await UserProfileSchema.findOne({
               userID: interaction.user.id
             });
@@ -245,6 +248,7 @@ export default class RobinStoryMissions extends SlashCommand {
             }, 4000);
 
             const { equation, solution } = generateSimpleArithmeticProblem();
+            console.log(solution);
 
             const solveEquation = new EmbedBuilder()
               .setTitle(`Solve this equation to get in`)
@@ -256,10 +260,10 @@ export default class RobinStoryMissions extends SlashCommand {
                 text: `Warning: Do not use other buttons while this one is active`
               });
 
-            const randomSolutions: number[] = [
-              solution + Math.floor(Math.random() * 10) + 1,
-              solution - Math.floor(Math.random() * 5) + 1,
-              solution + Math.floor(Math.random() * 2) + 1,
+            let randomSolutions: number[] = [
+              Math.floor(Math.random() * 10) + solution,
+              Math.floor(Math.random() * 5) - solution,
+              Math.floor(Math.random() * 15) + solution,
               solution
             ];
 
@@ -332,23 +336,158 @@ export default class RobinStoryMissions extends SlashCommand {
               interaction.channel.createMessageComponentCollector({
                 filter,
                 idle: 300000,
+                time: 300000,
                 componentType: ComponentType.Button
               });
+
+            const camerasButtons: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                  .setCustomId("firstCamera")
+                  .setLabel("Camera 1")
+                  .setStyle(ButtonStyle.Danger)
+                  .setEmoji("📹"),
+                new ButtonBuilder()
+                  .setCustomId("secondCamera")
+                  .setLabel("Camera 2")
+                  .setStyle(ButtonStyle.Danger)
+                  .setEmoji("📹"),
+                new ButtonBuilder()
+                  .setCustomId("thirdCamera")
+                  .setLabel("Camera 3")
+                  .setStyle(ButtonStyle.Success)
+                  .setEmoji("📹"),
+                new ButtonBuilder()
+                  .setCustomId("fourthCamera")
+                  .setLabel("Camera 4")
+                  .setStyle(ButtonStyle.Danger)
+                  .setEmoji("📹")
+              ]);
+
+            const cameraIDs = [
+              "firstCamera",
+              "secondCamera",
+              "thirdCamera",
+              "fourthCamera"
+            ];
 
             collector.on("collect", async (i) => {
               await i.deferUpdate();
               await delay(750);
 
+              const hackFailed = new EmbedBuilder()
+                .setTitle(`Mission Failed`)
+                .setColor(colors.ERRORRED as ColorResolvable)
+                .setDescription(
+                  `${interaction.user.username} failed to hack into the shop's system.`
+                );
+
               if (
                 randomSolutions.some(
                   (number) =>
-                    number === Number(i.customId) && number !== solution
+                    number === Number(i.customId) &&
+                    number !== solution &&
+                    !hackPassed
                 )
               ) {
-                console.log("You clicked the wrong button!");
+                interaction.followUp({
+                  embeds: [hackFailed],
+                  ephemeral: true
+                });
+
+                collector.stop("hackFailed");
               }
-              if (Number(i.customId) === solution) {
-                console.log("Correct button")
+              if (Number(i.customId) === solution && !hackPassed) {
+                hackPassed = true;
+                const hackSuccess = new EmbedBuilder()
+                  .setDescription(
+                    `Good shit, now go in and shoot the third camera only, the rest are down.`
+                  )
+                  .setColor(colors.DEFAULT as ColorResolvable);
+
+                interaction.followUp({
+                  embeds: [hackSuccess],
+                  components: [camerasButtons],
+                  ephemeral: true
+                });
+              }
+
+              if (
+                cameraIDs.some(
+                  (cameraID) =>
+                    cameraID === i.customId && cameraID !== "thirdCamera"
+                )
+              ) {
+                const wrongCamera = new EmbedBuilder()
+                  .setDescription(
+                    `Why tf would you do that, wrong camera dickhead, we only have so much time here don't waste it.`
+                  )
+                  .setColor(colors.DEFAULT as ColorResolvable);
+
+                interaction.followUp({
+                  embeds: [wrongCamera],
+                  ephemeral: true
+                });
+
+                wrongCameraShot = true;
+              }
+
+              if (i.customId === "thirdCamera") {
+                const correctCamera = new EmbedBuilder()
+                  .setDescription(
+                    `Good shit, Gerald will take care of the owners, don't shoot no one, place is ours now.`
+                  )
+                  .setColor(colors.DEFAULT as ColorResolvable);
+
+                collector.stop("missionComplete");
+
+                interaction.followUp({
+                  embeds: [correctCamera],
+                  ephemeral: true
+                });
+
+                const tasksCompleted = {
+                  "Take Over": true,
+                  "Trinity": hackPassed,
+                  "Cameras Out": wrongCameraShot === true ? false : true
+                };
+
+                console.log(wrongCameraShot === false ? true : false);
+
+                client.emit(
+                  "missionComplete",
+                  interaction,
+                  interaction.user,
+                  tasksCompleted,
+                  "The Mojave One"
+                );
+
+                collector.stop("missionPassed");
+              }
+            });
+
+            collector.on("end", (collected, reason) => {
+              if (reason === "idle" || reason === "time") {
+                const failedDial = new EmbedBuilder()
+                  .setDescription(
+                    `\`Robin:\` Wow good job shithead, the cops are here, we're dead.`
+                  )
+                  .setColor(colors.DEFAULT as ColorResolvable);
+
+                const missionFailed = new EmbedBuilder()
+                  .setTitle(`Mission Failed`)
+                  .setDescription(
+                    `The cops arrived at the scene before Jerald could take care of the owners.`
+                  )
+                  .setColor(colors.ERRORRED as ColorResolvable);
+
+                interaction.followUp({
+                  embeds: [failedDial]
+                });
+
+                interaction.followUp({
+                  embeds: [missionFailed]
+                });
               }
             });
           }
