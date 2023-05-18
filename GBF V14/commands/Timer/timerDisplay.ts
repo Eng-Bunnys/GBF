@@ -1,24 +1,25 @@
 const SlashCommand = require("../../utils/slashCommands").default;
 
 import {
+  CommandInteraction,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Client
+  Client,
+  ColorResolvable,
+  Interaction,
+  ComponentType,
+  CommandInteractionOptionResolver
 } from "discord.js";
 
-const colours = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import colours from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const timerSchema = require("../../schemas/User Schemas/Timer Schema");
-const userSchema = require("../../schemas/User Schemas/User Profile Schema");
+import timerSchema from "../../schemas/User Schemas/Timer Schema";
+import userSchema from "../../schemas/User Schemas/User Profile Schema";
 
-const {
-  msToTime,
-  chunkAverage,
-  twentyFourToTwelve
-} = require("../../utils/Engine");
+import { msToTime, chunkAverage, twentyFourToTwelve } from "../../utils/Engine";
 
 import {
   xpRequired,
@@ -26,7 +27,12 @@ import {
   hoursRequired
 } from "../../utils/TimerLogic";
 
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
+
+interface IExecute {
+  client: Client;
+  interaction: CommandInteraction;
+}
 
 export default class BasicTimerUI extends SlashCommand {
   constructor(client: Client) {
@@ -41,21 +47,7 @@ export default class BasicTimerUI extends SlashCommand {
       subcommands: {
         stats: {
           description: "Get the stats of the current tracking semester",
-          execute: async ({ client, interaction }) => {
-            //Abbreviation dictionary
-            /**
-             - dhms : Day, Hours, Minutes, Seconds | Means that this variable stores a human readable dynamic date
-             - HR : Human readable variable 
-             - hr : Hours 
-             - s : Seconds | Means that this variable's units is seconds only
-             - ms : MiliSeconds | Means that this variable's units is miliseconds only
-             - avg : Average of data
-             */
-
-            // timerData object stores time in seconds, so we have to convert it to miliseconds to be able to use the msToTime function
-
-            //Checking if the user data on the current semester
-
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
@@ -66,7 +58,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             const noAccount = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
@@ -78,7 +70,7 @@ export default class BasicTimerUI extends SlashCommand {
               });
 
             // First quadrant | Basic data
-            const HRTotalTime =
+            const HRTotalTime: string =
               timerData.timeSpent > 0
                 ? msToTime(timerData.timeSpent * 1000)
                 : `0 seconds`;
@@ -99,14 +91,17 @@ export default class BasicTimerUI extends SlashCommand {
             else avgTotalTime = msToTime(avgTotalTime * 1000);
 
             // Second quadrant | Break data
-            const HRBreakTime =
+            const HRBreakTime: string =
               timerData.breakTime > 0
                 ? msToTime(timerData.breakTime * 1000)
                 : `In-sufficient data`;
-            const hrBreakTime = Math.round(timerData.breakTime / 3600);
 
-            let avgBreakTime: any = timerData.breakTime / timerData.totalBreaks;
-            let rawBreakTime = timerData.breakTime / timerData.totalBreaks;
+            const hrBreakTime: number = Math.round(timerData.breakTime / 3600);
+
+            let avgBreakTime: number | string =
+              timerData.breakTime / timerData.totalBreaks;
+            let rawBreakTime: number =
+              timerData.breakTime / timerData.totalBreaks;
 
             if (!msToTime(avgBreakTime * 1000)) {
               avgBreakTime = `In-sufficient data`;
@@ -131,16 +126,18 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Checking if there was a last session
 
-            let HRSessionTime;
-            let UNIXSessionDate;
-            let deltaTime;
+            let HRSessionTime: string;
+            let UNIXSessionDate: string;
+            let deltaTime: number | string;
 
             if (timerData.lastSessionTime && timerData.lastSessionDate) {
               HRSessionTime = msToTime(timerData.lastSessionTime * 1000);
               // Switching basic JS date to dynamic UNIX
               UNIXSessionDate = `<t:${Math.round(
-                timerData.lastSessionDate / 1000
-              )}:F>, <t:${Math.round(timerData.lastSessionDate / 1000)}:R>`;
+                timerData.lastSessionDate.getTime() / 1000
+              )}:F>, <t:${Math.round(
+                timerData.lastSessionDate.getTime() / 1000
+              )}:R>`;
               // By switching this to true, we can tell the system that a previous session exists so it can display it
               deltaTime = timerData.lastSessionTime - rawTotalTime;
             } else {
@@ -152,22 +149,19 @@ export default class BasicTimerUI extends SlashCommand {
             // Fifth quadrant | Weekly averages
             // This quadrant uses an external function that can be found in GBF's engine
 
-            const weeklyAverages = chunkAverage(timerData.sessionLengths, 7);
-            const attendedWeeks = chunkAverage(timerData.sessionLengths, 5);
+            const weeklyAverages: number[] = chunkAverage(
+              timerData.sessionLengths,
+              7
+            );
+            const attendedWeeks: number[] = chunkAverage(
+              timerData.sessionLengths,
+              5
+            );
 
             // It is very likely that there isn't enough data to be able to provide a week's average, so we need to check for that
 
             // This will be the variable that will hold the average time spent per week
-            let displayWeeklyTimeAverage;
-
-            // Getting the average of the weekly data
-            // function averageTotal(data) {
-            //   let sum = 0;
-            //   for (let k = 0; k < data.length; k++) {
-            //     sum += data[k];
-            //   }
-            //   return sum / data.length;
-            // }
+            let displayWeeklyTimeAverage: string;
 
             if (!weeklyAverages.length || weeklyAverages.length < 1)
               displayWeeklyTimeAverage = `In-sufficient data`;
@@ -180,16 +174,14 @@ export default class BasicTimerUI extends SlashCommand {
                 weeklyAverages[
                   weeklyAverages.length - 1 >= 0 ? weeklyAverages.length - 1 : 0
                 ] / 3600
-              ).toFixed(2)} Hours]\n• Number of weeks: ${
+              ).toFixed(2)} Hours]\n• Number of 7 day weeks: ${
                 weeklyAverages.length
-              }\n• Number of 5 day weeks: ${
-                attendedWeeks.length
-              } (Based off global average school days)`;
+              }\n• Number of 5 day weeks: ${attendedWeeks.length}`;
             }
 
             // Getting the average start time (Old code)
 
-            let averageStartTime;
+            let averageStartTime: number;
 
             const sumOfTimes = timerData.startTime.reduce(
               (partialSum, a) => partialSum + a,
@@ -200,7 +192,7 @@ export default class BasicTimerUI extends SlashCommand {
               (sumOfTimes / timerData.startTime.length).toFixed(2)
             );
 
-            let displayAverageStartTime;
+            let displayAverageStartTime: number | string;
 
             if (!averageStartTime)
               displayAverageStartTime = `In-sufficient data`;
@@ -208,7 +200,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Random welcome message to the user
 
-            const randomMessages = [
+            const randomMessages: string[] = [
               `How's your day ${interaction.user.username}`,
               `Enjoying this day ${interaction.user.username}?`,
               `Best of luck to you ${interaction.user.username}`,
@@ -217,33 +209,33 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Getting a randomized message
 
-            const randomTitleText =
+            const randomTitleText: string =
               randomMessages[Math.floor(Math.random() * randomMessages.length)];
 
             // Sixth quadrant || Account levels
 
             // Getting the required XP to rank up, XP till that & progress bar
 
-            const seasonRank =
+            const seasonRank: number =
               timerData.seasonLevel > 0 ? timerData.seasonLevel : 1;
 
-            const accountRank = userData.Rank > 0 ? userData.Rank : 1;
+            const accountRank: number = userData.Rank > 0 ? userData.Rank : 1;
 
-            const accountXPrequired = xpRequiredAccount(accountRank + 1);
-            const seasonXPrequired = xpRequired(seasonRank + 1);
+            const accountXPrequired: number = xpRequiredAccount(
+              accountRank + 1
+            );
+            const seasonXPrequired: number = xpRequired(seasonRank + 1);
 
-            const hoursNeededAccount = Math.abs(
+            const hoursNeededAccount: number = Math.abs(
               hoursRequired(accountXPrequired - userData.Rank)
             );
-            const hoursNeededSeason = Math.abs(
+            const hoursNeededSeason: number = Math.abs(
               hoursRequired(seasonXPrequired - timerData.seasonXP)
             );
 
-            // Code from timerEngine
+            let seasonProgressBar: string;
 
-            let seasonProgressBar;
-
-            const percentageSeasonComplete =
+            const percentageSeasonComplete: number =
               (timerData.seasonXP / seasonXPrequired) * 100;
 
             if (percentageSeasonComplete >= 50 && percentageSeasonComplete < 90)
@@ -263,9 +255,9 @@ export default class BasicTimerUI extends SlashCommand {
             else if (percentageSeasonComplete >= 95)
               seasonProgressBar = `${emojis.leftFull}${emojis.middleFull}${emojis.middleFull}${emojis.rightFull}`;
 
-            let accountProgressBar;
+            let accountProgressBar: string;
 
-            const percentageAccountComplete =
+            const percentageAccountComplete: number =
               (userData.RP / accountXPrequired) * 100;
 
             if (
@@ -290,7 +282,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             // The main message that stores all of the information and the third quadrant | Longest session
 
-            const messageDescription = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
+            const messageDescription: string = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
               hrTotalTime == 1 ? "Hour" : "Hours"
             }]\n• Average Session Time: ${avgTotalTime} [${Math.round(
               rawTotalTime
@@ -310,9 +302,13 @@ export default class BasicTimerUI extends SlashCommand {
               timerData.longestSessionTime
                 ? msToTime(timerData.longestSessionTime * 1000)
                 : `In-sufficient data`
-            }\n\n**Previous Session Details:**\n• Session Duration: ${HRSessionTime}\n• Session Date: ${UNIXSessionDate}\n• Difference from average: ${
-              msToTime(deltaTime * 1000)
-                ? msToTime(deltaTime * 1000)
+            }\n• Longest Semester: ${msToTime(
+              timerData.biggestSemester * 1000
+            )} [${
+              timerData.biggestSemesterName
+            }]\n\n**Previous Session Details:**\n• Session Duration: ${HRSessionTime}\n• Session Date: ${UNIXSessionDate}\n• Difference from average: ${
+              msToTime((deltaTime as number) * 1000)
+                ? msToTime((deltaTime as number) * 1000)
                 : `In-sufficient data`
             }\n\n• Average Start Time: ${displayAverageStartTime} [GMT +2]\n• Average Session Time per Week: ${displayWeeklyTimeAverage}\n\n• Semester Level: ${
               timerData.seasonLevel
@@ -345,7 +341,7 @@ export default class BasicTimerUI extends SlashCommand {
                 }`
               )
               .setDescription(`${messageDescription}`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Encountered a bug or want to request a feature? Contact support, /bot invite and choose support server.`
               });
@@ -366,14 +362,14 @@ export default class BasicTimerUI extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
 
             const noAccount = new EmbedBuilder()
               .setTitle(`⚠️ You cannot do that ⚠️`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
@@ -384,13 +380,15 @@ export default class BasicTimerUI extends SlashCommand {
                 ephemeral: true
               });
 
-            const sessionTopic = interaction.options.getString("topic");
+            const sessionTopic: string = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("topic");
 
-            const HRTotalTime =
+            const HRTotalTime: number | string =
               timerData.timeSpent > 0
                 ? msToTime(timerData.timeSpent * 1000)
                 : `In-sufficient data`;
-            const hrTotalTime = Math.round(timerData.timeSpent / 3600);
+            const hrTotalTime: number = Math.round(timerData.timeSpent / 3600);
 
             let avgTotalTime: number | string =
               timerData.timeSpent / timerData.numberOfStarts;
@@ -404,7 +402,7 @@ export default class BasicTimerUI extends SlashCommand {
             } else avgTotalTime = msToTime(avgTotalTime * 1000);
 
             // Second quadrant | Break data
-            const HRBreakTime =
+            const HRBreakTime: number | string =
               timerData.breakTime > 0
                 ? msToTime(timerData.breakTime * 1000)
                 : `In-sufficient data`;
@@ -421,16 +419,18 @@ export default class BasicTimerUI extends SlashCommand {
               rawBreakTime = 0;
             } else avgBreakTime = msToTime(avgBreakTime * 1000);
 
-            let HRSessionTime;
-            let UNIXSessionDate;
-            let deltaTime;
+            let HRSessionTime: string;
+            let UNIXSessionDate: string;
+            let deltaTime: number | string;
 
             if (timerData.lastSessionTime && timerData.lastSessionDate) {
               HRSessionTime = msToTime(timerData.lastSessionTime * 1000);
               // Switching basic JS date to dynamic UNIX
               UNIXSessionDate = `<t:${Math.round(
-                timerData.lastSessionDate / 1000
-              )}:F>, <t:${Math.round(timerData.lastSessionDate / 1000)}:R>`;
+                timerData.lastSessionDate.getTime() / 1000
+              )}:F>, <t:${Math.round(
+                timerData.lastSessionDate.getTime() / 1000
+              )}:R>`;
               // By switching this to true, we can tell the system that a previous session exists so it can display it
               deltaTime = Number(
                 (timerData.lastSessionTime - rawTotalTime).toFixed(3)
@@ -446,8 +446,8 @@ export default class BasicTimerUI extends SlashCommand {
             }\n\n• Total Break Time: ${HRBreakTime} [${hrBreakTime.toLocaleString()} Hours]\n• Average Break Time: ${avgBreakTime} [${rawBreakTime.toLocaleString()} Seconds]\n• Total Number of Breaks: ${
               timerData.totalBreaks
             }\n\n**Previous Session Details:**\n• Session Duration: ${HRSessionTime}\n• Session Date: ${UNIXSessionDate}\n• Difference from average: ${
-              msToTime(deltaTime * 1000)
-                ? msToTime(deltaTime * 1000)
+              msToTime((deltaTime as number) * 1000)
+                ? msToTime((deltaTime as number) * 1000)
                 : deltaTime.toLocaleString() + ` Seconds`
             }`;
 
@@ -462,7 +462,7 @@ export default class BasicTimerUI extends SlashCommand {
               randomMessages[Math.floor(Math.random() * randomMessages.length)];
 
             // Using an API to generate random advice to put in the footer
-            let randomAdvice;
+            let randomAdvice: string;
             // It is very possible to not get any results back so we need to check for that
             try {
               await fetch(`https://luminabot.xyz/api/json/advice`)
@@ -470,13 +470,14 @@ export default class BasicTimerUI extends SlashCommand {
                 .then((data) => {
                   randomAdvice = `${data.advice}`;
                 });
-            } catch (err) {
+            } catch (err: Error | unknown) {
+              console.log(`Error fetching: ${err}`);
               randomAdvice = `Advice could not be loaded.`;
             }
 
             const mainEmbed = new EmbedBuilder()
               .setTitle(`${randomTitleText} | ${sessionTopic}`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(`${messageDescription}`)
               .setFooter({
                 text: `${randomAdvice}`
@@ -484,25 +485,32 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Creating the buttons that the user will use to start / stop / pause
 
-            const mainButtonsRow = new ActionRowBuilder().addComponents([
-              new ButtonBuilder()
-                .setCustomId("startTimer")
-                .setEmoji("🕜")
-                .setLabel("Start Timer")
-                .setStyle(ButtonStyle.Secondary),
-              new ButtonBuilder()
-                .setCustomId("pauseTimer")
-                .setEmoji("⏰")
-                .setDisabled(true)
-                .setLabel("Pause Timer")
-                .setStyle(ButtonStyle.Secondary),
-              new ButtonBuilder()
-                .setCustomId("stopTimer")
-                .setEmoji("🕛")
-                .setDisabled(true)
-                .setLabel("Stop Timer")
-                .setStyle(ButtonStyle.Secondary)
-            ]);
+            const mainButtonsRow: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                  .setCustomId("startTimer")
+                  .setEmoji("🕜")
+                  .setLabel("Start Timer")
+                  .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                  .setCustomId("pauseTimer")
+                  .setEmoji("⏰")
+                  .setDisabled(true)
+                  .setLabel("Pause Timer")
+                  .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                  .setCustomId("timerInfo")
+                  .setEmoji("ℹ️")
+                  .setDisabled(true)
+                  .setLabel("Session Stats")
+                  .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                  .setCustomId("stopTimer")
+                  .setEmoji("🕛")
+                  .setDisabled(true)
+                  .setLabel("Stop Timer")
+                  .setStyle(ButtonStyle.Secondary)
+              ]);
 
             const initiateMessage = await interaction.reply({
               embeds: [mainEmbed],
@@ -529,14 +537,14 @@ export default class BasicTimerUI extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
 
             const existingAccount = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `You already have existing semester data, you can reset and create a new profile using </timer registry:1068210539689414777>`
               );
@@ -549,11 +557,13 @@ export default class BasicTimerUI extends SlashCommand {
                 ephemeral: true
               });
 
-            const seasonName = interaction.options.getString("semester-name");
+            const seasonName = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("semester-name");
 
             const newSemesterSeason = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Registered`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(
                 `Registry Time:\n<t:${Math.floor(
                   Date.now() / 1000
@@ -562,7 +572,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             const helpEmbed = new EmbedBuilder()
               .setTitle(`${emojis.LOGOTRANS} GBF Timers`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(`1. Start by registering, this can be done for **free** using  </timer registry:1068210539689414777>
             2. Once registered, you can start a new session using </timer initiate:1068210539689414777>, buttons will be displayed that you can use to start, stop or pause the timer!
             3. Once you finished your session, you can view your stats using </timer stats:1068210539689414777>
@@ -620,7 +630,7 @@ export default class BasicTimerUI extends SlashCommand {
         },
         reset: {
           description: "Reset the current semester stats",
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
@@ -629,7 +639,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             const noAccount = new EmbedBuilder()
               .setTitle(`⚠️ You cannot do that ⚠️`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
@@ -644,37 +654,39 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Creating confirm or deny buttons
 
-            const confirmationButtons = new ActionRowBuilder().addComponents([
-              new ButtonBuilder()
-                .setCustomId("confirmTimerDelete")
-                .setStyle(ButtonStyle.Danger)
-                .setLabel("Delete My Data"),
-              new ButtonBuilder()
-                .setCustomId("denyTimerDelete")
-                .setStyle(ButtonStyle.Success)
-                .setLabel("Don't Delete My Data")
-            ]);
+            const confirmationButtons: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                  .setCustomId("confirmTimerDelete")
+                  .setStyle(ButtonStyle.Danger)
+                  .setLabel("Delete My Data"),
+                new ButtonBuilder()
+                  .setCustomId("denyTimerDelete")
+                  .setStyle(ButtonStyle.Secondary)
+                  .setLabel("Don't Delete My Data")
+              ]);
 
             // Creating the same buttons as above but disabled
 
-            const confirmationButtonsD = new ActionRowBuilder().addComponents([
-              new ButtonBuilder()
-                .setCustomId("confirmTimerDeleteD")
-                .setDisabled(true)
-                .setStyle(ButtonStyle.Danger)
-                .setLabel("Delete My Data"),
-              new ButtonBuilder()
-                .setCustomId("denyTimerDeleteD")
-                .setDisabled(true)
-                .setStyle(ButtonStyle.Success)
-                .setLabel("Don't Delete My Data")
-            ]);
+            const confirmationButtonsD: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                  .setCustomId("confirmTimerDeleteD")
+                  .setDisabled(true)
+                  .setStyle(ButtonStyle.Danger)
+                  .setLabel("Delete My Data"),
+                new ButtonBuilder()
+                  .setCustomId("denyTimerDeleteD")
+                  .setDisabled(true)
+                  .setStyle(ButtonStyle.Secondary)
+                  .setLabel("Don't Delete My Data")
+              ]);
 
             // Creating an embed to display to the user
 
             const warningMessage = new EmbedBuilder()
               .setTitle(`⚠️ Confirmation required`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(
                 `Please use the buttons below to confirm or deny this action. [Semester reset, this includes semester XP]\n\nWe recommend using </timer stats:1068210539689414777> before restting.`
               );
@@ -688,14 +700,15 @@ export default class BasicTimerUI extends SlashCommand {
             // Creating an interaction collector with a 5 minutes time, if the time runs out nothing happens
 
             // Creating the filter that checks if the user who clicked the button is the interaction author
-            const filter = (i) => {
+            const filter = (i: Interaction) => {
               return i.user.id === interaction.user.id;
             };
             // Creating the collector in the current channel
             const collector =
               interaction.channel.createMessageComponentCollector({
                 filter,
-                time: 300000
+                time: 300000,
+                componentType: ComponentType.Button
               });
             // Looking for the collector collect event
             collector.on("collect", async (i) => {
@@ -703,7 +716,7 @@ export default class BasicTimerUI extends SlashCommand {
               if (i.customId === "denyTimerDelete") {
                 const processAborted = new EmbedBuilder()
                   .setTitle(`${emojis.VERIFY} Success`)
-                  .setColor(colours.DEFAULT)
+                  .setColor(colours.DEFAULT as ColorResolvable)
                   .setDescription(
                     `Process aborted by the user, no action was taken.`
                   );
@@ -715,18 +728,18 @@ export default class BasicTimerUI extends SlashCommand {
 
                 // Returning and closing the collector
 
-                return collector.stop({ reason: "308" });
+                return collector.stop("308");
               } else if (i.customId === "confirmTimerDelete") {
                 // Telling the user the data is being deleted
 
                 const processBegin = new EmbedBuilder()
                   .setTitle(`${emojis.VERIFY} Success`)
-                  .setColor(colours.DEFAULT)
+                  .setColor(colours.DEFAULT as ColorResolvable)
                   .setDescription(
                     `Your data has been deleted, to create a new semester use </timer registry:1068210539689414777>`
                   );
 
-                const semesterRecap = `• Total Time: ${msToTime(
+                const semesterRecap: string = `• Total Time: ${msToTime(
                   timerData.timeSpent * 1000
                 )}\n• Number of Sessions: ${
                   timerData.numberOfStarts
@@ -740,13 +753,36 @@ export default class BasicTimerUI extends SlashCommand {
 
                 const semesterStats = new EmbedBuilder()
                   .setTitle(`${timerData.seasonName} Recap`)
-                  .setColor(colours.DEFAULT)
+                  .setColor(colours.DEFAULT as ColorResolvable)
                   .setDescription(`${semesterRecap}`)
                   .setFooter({
                     text: `Good luck on your next journey! - GBF Team`
                   });
 
                 // Deleting the data
+
+                if (timerData.biggestSemester < timerData.timeSpent) {
+                  await timerData.updateOne({
+                    biggestSemester: timerData.timeSpent,
+                    biggestSemesterName: timerData.seasonName
+                  });
+
+                  const newLongestSemester = new EmbedBuilder()
+                    .setTitle(`🎉 New Record`)
+                    .setDescription(
+                      `${
+                        timerData.seasonName
+                      } was your biggest semester with ${msToTime(
+                        timerData.timeSpent * 1000
+                      )}!`
+                    )
+                    .setColor(colours.DEFAULT as ColorResolvable);
+
+                  interaction.channel.send({
+                    content: `<@${interaction.user.id}>`,
+                    embeds: [newLongestSemester]
+                  });
+                }
 
                 await timerData.updateOne({
                   messageID: null,
@@ -762,7 +798,7 @@ export default class BasicTimerUI extends SlashCommand {
                   breakTime: 0,
                   totalBreaks: 0,
                   startTime: [],
-                  intiationTime: null,
+                  initiationTime: null,
                   sessionBreakTime: 0,
                   sessionBreaks: 0,
                   breakTimerStart: null,
@@ -778,9 +814,7 @@ export default class BasicTimerUI extends SlashCommand {
                   components: [confirmationButtonsD]
                 });
                 // Closing the collector
-                return collector.stop({
-                  reason: "308"
-                });
+                return collector.stop("308");
               }
             });
 
@@ -789,7 +823,7 @@ export default class BasicTimerUI extends SlashCommand {
             collector.on("end", (collected, reason) => {
               // Ending the command and disabling the buttons
               if (reason !== "308") return;
-              return interaction.editReply({
+              interaction.editReply({
                 content: `Timed out.`,
                 components: [confirmationButtonsD]
               });
@@ -798,14 +832,14 @@ export default class BasicTimerUI extends SlashCommand {
         },
         info: {
           description: "Get details on the current active session",
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
 
             const noAccount = new EmbedBuilder()
               .setTitle(`⚠️ You cannot do that ⚠️`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
@@ -820,10 +854,10 @@ export default class BasicTimerUI extends SlashCommand {
 
             const noActiveSession = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(`There are no active sessions.`);
 
-            if (!timerData.intiationTime)
+            if (!timerData.initiationTime)
               return interaction.reply({
                 embeds: [noActiveSession],
                 ephemeral: true
@@ -832,6 +866,28 @@ export default class BasicTimerUI extends SlashCommand {
             // Calculating the time elapsed
 
             // Checking if the user took a break, if they did not we auto set the time to 0
+            let onBreak: boolean = timerData.breakTimerStart ? true : false;
+
+            let currentBreakTime: string | null = null;
+
+            let activeBreakTime: number;
+
+            if (onBreak) {
+              activeBreakTime = Math.abs(
+                Number(
+                  (
+                    (Date.now() - timerData.breakTimerStart.getTime()) /
+                    1000
+                  ).toFixed(3)
+                ) * 1000
+              );
+              currentBreakTime = `• Current Break Length:  ${msToTime(
+                activeBreakTime
+              )}`;
+            } else {
+              currentBreakTime = null;
+              activeBreakTime = 0;
+            }
 
             let breakTime: number =
               timerData.sessionBreakTime > 0 ? timerData.sessionBreakTime : 0;
@@ -843,7 +899,7 @@ export default class BasicTimerUI extends SlashCommand {
 
             // Subtracting the break time from the time elapsed to get the true time elapsed
             const timeElapsed: string = (
-              (Date.now() - timerData.intiationTime.getTime()) / 1000 -
+              (Date.now() - timerData.initiationTime.getTime()) / 1000 -
               breakTime
             ).toFixed(3);
 
@@ -853,16 +909,21 @@ export default class BasicTimerUI extends SlashCommand {
                   timerData.sessionTopic ? timerData.sessionTopic : ""
                 }`
               )
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(
                 `• Time Elapsed: ${msToTime(
                   Math.abs(Number(timeElapsed) * 1000)
                 )}\n• Total Break Time: ${displayBreakTime}\n• Total Breaks: ${
                   timerData.sessionBreaks
-                }\n\n• Start Time: <t:${Math.round(
-                  timerData.lastSessionDate / 1000
+                }\n${
+                  currentBreakTime !== null ? currentBreakTime + "\n" : "\n"
+                }• Start Time: <t:${Math.round(
+                  timerData.lastSessionDate.getTime() / 1000
                 )}:F>`
-              );
+              )
+              .setFooter({
+                text: `The active break time is not counted in the time elapsed, the real time elapsed will show once the break has ended, same applies to the total break time.`
+              });
 
             return interaction.reply({
               embeds: [sessionStats]
@@ -871,10 +932,10 @@ export default class BasicTimerUI extends SlashCommand {
         },
         help: {
           description: "Find out how to use GBF Timers",
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const helpEmbed = new EmbedBuilder()
               .setTitle(`${emojis.LOGOTRANS} GBF Timers`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(`1. Start by registering, this can be done for **free** using  </timer registry:1068210539689414777>
             2. Once registered, you can start a new session using </timer initiate:1068210539689414777>, buttons will be displayed that you can use to start, stop or pause the timer!
             3. Once you finished your session, you can view your stats using </timer stats:1068210539689414777>
@@ -898,14 +959,14 @@ export default class BasicTimerUI extends SlashCommand {
             }
           ],
           description: "Update the current session's topic",
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const timerData = await timerSchema.findOne({
               userID: interaction.user.id
             });
 
             const noAccount = new EmbedBuilder()
               .setTitle(`⚠️ You cannot do that ⚠️`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(
                 `I couldn't find any data matching your user ID.\n\nCreate a new semester account using </timer registry:1068210539689414777>`
               );
@@ -920,24 +981,28 @@ export default class BasicTimerUI extends SlashCommand {
 
             const noActiveSession = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colours.ERRORRED)
+              .setColor(colours.ERRORRED as ColorResolvable)
               .setDescription(`There are no active sessions.`);
 
-            if (!timerData.intiationTime)
+            if (!timerData.initiationTime)
               return interaction.reply({
                 embeds: [noActiveSession],
                 ephemeral: true
               });
 
             await timerData.updateOne({
-              sessionTopic: interaction.options.getString("topic")
+              sessionTopic: (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("topic")
             });
 
             const topicUpdated = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success`)
-              .setColor(colours.DEFAULT)
+              .setColor(colours.DEFAULT as ColorResolvable)
               .setDescription(
-                `New session topic: ${interaction.options.getString("topic")}`
+                `New session topic: ${(
+                  interaction.options as CommandInteractionOptionResolver
+                ).getString("topic")}`
               );
 
             return interaction.reply({
