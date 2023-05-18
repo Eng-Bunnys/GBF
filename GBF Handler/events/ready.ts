@@ -2,11 +2,11 @@ import chalk, { redBright, whiteBright, underline } from "chalk";
 
 import figlet, { textSync } from "figlet";
 
-import { capitalize } from "../utils/Engine";
+import { capitalize } from "../../utils/Engine";
 
 import { Client, Events } from "discord.js";
 
-import GBFVersion from "../GBF/Version.json";
+import GBFVersion from "../../GBF/Version.json";
 
 export default function botReady(client: Client) {
   client.on(Events.ClientReady, async () => {
@@ -56,5 +56,11 @@ export default function botReady(client: Client) {
         reason.message
       );
     });
+  });
+
+  process.on("uncaughtException", (err: Error, origin: string) => {
+    console.log(
+      `Caught uncaughtException: ${err}\n` + `Exception origin: ${origin}`
+    );
   });
 }
