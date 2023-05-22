@@ -32,7 +32,6 @@ interface IExecute {
 
 const WelcomeMessage = new EmbedBuilder()
   .setTitle(`${emojis.ParrotDance} Welcome to GBF Freebies 🎉`)
-  .setColor(colors.DEFAULT as ColorResolvable)
   .setDescription(
     `This will be the channel where GBF Freebie announcements and default setting freebies are sent to, happy gaming!`
   )
@@ -290,6 +289,8 @@ export default class FreebieRegistry extends SlashCommand {
                 )
               );
 
+              WelcomeMessage.setColor(embedColor as ColorResolvable);
+
               await freebieChannel.send({
                 embeds: [WelcomeMessage]
               });
@@ -384,6 +385,8 @@ export default class FreebieRegistry extends SlashCommand {
                 )
               );
 
+              WelcomeMessage.setColor(embedColor as ColorResolvable);
+
               await AutoFreebieChannel.send({
                 embeds: [WelcomeMessage]
               });
@@ -416,6 +419,265 @@ export default class FreebieRegistry extends SlashCommand {
             return interaction.reply({
               embeds: [HelpEmbed],
               ephemeral: true
+            });
+          }
+        },
+        categories: {
+          description: "Customize the category settings",
+          args: [
+            {
+              name: "enable-all",
+              description: "Enable all the categories [Enabled by default]",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "send-steam",
+              description:
+                "Choose whether GBF should tell you when a Steam freebie is available.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "steam-mention",
+              description:
+                "Choose whether GBF should mention a role whenever a Steam freebe is sent.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "steam-role",
+              description:
+                "Choose the role that GBF should ping whenever a Steam freebie is sent.",
+              type: ApplicationCommandOptionType.Role
+            },
+            {
+              name: "steam-channel",
+              description:
+                "Choose the channel that GBF should send Steam freebies to.",
+              type: ApplicationCommandOptionType.Channel,
+              channelTypes: [
+                ChannelType.GuildText,
+                ChannelType.GuildAnnouncement
+              ]
+            },
+            {
+              name: "send-epic-games",
+              description:
+                "Choose whether GBF should tell you when an Epic Games freebie is available.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "epic-games-mention",
+              description:
+                "Choose whether GBF should mention a role whenever an Epic Games freebe is sent.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "epic-games-role",
+              description:
+                "Choose the role that GBF should ping whenever an Epic Games freebie is sent.",
+              type: ApplicationCommandOptionType.Role
+            },
+            {
+              name: "epic-games-channel",
+              description:
+                "Choose the channel that GBF should send Epic Games freebies to.",
+              type: ApplicationCommandOptionType.Channel,
+              channelTypes: [
+                ChannelType.GuildText,
+                ChannelType.GuildAnnouncement
+              ]
+            },
+            {
+              name: "send-other",
+              description:
+                "Choose whether GBF should tell you when a freebie from another game store is available.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "other-mention",
+              description:
+                "Choose whether GBF should mention a role whenever an Other game store freebe is sent.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "other-role",
+              description:
+                "Choose the role that GBF should ping whenever an Other game store freebie is sent.",
+              type: ApplicationCommandOptionType.Role
+            },
+            {
+              name: "other-channel",
+              description:
+                "Choose the channel that GBF should send Other freebies to.",
+              type: ApplicationCommandOptionType.Channel,
+              channelTypes: [
+                ChannelType.GuildText,
+                ChannelType.GuildAnnouncement
+              ]
+            }
+          ],
+          execute: async ({ client, interaction }: IExecute) => {
+            const ServerData = await FreebieProfileModel.findOne({
+              guildId: interaction.guild.id
+            });
+
+            const NotRegistered = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `${interaction.guild.name} is not a GBF Freebies server, you can register using ${CommandLinks.FreebieRegister}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData)
+              return interaction.reply({
+                embeds: [NotRegistered],
+                ephemeral: true
+              });
+
+            const FreebiesDisabled = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `GBF Freebies is disabled in ${interaction.guild.name}, you can enable it using ${CommandLinks.FreebieUpdate}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData.Enabled)
+              return interaction.reply({
+                embeds: [FreebiesDisabled],
+                ephemeral: true
+              });
+
+            const AllEnabled =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("enable-all", false) || true;
+            const SteamBoolean =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("send-steam", false) || AllEnabled;
+            const SteamMention =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("steam-mention", false) || false;
+            const SteamRole = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getRole("steam-role", false);
+            const SteamChannel = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getChannel("steam-channel", false) as TextChannel;
+
+            const EpicBoolean =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("send-epic-games", false) || AllEnabled;
+            const EpicMention =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("epic-games-mention", false) || false;
+            const EpicRole = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getRole("epic-games-role", false);
+            const EpicChannel = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getChannel("epic-games-channel", false) as TextChannel;
+
+            const OtherBoolean =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("send-other", false) || AllEnabled;
+            const OtherMention =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("other-mention", false) || false;
+            const OtherRole = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getRole("other-role", false);
+            const OtherChannel = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getChannel("other-channel", false) as TextChannel;
+
+            if (
+              !SteamBoolean &&
+              !SteamMention &&
+              !SteamRole &&
+              !SteamChannel &&
+              !EpicBoolean &&
+              !EpicMention &&
+              !EpicRole &&
+              !EpicChannel &&
+              !OtherBoolean &&
+              !OtherMention &&
+              !OtherRole &&
+              !OtherChannel
+            ) {
+              return interaction.reply({
+                content:
+                  "Please specify at least one service or setting to update.",
+                ephemeral: true
+              });
+            }
+
+            const SteamUpdatedSettings: string = `${
+              emojis.STEAMLOGO
+            } Steam\n• ${
+              SteamBoolean ? "Enabled" : "Disabled"
+            }\n• Mention: ${capitalize(SteamMention.toString())}\n• Role: ${
+              SteamRole ? SteamRole : "No Role Specified"
+            }\n• Channel: ${
+              SteamChannel ? SteamChannel : "No Channel Specified"
+            }`;
+
+            const EpicGamesUpdatedSettings: string = `${
+              emojis.EPIC
+            } Epic Games\n• ${
+              EpicBoolean ? "Enabled" : "Disabled"
+            }\n• Mention: ${capitalize(EpicMention.toString())}\n• Role: ${
+              EpicRole ? EpicRole : "No Role Specified"
+            }\n• Channel: ${
+              EpicChannel ? EpicChannel : "No Channel Specified"
+            }`;
+
+            const OtherUpdatedSettings: string = `${emojis.GOGLOGO} ${
+              emojis.UBISOFTLOGO
+            } ${emojis.ORIGINLOGO} Other\n• ${
+              OtherBoolean ? "Enabled" : "Disabled"
+            }\n• Mention: ${capitalize(OtherMention.toString())}\n• Role: ${
+              OtherRole ? OtherRole : "No Role Specified"
+            }\n• Channel: ${
+              OtherChannel ? OtherChannel : "No Channel Specified"
+            }`;
+
+            await ServerData.updateOne({
+              AllEnabled: AllEnabled,
+              EGSEnabled: EpicBoolean,
+              EGSRole: EpicRole ? EpicRole.id : ServerData.EGSRole,
+              EGSMention: EpicMention,
+              EGSChannel: EpicChannel ? EpicChannel.id : ServerData.EGSChannel,
+              SteamEnabled: SteamBoolean,
+              SteamMention: SteamMention,
+              SteamChannel: SteamChannel
+                ? SteamChannel.id
+                : ServerData.SteamChannel,
+              SteamRole: SteamRole ? SteamRole.id : ServerData.SteamRole,
+              OtherEnabled: OtherBoolean,
+              OtherMention: OtherMention,
+              OtherChannel: OtherChannel
+                ? OtherChannel.id
+                : ServerData.OtherChannel,
+              OtherRole: OtherRole ? OtherRole.id : ServerData.OtherRole
+            });
+
+            const FreebieCategoryUpdated = new EmbedBuilder()
+              .setTitle(`${emojis.VERIFY} Success`)
+              .setDescription(
+                `Updated GBF Freebies Settings\n\n${EpicGamesUpdatedSettings}\n\n${SteamUpdatedSettings}\n\n${OtherUpdatedSettings}`
+              )
+              .setColor(ServerData.embedColor as ColorResolvable)
+              .setFooter({
+                text: `Confused? Run /freebie help for help with setting up GBF Freebeis`
+              });
+
+            return interaction.reply({
+              embeds: [FreebieCategoryUpdated]
             });
           }
         }
