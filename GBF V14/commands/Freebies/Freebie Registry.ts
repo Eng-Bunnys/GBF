@@ -646,6 +646,68 @@ export default class FreebieRegistry extends SlashCommand {
               OtherChannel ? OtherChannel : "No Channel Specified"
             }`;
 
+            if (SteamChannel) {
+              await SteamChannel.permissionOverwrites.set(
+                [
+                  {
+                    id: interaction.guild.id,
+                    deny: [PermissionFlagsBits.SendMessages],
+                    allow: [PermissionFlagsBits.ViewChannel]
+                  },
+                  {
+                    id: client.user.id,
+                    allow: [
+                      PermissionFlagsBits.SendMessages,
+                      PermissionFlagsBits.EmbedLinks,
+                      PermissionFlagsBits.UseExternalEmojis
+                    ]
+                  }
+                ],
+                `GBF Freebie Setup [Steam]`
+              );
+            }
+            if (EpicChannel) {
+              await EpicChannel.permissionOverwrites.set(
+                [
+                  {
+                    id: interaction.guild.id,
+                    deny: [PermissionFlagsBits.SendMessages],
+                    allow: [PermissionFlagsBits.ViewChannel]
+                  },
+                  {
+                    id: client.user.id,
+                    allow: [
+                      PermissionFlagsBits.SendMessages,
+                      PermissionFlagsBits.EmbedLinks,
+                      PermissionFlagsBits.UseExternalEmojis
+                    ]
+                  }
+                ],
+                `GBF Freebie Setup [Epic Games]`
+              );
+            }
+
+            if (OtherChannel) {
+              await OtherChannel.permissionOverwrites.set(
+                [
+                  {
+                    id: interaction.guild.id,
+                    deny: [PermissionFlagsBits.SendMessages],
+                    allow: [PermissionFlagsBits.ViewChannel]
+                  },
+                  {
+                    id: client.user.id,
+                    allow: [
+                      PermissionFlagsBits.SendMessages,
+                      PermissionFlagsBits.EmbedLinks,
+                      PermissionFlagsBits.UseExternalEmojis
+                    ]
+                  }
+                ],
+                `GBF Freebie Setup [Other]`
+              );
+            }
+
             await ServerData.updateOne({
               AllEnabled: AllEnabled,
               EGSEnabled: EpicBoolean,
@@ -679,6 +741,124 @@ export default class FreebieRegistry extends SlashCommand {
             return interaction.reply({
               embeds: [FreebieCategoryUpdated]
             });
+          }
+        },
+        update: {
+          description: "Update your server's GBF Freebies default settings",
+          args: [
+            {
+              name: "send-freebies",
+              description:
+                "Set this option to false if you want to disable GBF Freebies from your server.",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "use-default",
+              description: "Use the GBF Freebies default settings",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "default-channel",
+              description: "The default GBF Freebies channel",
+              type: ApplicationCommandOptionType.Channel,
+              channelTypes: [
+                ChannelType.GuildText,
+                ChannelType.GuildAnnouncement
+              ]
+            },
+            {
+              name: "default-mention",
+              description:
+                "Choose whether GBF should mention a role by default when a freebie is sent",
+              type: ApplicationCommandOptionType.Boolean
+            },
+            {
+              name: "default-role",
+              description:
+                "Choose the default role that GBF should mention when a freebie is sent",
+              type: ApplicationCommandOptionType.Role
+            }
+          ],
+          execute: async ({ client, interaction }: IExecute) => {
+            const DisableFreebies =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("send-freebies", false) || false;
+            const UseDefault = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getBoolean("use-default", false);
+            const DefaultChannel = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getChannel("default-channel", false);
+            const DefaultMention = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getBoolean("default-mention", false);
+            const DefaultRole = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getRole("default-role", false);
+
+            const ServerData = await FreebieProfileModel.findOne({
+              guildId: interaction.guild.id
+            });
+
+            const NotRegistered = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `${interaction.guild.name} is not a GBF Freebies server, you can register using ${CommandLinks.FreebieRegister}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData)
+              return interaction.reply({
+                embeds: [NotRegistered],
+                ephemeral: true
+              });
+
+            const FreebiesDisabled = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `GBF Freebies is disabled in ${interaction.guild.name}, you can enable it using ${CommandLinks.FreebieUpdate}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData.Enabled && !DisableFreebies)
+              return interaction.reply({
+                embeds: [FreebiesDisabled],
+                ephemeral: true
+              });
+
+            const NoChoiceMade = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colors.ERRORRED as ColorResolvable)
+              .setDescription(`You need to choose at least one option.`);
+
+            if (
+              !UseDefault &&
+              !DefaultChannel &&
+              !DefaultMention &&
+              !DefaultRole
+            )
+              return interaction.reply({
+                embeds: [NoChoiceMade],
+                ephemeral: true
+              });
+
+            const GoodbyeMessage = new EmbedBuilder()
+              .setTitle(`${emojis.Crying} We're sad to see you go so soon.`)
+              .setColor(colors.DEFAULT as ColorResolvable)
+              .setDescription(
+                `We'd like to hear your thoughts on GBF Freebies [${hyperlink(
+                  "here",
+                  "https://forms.gle/5n2puvQHyhJrJ8VU7"
+                )}], if you'd like to re-enable GBF Freebies, you can do so using: ${
+                  CommandLinks.FreebieUpdate
+                }`
+              );
+
+            if (DisableFreebies)
+              return interaction.reply({
+                embeds: [GoodbyeMessage]
+              });
           }
         }
       }
