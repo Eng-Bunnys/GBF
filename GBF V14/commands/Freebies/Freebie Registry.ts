@@ -7,6 +7,7 @@ import {
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
+  Embed,
   EmbedBuilder,
   PermissionFlagsBits,
   TextChannel,
@@ -51,6 +52,7 @@ export default class FreebieRegistry extends SlashCommand {
       ],
       cooldown: 5,
       devBypass: true,
+      dmEnabled: false,
       subcommands: {
         register: {
           description: "Register your server to be part of GBF Freebies",
@@ -224,10 +226,10 @@ export default class FreebieRegistry extends SlashCommand {
                 FreebieId: registryID,
                 guildId: interaction.guild.id,
                 Enabled: true,
-                Channel: freebieChannel.id,
-                Ping: mentionBoolean,
-                rolePing: freebieRole.id,
-                embedColor: embedColor
+                DefaultChannel: freebieChannel ? freebieChannel.id : null,
+                DefaultMention: mentionBoolean,
+                DefaultRole: freebieRole ? freebieRole.id : null,
+                EmbedColor: embedColor
               });
 
               await newServerProfile.save();
@@ -332,10 +334,10 @@ export default class FreebieRegistry extends SlashCommand {
                 FreebieId: registryID,
                 guildId: interaction.guild.id,
                 Enabled: true,
-                Channel: AutoFreebieChannel.id,
-                Ping: false,
-                rolePing: null,
-                embedColor: embedColor
+                DefaultChannel: AutoFreebieChannel.id,
+                DefaultMention: false,
+                DefaultRole: null,
+                EmbedColor: embedColor
               });
 
               await newServerProfile.save();
@@ -733,7 +735,7 @@ export default class FreebieRegistry extends SlashCommand {
               .setDescription(
                 `Updated GBF Freebies Settings\n\n${EpicGamesUpdatedSettings}\n\n${SteamUpdatedSettings}\n\n${OtherUpdatedSettings}`
               )
-              .setColor(ServerData.embedColor as ColorResolvable)
+              .setColor(ServerData.EmbedColor as ColorResolvable)
               .setFooter({
                 text: `Confused? Run /freebie help for help with setting up GBF Freebeis`
               });
@@ -780,22 +782,26 @@ export default class FreebieRegistry extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }: IExecute) => {
-            const DisableFreebies =
+            const SendFreebies: boolean =
               (
                 interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("send-freebies", false) || false;
+              ).getBoolean("send-freebies") ?? true;
+
             const UseDefault = (
               interaction.options as CommandInteractionOptionResolver
-            ).getBoolean("use-default", false);
+            ).getBoolean("use-default");
+
             const DefaultChannel = (
               interaction.options as CommandInteractionOptionResolver
-            ).getChannel("default-channel", false);
-            const DefaultMention = (
+            ).getChannel("default-channel");
+
+            const DefaultMention: boolean = (
               interaction.options as CommandInteractionOptionResolver
-            ).getBoolean("default-mention", false);
+            ).getBoolean("default-mention");
+
             const DefaultRole = (
               interaction.options as CommandInteractionOptionResolver
-            ).getRole("default-role", false);
+            ).getRole("default-role");
 
             const ServerData = await FreebieProfileModel.findOne({
               guildId: interaction.guild.id
@@ -821,25 +827,9 @@ export default class FreebieRegistry extends SlashCommand {
               )
               .setColor(colors.ERRORRED as ColorResolvable);
 
-            if (!ServerData.Enabled && !DisableFreebies)
+            if (!ServerData.Enabled && SendFreebies !== true)
               return interaction.reply({
                 embeds: [FreebiesDisabled],
-                ephemeral: true
-              });
-
-            const NoChoiceMade = new EmbedBuilder()
-              .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED as ColorResolvable)
-              .setDescription(`You need to choose at least one option.`);
-
-            if (
-              !UseDefault &&
-              !DefaultChannel &&
-              !DefaultMention &&
-              !DefaultRole
-            )
-              return interaction.reply({
-                embeds: [NoChoiceMade],
                 ephemeral: true
               });
 
@@ -847,18 +837,182 @@ export default class FreebieRegistry extends SlashCommand {
               .setTitle(`${emojis.Crying} We're sad to see you go so soon.`)
               .setColor(colors.DEFAULT as ColorResolvable)
               .setDescription(
-                `We'd like to hear your thoughts on GBF Freebies [${hyperlink(
+                `We'd like to hear your thoughts on GBF Freebies ${hyperlink(
                   "here",
                   "https://forms.gle/5n2puvQHyhJrJ8VU7"
-                )}], if you'd like to re-enable GBF Freebies, you can do so using: ${
+                )}, if you'd like to re-enable GBF Freebies, you can do so using: ${
                   CommandLinks.FreebieUpdate
                 }`
               );
 
-            if (DisableFreebies)
+            console.log(SendFreebies);
+
+            if (SendFreebies === false) {
+              await ServerData.updateOne({
+                Enabled: false
+              });
               return interaction.reply({
                 embeds: [GoodbyeMessage]
               });
+            }
+
+            const NoChoiceMade = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colors.ERRORRED as ColorResolvable)
+              .setDescription(`You need to choose at least one option.`);
+
+            if (
+              UseDefault === null &&
+              !DefaultChannel &&
+              DefaultMention === null &&
+              !DefaultRole
+            )
+              return interaction.reply({
+                embeds: [NoChoiceMade],
+                ephemeral: true
+              });
+
+            const ChangesMade: string = `• System Active: ${capitalize(
+              SendFreebies.toString()
+            )}\n• Use Default Settings: ${
+              UseDefault === null ? "No Changes Made" : UseDefault
+            }\n• Default Channel: ${
+              DefaultChannel ? DefaultChannel : "No Changes Made"
+            }\n• Default Mention: ${
+              DefaultMention === null
+                ? "No Changes Made"
+                : capitalize(DefaultMention.toString())
+            }\n• Default Role: ${
+              DefaultRole ? DefaultRole : "No Changes Made"
+            }`;
+
+            const SettingsSaved = new EmbedBuilder()
+              .setTitle(`${emojis.VERIFY} Settings Saved`)
+              .setColor(ServerData.EmbedColor as ColorResolvable)
+              .setDescription(`${ChangesMade}`);
+
+            await ServerData.updateOne({
+              Enabled: SendFreebies,
+              UseDefault:
+                UseDefault === null ? ServerData.UseDefault : UseDefault,
+              DefaultChannel: DefaultChannel
+                ? DefaultChannel.id
+                : ServerData.DefaultChannel,
+              DefaultMention:
+                DefaultMention === null
+                  ? ServerData.DefaultMention
+                  : DefaultMention,
+              DefaultRole: DefaultRole ? DefaultRole.id : ServerData.DefaultRole
+            });
+
+            return interaction.reply({
+              embeds: [SettingsSaved]
+            });
+          }
+        },
+        settings: {
+          description: "View this server's GBF Freebies settings",
+          execute: async ({ client, interaction }: IExecute) => {
+            const ServerData = await FreebieProfileModel.findOne({
+              guildId: interaction.guild.id
+            });
+
+            const NotRegistered = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `${interaction.guild.name} is not a GBF Freebies server, you can register using ${CommandLinks.FreebieRegister}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData)
+              return interaction.reply({
+                embeds: [NotRegistered],
+                ephemeral: true
+              });
+
+            const DefaultChannelLink = interaction.guild.channels.cache.get(
+              ServerData.DefaultChannel
+            );
+            const DefaultRoleMention = interaction.guild.channels.cache.get(
+              ServerData.DefaultRole
+            );
+
+            const EpicGamesChannel = interaction.guild.channels.cache.get(
+              ServerData.EGSChannel
+            );
+            const EpicGamesRole = interaction.guild.channels.cache.get(
+              ServerData.EGSRole
+            );
+
+            const SteamChannel = interaction.guild.channels.cache.get(
+              ServerData.SteamChannel
+            );
+            const SteamRole = interaction.guild.channels.cache.get(
+              ServerData.SteamRole
+            );
+
+            const OtherChannel = interaction.guild.channels.cache.get(
+              ServerData.OtherChannel
+            );
+            const OtherRole = interaction.guild.channels.cache.get(
+              ServerData.OtherRole
+            );
+
+            const ServerSettings: string = `• System Enabled: ${capitalize(
+              ServerData.Enabled.toString()
+            )}\n• Freebie ID: ${ServerData.FreebieId}\n• Embed Color: ${
+              ServerData.EmbedColor
+            }\n\n**Default Settings:**\n• Use Default Settings: ${capitalize(
+              ServerData.UseDefault.toString()
+            )}\n• Channel: ${
+              DefaultChannelLink ? DefaultChannelLink : "Deleted Channel"
+            }\n• Mention: ${capitalize(
+              ServerData.DefaultMention.toString()
+            )}\n• Role: ${
+              DefaultRoleMention ? DefaultRoleMention : "Role Not Found"
+            }\n\n**Category Settings:**\n**${
+              emojis.EPIC
+            } Epic Games**\n• Enabled: ${
+              ServerData.EGSEnabled || ServerData.AllEnabled ? "True" : "False"
+            }\n• Channel: ${
+              EpicGamesChannel ? EpicGamesChannel : "Default Channel"
+            }\n• Role: ${
+              EpicGamesRole ? EpicGamesRole : "Default Role"
+            }\n• Mention: ${capitalize(
+              ServerData.EGSMention.toString()
+            )}\n\n**${emojis.STEAMLOGO} Steam**\n• Enabled: ${
+              ServerData.SteamEnabled || ServerData.AllEnabled
+                ? "True"
+                : "False"
+            }\n• Channel: ${
+              SteamChannel ? SteamChannel : "Default Channel"
+            }\n• Role: ${
+              SteamRole ? SteamRole : "Default Role"
+            }\n• Mention: ${capitalize(
+              ServerData.SteamMention.toString()
+            )}\n\n**${emojis.UBISOFTLOGO} ${emojis.GOGLOGO} ${
+              emojis.ORIGINLOGO
+            } Other**\n• Enabled: ${
+              ServerData.OtherEnabled || ServerData.AllEnabled
+                ? "True"
+                : "False"
+            }\n• Channel: ${
+              OtherChannel ? OtherChannel : "Default Channel"
+            }\n• Role: ${
+              OtherRole ? OtherRole : "Default Role"
+            }\n• Mention: ${capitalize(ServerData.OtherMention.toString())}`;
+
+            const ServerSettingsEmbed = new EmbedBuilder()
+              .setTitle(`${interaction.guild.name} GBF Freebies Settings`)
+              .setColor(ServerData.EmbedColor as ColorResolvable)
+              .setDescription(`${ServerSettings}`)
+              .setFooter({
+                text: `Need help? Run /freebie help`
+              });
+
+            return interaction.reply({
+              embeds: [ServerSettingsEmbed]
+            });
           }
         }
       }
