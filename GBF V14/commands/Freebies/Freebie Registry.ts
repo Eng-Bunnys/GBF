@@ -7,7 +7,6 @@ import {
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
-  Embed,
   EmbedBuilder,
   PermissionFlagsBits,
   TextChannel,
@@ -845,8 +844,6 @@ export default class FreebieRegistry extends SlashCommand {
                 }`
               );
 
-            console.log(SendFreebies);
-
             if (SendFreebies === false) {
               await ServerData.updateOne({
                 Enabled: false
@@ -1013,6 +1010,93 @@ export default class FreebieRegistry extends SlashCommand {
             return interaction.reply({
               embeds: [ServerSettingsEmbed]
             });
+          }
+        },
+        cosmetic: {
+          description: "Update your GBF Freebies message looks",
+          args: [
+            {
+              name: "embed-color",
+              description: "Change the color of the embed that gets sent",
+              type: ApplicationCommandOptionType.String
+            }
+          ],
+          execute: async ({ client, interaction }: IExecute) => {
+            const ServerData = await FreebieProfileModel.findOne({
+              guildId: interaction.guild.id
+            });
+
+            const NotRegistered = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `${interaction.guild.name} is not a GBF Freebies server, you can register using ${CommandLinks.FreebieRegister}`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (!ServerData)
+              return interaction.reply({
+                embeds: [NotRegistered],
+                ephemeral: true
+              });
+
+            const EmbedColor = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("embed-color");
+
+            const NoChoiceMade = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colors.ERRORRED as ColorResolvable)
+              .setDescription(`Choose at least one option`);
+
+            if (!EmbedColor)
+              return interaction.reply({
+                embeds: [NoChoiceMade],
+                ephemeral: true
+              });
+
+            const colorCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+
+            const invalidColor = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `The color specified (${EmbedColor}) does not match the correct format (#RRGGBB), you can get HTML color codes from ${hyperlink(
+                  "here",
+                  "https://htmlcolorcodes.com/"
+                )}`
+              );
+
+            if (!colorCodeRegex.test(EmbedColor)) {
+              return interaction.reply({
+                embeds: [invalidColor],
+                ephemeral: true
+              });
+            }
+          }
+        },
+        send: {
+          description: "[Developer] Send the Freebies",
+          execute: async ({ client, interaction }: IExecute) => {
+            if (!FreebieIDs.AdminIDs.includes(interaction.user.id))
+              return interaction.reply({
+                content: `You cannot use this command`,
+                ephemeral: true
+              });
+
+            if (!FreebieIDs.AdminChannels.includes(interaction.channel.id))
+              return interaction.reply({
+                content: `This command is disabled in this channel`,
+                ephemeral: true
+              });
+
+            const ControlPanel = new EmbedBuilder()
+              .setTitle("GBF Freebies Control Panel")
+              .setColor(colors.DEFAULT as ColorResolvable)
+              .setDescription(`Please use the buttons below to start`)
+              .addFields({
+                name: "Buttons:",
+                value: `**Guide:**\nEmoji 🡪 Button to click\nNumber 🡪 Number of games supported\n• Epic Games: ${emojis.EPIC} (3)\n• Steam: ${emojis.STEAMLOGO} (3)\n• GOG: ${emojis.GOGLOGO} (3)\n• Prime Gaming: ${emojis.PRIME} (3)\n• Origin: ${emojis.ORIGINLOGO} (3)\n• Ubisoft: ${emojis.UBISOFTLOGO} (3)`
+              })
+              .setTimestamp();
           }
         }
       }
