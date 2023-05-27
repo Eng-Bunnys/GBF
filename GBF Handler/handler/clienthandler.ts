@@ -3,11 +3,14 @@ import { connect } from "mongoose";
 import { registerCommands } from "./registry";
 import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
-import GBFSlash from "./handlerforSlash";
+import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
+import { CommandOptions } from "./commandhandler";
 
 export default class GBFClient extends Client {
-  public readonly commands: Collection<string, unknown> = new Collection();
-  public readonly slashCommands: Collection<string, unknown> = new Collection();
+  public readonly commands: Collection<string, CommandOptions> =
+    new Collection();
+  public readonly slashCommands: Collection<string, GBFSlashOptions> =
+    new Collection();
   public readonly buttonCommands: Collection<string, unknown> =
     new Collection();
   public readonly selectCmds: Collection<string, unknown> = new Collection();
