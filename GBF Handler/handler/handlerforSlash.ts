@@ -1,11 +1,15 @@
-import { ApplicationCommandOptionType } from "discord.js";
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandOptionData
+} from "discord.js";
 
-interface GBFSlashOptions {
-  name?: string;
-  category?: string;
-  description?: string;
+export interface GBFSlashOptions {
+  name: string;
+  category: string;
+  description: string;
   usage?: string;
   examples?: string;
+  onHelpMenu?: boolean;
   options?: any[];
   defaultPermission?: boolean;
   devOnly?: boolean;
@@ -20,17 +24,18 @@ interface GBFSlashOptions {
   subcommands?: any;
 }
 
-class GBFSlash {
+export class GBFSlash {
   readonly client: any;
   readonly name: string;
   readonly category: string;
   readonly description: string;
   readonly usage: string;
   readonly examples: string;
-  readonly options: any[];
+  readonly onHelpMenu: boolean;
+  readonly options: ApplicationCommandOptionData[];
   readonly defaultPermission: boolean;
   readonly devOnly: boolean;
-  readonly Partner: boolean;
+  readonly partner: boolean;
   readonly devBypass: boolean;
   readonly userPermission: string[];
   readonly botPermission: string[];
@@ -47,10 +52,11 @@ class GBFSlash {
     this.description = options.description || "";
     this.usage = options.usage || "";
     this.examples = options.examples || "";
+    this.onHelpMenu = options.onHelpMenu || true;
     this.options = options.options || [];
     this.defaultPermission = options.defaultPermission || true;
     this.devOnly = options.devOnly || false;
-    this.Partner = options.Partner || false;
+    this.partner = options.Partner || false;
     this.devBypass = options.devBypass || false;
     this.userPermission = options.userPermission || [];
     this.botPermission = options.botPermission || [];
@@ -68,8 +74,6 @@ class GBFSlash {
     }
   }
 }
-
-export = GBFSlash;
 
 function getSubcommandGroupOptions(groups: any) {
   const names = Object.keys(groups);
