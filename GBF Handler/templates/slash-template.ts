@@ -1,4 +1,4 @@
-const SlashCommand = require("../utils/slashCommands").default;
+import SlashCommand from "../utils/slashCommands";
 
 import {
   ApplicationCommandOptionType,
@@ -36,7 +36,7 @@ export default class Name extends SlashCommand {
       cooldown: 0,
       development: true,
       dmEnabled: false,
-      Partner: true
+      partner: true
     });
   }
 
