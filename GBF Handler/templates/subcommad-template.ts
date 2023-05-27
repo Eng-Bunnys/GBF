@@ -1,4 +1,4 @@
-const SlashCommand = require("../utils/slashCommands").default;
+import SlashCommand from "../utils/slashCommands";
 
 import {
   ApplicationCommandOptionType,
