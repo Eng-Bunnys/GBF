@@ -1,6 +1,12 @@
-const Command = require("../utils/command").default;
+import Command from "../utils/command";
 
-import { Client } from "discord.js";
+import { Client, Message } from "discord.js";
+
+interface LegacyCommandExecute {
+  client: Client;
+  message: Message;
+  args: [string];
+}
 
 export default class LegacyCommand extends Command {
   constructor(client: Client) {
@@ -16,13 +22,13 @@ export default class LegacyCommand extends Command {
       botPermission: [],
       devOnly: false,
       devBypass: false,
-      Partner: false,
+      partner: false,
       development: false,
       dmEnabled: false,
       canNotDisable: false
     });
   }
-  async execute({ client, message, args }) {
+  async execute({ client, message, args }: LegacyCommandExecute) {
     return message.reply({
       content: `Test`
     });
