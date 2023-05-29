@@ -7,16 +7,25 @@ import {
   ButtonStyle,
   ApplicationCommandOptionType,
   Client,
-  ColorResolvable
+  ColorResolvable,
+  CommandInteraction,
+  CommandInteractionOptionResolver,
+  TextChannel,
+  User
 } from "discord.js";
 
 import colours from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
 import deverloperID from "../../GBF/Bot Ban Features.json";
 
-import botBanSchema from "../../schemas/GBF Schemas/Bot Ban Schema";
+import { GBFBotBanModel } from "../../schemas/GBF Schemas/Bot Ban Schema";
 
-module.exports = class botBans extends SlashCommand {
+interface IExecute {
+  client: Client;
+  interaction: CommandInteraction;
+}
+
+export default class botBans extends SlashCommand {
   constructor(client: Client) {
     super(client, {
       name: "bot-ban",
@@ -42,11 +51,13 @@ module.exports = class botBans extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
-            const targetUser = interaction.options.getUser("user");
-            const banReason = interaction.options.getString("reason");
+          execute: async ({ client, interaction }: IExecute) => {
+            const targetUser: User = interaction.options.getUser("user");
+            const banReason: string = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("reason");
 
-            const banData = await botBanSchema.findOne({
+            const banData = await GBFBotBanModel.findOne({
               userId: targetUser.id
             });
 
@@ -56,7 +67,7 @@ module.exports = class botBans extends SlashCommand {
                 ephemeral: true
               });
 
-            const newBanDoc = new botBanSchema({
+            const newBanDoc = new GBFBotBanModel({
               userId: targetUser.id,
               reason: banReason,
               timeOfBan: new Date(Date.now()),
@@ -91,9 +102,9 @@ module.exports = class botBans extends SlashCommand {
                 iconURL: client.user.displayAvatarURL()
               });
 
-            const logsChannel = await client.channels.fetch(
+            const logsChannel = (await client.channels.cache.get(
               deverloperID.GBFLogsChannel
-            );
+            )) as TextChannel;
 
             const dmBan = new EmbedBuilder()
               .setTitle(`📩 You have received a new message`)
@@ -111,12 +122,13 @@ module.exports = class botBans extends SlashCommand {
                 iconURL: client.user.displayAvatarURL()
               });
 
-            const dmBanButton = new ActionRowBuilder().addComponents(
-              new ButtonBuilder()
-                .setLabel("Ban Appeal")
-                .setStyle(ButtonStyle.Link)
-                .setURL(deverloperID.GBFBanAppeal)
-            );
+            const dmBanButton: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                  .setLabel("Ban Appeal")
+                  .setStyle(ButtonStyle.Link)
+                  .setURL(deverloperID.GBFBanAppeal)
+              );
 
             try {
               targetUser.send({
@@ -145,10 +157,10 @@ module.exports = class botBans extends SlashCommand {
               required: true
             }
           ],
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const targerUser = interaction.options.getUser("user");
 
-            const banData = await botBanSchema.findOne({
+            const banData = await GBFBotBanModel.findOne({
               userId: targerUser.id
             });
 
@@ -158,7 +170,7 @@ module.exports = class botBans extends SlashCommand {
                 ephemeral: true
               });
 
-            await botBanSchema.deleteOne({
+            await GBFBotBanModel.deleteOne({
               userId: targerUser.id
             });
 
@@ -192,9 +204,9 @@ module.exports = class botBans extends SlashCommand {
               console.log(`I couldn't DM ${targerUser.tag}`);
             }
 
-            const logsChannel = await client.channels.fetch(
+            const logsChannel = (await client.channels.cache.get(
               deverloperID.GBFLogsChannel
-            );
+            )) as TextChannel;
 
             await logsChannel.send({
               embeds: [newUnban]
@@ -208,4 +220,4 @@ module.exports = class botBans extends SlashCommand {
       }
     });
   }
-};
+}
