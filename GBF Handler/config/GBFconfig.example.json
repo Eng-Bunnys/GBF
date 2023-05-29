@@ -1,15 +1,12 @@
 {
-  "TOKEN": "",
-  "MONGOURI": "",
+    "TOKEN": "",
+    "MONGOURI": "",
     "PREFIX": "!!",
-    "Developers": [
-        ""
-    ],
-    "Partners": [
-        ""
-    ],
-  "LogChannel": "",
-  "TestGuilds": [
-        ""
-    ]
+    "SupportServer": "",
+    "HelpMenu": true,
+    "IgnoredHelpCategories": [],
+    "Developers": [],
+    "LogChannel": "",
+    "Partners": [],
+    "TestGuilds": []
 }
