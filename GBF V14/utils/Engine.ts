@@ -1,6 +1,20 @@
-import { Guild, Snowflake, TextChannel } from "discord.js";
+import {
+  APIEmbedField,
+  BaseMessageOptions,
+  Collection,
+  DMChannel,
+  Guild,
+  Interaction,
+  Message,
+  Snowflake,
+  StringSelectMenuBuilder,
+  TextBasedChannel,
+  TextChannel
+} from "discord.js";
 
 import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
+import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
+import { CommandOptions } from "../handler/commandhandler";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
@@ -406,21 +420,19 @@ export function roleInGuildCheck(roleIds, interaction) {
 }
 
 /**
-
-Capitalizes the first letter of a string.
-@param {string} string - The string to capitalize the first letter of.
-@returns {string} The input string with the first letter capitalized.
-If the input string is empty or undefined, an error message is returned.
-@example
-capitalizeFirstLetter("hello world"); // "Hello world"
-capitalizeFirstLetter("jOHN"); // "JOHN"
-capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
-capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
-*/
-
-export function capitalizeFirstLetter(string) {
+ * Capitalizes the first letter of a string.
+ * @param string - The string to capitalize the first letter of.
+ * @returns The input string with the first letter capitalized.
+ * If the input string is empty or undefined, an error message is returned.
+ * @example
+ * capitalizeFirstLetter("hello world"); // "Hello world"
+ * capitalizeFirstLetter("jOHN"); // "JOHN"
+ * capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
+ * capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
+ */
+export function capitalizeFirstLetter(string?: string): string {
   if (!string || !string.trim().length) {
-    return "Error: **Input string is empty or undefined.**";
+    return "Error: Input string is empty or undefined.";
   }
 
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -568,7 +580,7 @@ twentyFourToTwelve(24)
 twentyFourToTwelve(-1)
 */
 
-export function twentyFourToTwelve(hours) {
+export function twentyFourToTwelve(hours: number): number {
   if (isNaN(hours) || hours < 0 || hours > 23) return;
 
   let displayTime;
@@ -597,20 +609,19 @@ export function twentyFourToTwelve(hours) {
 
 /**
  *
- * @param {*} array [Numbers array that contains the data you want to split]
- * @param {*} size [The maximum number of elements in each array]
- * @returns {array} [[...], [...]]
+ * @param array [Numbers array that contains the data you want to split]
+ * @param size [The maximum number of elements in each array]
+ * @returns [[...], [...]]
  */
-
-export function chunkAverage(array, size) {
-  let renderedChunk;
+export function chunkAverage(array: number[], size: number): number[] {
+  let renderedChunk: number[];
   let chunkSum = 0;
 
   const chunkArray = [...array];
-  const mainChunk = [];
-  const averageChunks = [];
+  const mainChunk: number[][] = [];
+  const averageChunks: number[] = [];
 
-  const backupChunks = [];
+  const backupChunks: number[][] = [];
 
   const splitIndex = !Number.isNaN(size) ? size : 7;
 
@@ -624,11 +635,9 @@ export function chunkAverage(array, size) {
   for (let j = 0; j < mainChunk.length || j < backupChunks.length; j++) {
     if (mainChunk.length) {
       chunkSum = mainChunk[j].reduce((partialSum, a) => partialSum + a, 0);
-      // chunkAverage = chunkSum / mainChunk[j].length;
       averageChunks.push(chunkSum);
     } else {
       chunkSum = backupChunks[j].reduce((partialSum, a) => partialSum + a, 0);
-      // chunkAverage = chunkSum / backupChunks[j].length;
       averageChunks.push(chunkSum);
     }
   }
@@ -651,7 +660,7 @@ return Output: 'Rank must be a positive integer.'
 RPRequiredToLevelUp(-3);
 */
 
-export function RPRequiredToLevelUp(rank: number) {
+export function RPRequiredToLevelUp(rank: number): number {
   return rank * 800 + (rank - 1) * 400;
 }
 
@@ -780,6 +789,134 @@ export function levelUpReward(level: number): number {
 
   // Return the reward value from the array based on the calculated position
   return rewardArray[rewardPosition - 1];
+}
+
+export function toLowerCaseArray(arr: string[]): string[] {
+  return arr.map((elem) => elem.toLowerCase());
+}
+
+export function generateHelpMenuFields(
+  commands: Collection<string, CommandOptions | GBFSlashOptions>,
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): APIEmbedField[] {
+  const fields = commands.reduce<APIEmbedField[]>((fieldAccumulator, cmd) => {
+    if (
+      toLowerCaseArray(excludedCategories).includes(
+        cmd.category.toLocaleLowerCase()
+      ) ||
+      cmd.category === ""
+    ) {
+      return fieldAccumulator;
+    }
+    const categoryIndex = categories.findIndex((c) => c.name === cmd.category);
+    const categoryName =
+      categoryIndex === -1
+        ? cmd.category
+        : `${categories[categoryIndex].emoji} ${categories[categoryIndex].name}`;
+    let category: {
+      name: string;
+      value: string;
+      inline?: boolean;
+    } = {
+      name: `• ${capitalize(categoryName)}`,
+      value: `**/${cmd.name}**`,
+      inline: true
+    };
+    const existingCategoryField = fieldAccumulator.find(
+      (field) => field.name === category.name
+    );
+    if (existingCategoryField) {
+      category = existingCategoryField;
+    } else {
+      fieldAccumulator.push(category);
+    }
+    if (cmd instanceof GBFSlash) {
+      if (cmd.subcommands) {
+        const subcommands = Object.keys(cmd.subcommands)
+          .map((key) => `${key}`)
+          .join(", ");
+        category.value += ` - ${subcommands}`;
+      }
+    }
+    return fieldAccumulator;
+  }, []);
+  return fields;
+}
+
+export function generateCategorySelectMenu(
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): StringSelectMenuBuilder {
+  const filteredCategories = categories.filter(
+    (cat) =>
+      cat.name !== "" &&
+      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
+  );
+
+  const selectOptions = filteredCategories.map((c) => {
+    return {
+      label: c.emoji + " " + c.name,
+      value: c.name.toLowerCase()
+    };
+  });
+
+  const HelpMenuSelect = new StringSelectMenuBuilder()
+    .setCustomId("HelpMenuSelect")
+    .setPlaceholder("Select a category")
+    .addOptions(selectOptions);
+
+  return HelpMenuSelect;
+}
+
+export function generateCategorySelectMenuWithReturn(
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): StringSelectMenuBuilder {
+  const filteredCategories = categories.filter(
+    (cat) =>
+      cat.name !== "" &&
+      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
+  );
+
+  const selectOptions = filteredCategories.map((c) => {
+    return {
+      label: c.emoji + " " + c.name,
+      value: c.name.toLowerCase()
+    };
+  });
+
+  const HelpMenuSelect = new StringSelectMenuBuilder()
+    .setCustomId("HelpMenuSelect")
+    .setPlaceholder("Select a category")
+    .addOptions(selectOptions);
+
+  HelpMenuSelect.addOptions({
+    label: "Main Menu",
+    value: "HelpMenu"
+  });
+
+  return HelpMenuSelect;
+}
+
+/**
+ * Sends a message to the given channel and deletes it after a specified time.
+ * @param {TextBasedChannel} Channel - The channel to send the message to.
+ * @param {BaseMessageOptions} MessageOptions - The message options to use when sending the message.
+ * @param {number} TimeInSeconds - The time to wait before deleting the message, in seconds.
+ * @return {Promise<void>} - A Promise that resolves when the message has been sent and scheduled for deletion.
+ */
+export async function SendAndDelete(
+  Channel: TextBasedChannel,
+  MessageOptions: BaseMessageOptions,
+  TimeInSeconds = 5
+): Promise<Message<false>> {
+  if (Channel instanceof DMChannel) return Channel.send(MessageOptions);
+  const message: Message | Interaction = await Channel.send(MessageOptions);
+
+  setTimeout(async () => {
+    await message.delete();
+  }, TimeInSeconds * 1000);
 }
 
 interface TimeUnits {
