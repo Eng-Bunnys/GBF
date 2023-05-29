@@ -14,7 +14,7 @@ export interface CommandOptions {
   development?: boolean;
   dmEnabled?: boolean;
   Partner?: boolean;
-  args?: any[];
+  args?: string[];
 }
 
 export class GBFCmd {
@@ -34,7 +34,7 @@ export class GBFCmd {
   readonly devBypass: boolean;
   readonly dmEnabled: boolean;
   readonly partner: boolean;
-  readonly args: any[];
+  readonly args: string[];
 
   constructor(
     client: any,
@@ -71,7 +71,7 @@ export class GBFCmd {
       development?: boolean;
       dmEnabled?: boolean;
       partner?: boolean;
-      args?: any[];
+      args?: string[];
     }
   ) {
     this.client = client;
