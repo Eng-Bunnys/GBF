@@ -1,4 +1,11 @@
-import { ApplicationCommandData, Client, Collection } from "discord.js";
+import {
+  ApplicationCommandData,
+  Client,
+  ClientOptions,
+  Collection,
+  Guild,
+  BitFieldResolvable
+} from "discord.js";
 import { connect } from "mongoose";
 import { registerCommands } from "./registry";
 import { lstatSync, readdirSync } from "fs";
@@ -6,7 +13,25 @@ import { join } from "path";
 import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
 
-export default class GBFClient extends Client {
+export interface IGBFClient {
+  CommandsFolder: string;
+  EventsFolder: string;
+  Prefix: string;
+  Developers?: string[];
+  config?: any;
+  HelpMenu?: boolean;
+  intents: BitFieldResolvable<string, number>;
+  TestServers?: string[];
+  LogsChannel?: string;
+  Partners?: string[];
+  SupportServer?: string;
+  IgnoredHelpCategories?: string[];
+}
+
+export default class GBFClient extends Client implements IGBFClient {
+  public readonly CommandsFolder: string;
+  public readonly EventsFolder: string;
+  public readonly Prefix: string;
   public readonly commands: Collection<string, CommandOptions> =
     new Collection();
   public readonly slashCommands: Collection<string, GBFSlashOptions> =
@@ -17,16 +42,28 @@ export default class GBFClient extends Client {
   public readonly contextCmds: Collection<string, unknown> = new Collection();
   public readonly aliases: Collection<string, unknown> = new Collection();
   public readonly events: Collection<string, unknown> = new Collection();
-  public readonly configs: any = require("../config/GBFconfig.json");
+  public readonly config: any;
+  public readonly intents: BitFieldResolvable<string, number>;
+  public readonly TestServers: string[];
+  public readonly Developers: string[];
+  public readonly HelpMenu: boolean;
+  public readonly LogsChannel?: string;
+  public readonly Partners?: string[];
+  public readonly SupportServer?: string;
+  public readonly IgnoredHelpCategories?: string[];
 
-  constructor(options) {
+  constructor(options: IGBFClient & ClientOptions) {
     super(options);
+    this.CommandsFolder = options.CommandsFolder;
+    this.EventsFolder = options.EventsFolder;
+    this.config = require(options.config);
+    this.TestServers = options.TestServers;
   }
 
   public async loadCommands(): Promise<void> {
     if (!this.application?.owner) await this.application?.fetch();
 
-    await registerCommands(this, "../commands");
+    await registerCommands(this, this.CommandsFolder);
 
     const guildCommands: ApplicationCommandData[] = toApplicationCommand(
       this.slashCommands.filter((s: GBFSlash) => s.development)
@@ -36,10 +73,13 @@ export default class GBFClient extends Client {
     );
 
     if (guildCommands.length) {
-      if (this.configs.TestGuilds.length > 0) {
-        for (let i = 0; i < this.configs.TestGuilds.length; i++) {
-          let testServer = await this.guilds.fetch(this.configs.TestGuilds[i]);
-          await testServer.commands.set(guildCommands);
+      if (this.TestServers && this.TestServers.length > 0) {
+        for (let i = 0; i <= this.TestServers.length; i++) {
+          let testServer = await this.guilds.fetch(this.TestServers[i]);
+          if (testServer instanceof Guild) {
+            await testServer.commands.set(guildCommands);
+            console.log(`Setting Guild Only Commands in: ${testServer.name}`);
+          }
         }
       }
     }
@@ -72,16 +112,16 @@ export default class GBFClient extends Client {
             eventFunction.name,
             eventFunction as GlobalEventHandlers
           );
-          eventFunction(this, this.configs);
+          eventFunction(this, this.config);
         }
       }
     };
 
-    readEvents("../events");
+    readEvents(this.EventsFolder);
   }
 
   async login(token: string) {
-    await connect(this.configs.MONGOURI, {
+    await connect(this.config.MONGOURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false
