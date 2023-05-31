@@ -1,8 +1,8 @@
-import { Client } from "discord.js";
-import { GBFSlash } from "../handler/handlerforSlash";
+import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
+import GBFClient from "../handler/clienthandler";
 
 class SlashCommand extends GBFSlash {
-  constructor(client: Client, options: any) {
+  constructor(client: GBFClient, options: GBFSlashOptions) {
     super(client, options);
   }
 }
