@@ -1,14 +1,13 @@
-import chalk, { redBright, whiteBright, underline } from "chalk";
+import { redBright, whiteBright, underline } from "chalk";
 
-import figlet, { textSync } from "figlet";
+import { textSync } from "figlet";
 
 import { capitalize } from "../../utils/Engine";
 
-import { Client, Events } from "discord.js";
+import { Events } from "discord.js";
+import GBFClient from "../../handler/clienthandler";
 
-import GBFVersion from "../../GBF/Version.json";
-
-export default function botReady(client: Client) {
+export default function botReady(client: GBFClient) {
   client.on(Events.ClientReady, async () => {
     const totalUsers = client.guilds.cache.reduce(
       (acc, guild) => acc + guild.memberCount,
@@ -30,9 +29,7 @@ export default function botReady(client: Client) {
 
     console.log(
       redBright(
-        underline(
-          `${client.user.username} is now online! v${GBFVersion.Version}`
-        )
+        underline(`${client.user.username} is now online! v${client.Version}`)
       )
     );
 
