@@ -1,8 +1,8 @@
-import { Client } from "discord.js";
-import { GBFCmd } from "../handler/commandhandler";
+import { CommandOptions, GBFCmd } from "../handler/commandhandler";
+import GBFClient from "../handler/clienthandler";
 
 class Command extends GBFCmd {
-  constructor(client: Client, options: any) {
+  constructor(client: GBFClient, options: CommandOptions) {
     super(client, options);
   }
 }
