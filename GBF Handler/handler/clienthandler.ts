@@ -16,16 +16,24 @@ import { CommandOptions } from "./commandhandler";
 export interface IGBFClient {
   CommandsFolder: string;
   EventsFolder: string;
+  LogActions?: boolean;
   Prefix: string;
   Developers?: string[];
   config?: any;
-  HelpMenu?: boolean;
   intents: BitFieldResolvable<string, number>;
   TestServers?: string[];
   LogsChannel?: string;
   Partners?: string[];
   SupportServer?: string;
   IgnoredHelpCategories?: string[];
+  Version: string;
+  DisabledCommands?: string[];
+}
+
+export enum DefaultCommands {
+  BotBan = "bot-ban",
+  EventSim = "simulate",
+  HelpMenu = "help"
 }
 
 export default class GBFClient extends Client implements IGBFClient {
@@ -46,18 +54,30 @@ export default class GBFClient extends Client implements IGBFClient {
   public readonly intents: BitFieldResolvable<string, number>;
   public readonly TestServers: string[];
   public readonly Developers: string[];
-  public readonly HelpMenu: boolean;
   public readonly LogsChannel?: string;
   public readonly Partners?: string[];
   public readonly SupportServer?: string;
   public readonly IgnoredHelpCategories?: string[];
+  public readonly Version: string;
+  public readonly DisabledCommands?: string[];
+  public readonly LogActions?: boolean;
 
   constructor(options: IGBFClient & ClientOptions) {
     super(options);
     this.CommandsFolder = options.CommandsFolder;
     this.EventsFolder = options.EventsFolder;
+    this.Prefix = options.Prefix;
     this.config = require(options.config);
+    this.intents = options.intents;
     this.TestServers = options.TestServers;
+    this.Developers = options.Developers;
+    this.LogsChannel = options.LogsChannel;
+    this.Partners = options.Partners;
+    this.SupportServer = options.SupportServer;
+    this.IgnoredHelpCategories = options.IgnoredHelpCategories;
+    this.Version = options.Version;
+    this.DisabledCommands = options.DisabledCommands;
+    this.LogActions = options.LogActions;
   }
 
   public async loadCommands(): Promise<void> {
@@ -66,11 +86,21 @@ export default class GBFClient extends Client implements IGBFClient {
     await registerCommands(this, this.CommandsFolder);
 
     const guildCommands: ApplicationCommandData[] = toApplicationCommand(
-      this.slashCommands.filter((s: GBFSlash) => s.development)
+      this.slashCommands.filter(
+        (s: GBFSlash) =>
+          s.development && !this.DisabledCommands?.includes(s.name)
+      )
     );
     const globalCommands: ApplicationCommandData[] = toApplicationCommand(
-      this.slashCommands.filter((s: GBFSlash) => !s.development)
+      this.slashCommands.filter(
+        (s: GBFSlash) =>
+          !s.development && !this.DisabledCommands?.includes(s.name)
+      )
     );
+
+    if (this.LogActions)
+      for (let j = 0; j < this.DisabledCommands.length; j++)
+        console.log(`Will not register: ${this.DisabledCommands[j]}`);
 
     if (guildCommands.length) {
       if (this.TestServers && this.TestServers.length > 0) {
@@ -78,7 +108,10 @@ export default class GBFClient extends Client implements IGBFClient {
           let testServer = await this.guilds.fetch(this.TestServers[i]);
           if (testServer instanceof Guild) {
             await testServer.commands.set(guildCommands);
-            console.log(`Setting Guild Only Commands in: ${testServer.name}`);
+            if (this.LogActions)
+              console.log(
+                `Registering Guild Only Commands in: ${testServer.name}`
+              );
           }
         }
       }
