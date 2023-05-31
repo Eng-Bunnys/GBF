@@ -1,5 +1,4 @@
 import {
-  Client,
   ColorResolvable,
   EmbedBuilder,
   Events,
@@ -8,13 +7,13 @@ import {
 } from "discord.js";
 
 import colours from "../../GBF/GBFColor.json";
-import { Developers, LogChannel } from "../../config/GBFconfig.json";
 
 import { redBright } from "chalk";
 
 import { guildChannels } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
 
-export default function guildCreate(client: Client) {
+export default function guildCreate(client: GBFClient) {
   client.on(Events.GuildCreate, async (guild: Guild) => {
     const channel = guildChannels(guild, "general");
     if (!channel) return;
@@ -38,9 +37,9 @@ export default function guildCreate(client: Client) {
       embeds: [joinMessage]
     });
 
-    const GBFLogger: TextChannel = await client.channels
-      .fetch(LogChannel)
-      .catch(() => null);
+    const GBFLogger = client.channels.cache.get(
+      client.LogsChannel
+    ) as TextChannel;
 
     const newGuildJoin = new EmbedBuilder()
       .setTitle(`I have been added to ${guild.name}`)
@@ -51,8 +50,9 @@ export default function guildCreate(client: Client) {
 
     let GBFDevelopers: string = ``;
 
-    for (let i = 0; i < Developers.length; i++)
-      GBFDevelopers += `<@${Developers[i]}> `;
+    if (client.Developers)
+      for (let i = 0; i < client.Developers.length; i++)
+        GBFDevelopers += `<@${client.Developers[i]}> `;
 
     if (GBFLogger) {
       GBFLogger.send({
