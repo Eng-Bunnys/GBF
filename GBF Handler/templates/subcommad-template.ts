@@ -1,18 +1,15 @@
+import GBFClient from "../handler/clienthandler";
 import SlashCommand from "../utils/slashCommands";
 
-import {
-  ApplicationCommandOptionType,
-  Client,
-  CommandInteraction
-} from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 
 interface IExecute {
-  client: Client;
+  client: GBFClient;
   interaction: CommandInteraction;
 }
 
 export default class Tests extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "",
       description: "",
