@@ -3,27 +3,17 @@ import {
   Client,
   Collection,
   ColorResolvable,
-  DMChannel,
   EmbedBuilder,
   Events,
   Message,
-  PermissionResolvable,
-  TextChannel
+  PermissionResolvable
 } from "discord.js";
 
 import {
-  msToTime,
   missingPermissions,
   capitalize,
   SendAndDelete
 } from "../../utils/Engine";
-
-import {
-  Developers,
-  PREFIX,
-  Partners,
-  TestGuilds
-} from "../../config/GBFconfig.json";
 
 import colours from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
@@ -34,6 +24,7 @@ import {
   IGuildData
 } from "../../schemas/GBF Schemas/Guild Data Schema";
 import { CommandOptions } from "../../handler/commandhandler";
+import GBFClient from "../../handler/clienthandler";
 
 const cooldowns = new Collection();
 
@@ -66,7 +57,7 @@ export default function messageCreate(client) {
         embeds: [SuspendedEmbed]
       });
 
-    const prefix = guildData ? guildData.Prefix : PREFIX;
+    const prefix = guildData ? guildData.Prefix : (client as GBFClient).Prefix;
 
     if (!message.content.startsWith(prefix)) return;
 
@@ -86,7 +77,10 @@ export default function messageCreate(client) {
       .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(`${command.name} is disabled globally`);
 
-    if (command.development && !TestGuilds.includes(message.guild.id))
+    if (
+      command.development &&
+      !(client as GBFClient).TestServers.includes(message.guild.id)
+    )
       return SendAndDelete(message.channel, {
         content: `<@${message.author.id}>`,
         embeds: [TestOnlyCommand]
@@ -104,7 +98,10 @@ export default function messageCreate(client) {
       });
     }
 
-    if (command.devOnly && !Developers.includes(message.author.id)) {
+    if (
+      command.devOnly &&
+      !(client as GBFClient).Developers.includes(message.author.id)
+    ) {
       const DevOnly = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't use that`)
         .setDescription("This command is only available for developers.")
@@ -115,7 +112,10 @@ export default function messageCreate(client) {
       });
     }
 
-    if (command.partner && !Partners.includes(message.author.id)) {
+    if (
+      command.partner &&
+      !(client as GBFClient).Partners.includes(message.author.id)
+    ) {
       const PartnerOnly = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't use that`)
         .setDescription(`This command is only available for partners.`)
@@ -193,7 +193,8 @@ export default function messageCreate(client) {
      */
     if (
       !command.devBypass ||
-      (command.devBypass && !Developers.includes(message.member.id))
+      (command.devBypass &&
+        !(client as GBFClient).Developers.includes(message.member.id))
     ) {
       const cooldownAmountS: number = command.cooldown;
       if (cooldownAmountS) {
