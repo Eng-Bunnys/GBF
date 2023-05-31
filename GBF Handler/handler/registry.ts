@@ -45,7 +45,10 @@ export async function registerCommands(client: GBFClient, ...dirs: string[]) {
                 continue;
               }
 
-              client.commands.set(name, cmdModule);
+              if (!client.DisabledCommands.includes(name)) {
+                client.commands.set(name, cmdModule);
+              }
+
               if (aliases)
                 aliases.map((alias) => client.aliases!.set(alias, name));
             } else {
