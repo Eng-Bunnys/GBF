@@ -6,7 +6,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ApplicationCommandOptionType,
-  Client,
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
@@ -19,14 +18,15 @@ import emojis from "../../GBF/GBFEmojis.json";
 import deverloperID from "../../GBF/Bot Ban Features.json";
 
 import { GBFBotBanModel } from "../../schemas/GBF Schemas/Bot Ban Schema";
+import GBFClient from "../../handler/clienthandler";
 
 interface IExecute {
-  client: Client;
+  client: GBFClient;
   interaction: CommandInteraction;
 }
 
 export default class botBans extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "bot-ban",
       description: "Ban a user from using the bot",
@@ -138,9 +138,16 @@ export default class botBans extends SlashCommand {
             } catch (err) {
               console.log(`I couldn't DM ${targetUser.tag}`);
             }
-            await logsChannel.send({
-              embeds: [newBan]
-            });
+
+            if (client.LogsChannel) {
+              const logsChannel = client.channels.cache.get(
+                client.LogsChannel
+              ) as TextChannel;
+
+              await logsChannel.send({
+                embeds: [newBan]
+              });
+            }
 
             return interaction.reply({
               embeds: [newBan]
@@ -204,13 +211,15 @@ export default class botBans extends SlashCommand {
               console.log(`I couldn't DM ${targerUser.tag}`);
             }
 
-            const logsChannel = (await client.channels.cache.get(
-              deverloperID.GBFLogsChannel
-            )) as TextChannel;
+            if (client.LogsChannel) {
+              const logsChannel = client.channels.cache.get(
+                client.LogsChannel
+              ) as TextChannel;
 
-            await logsChannel.send({
-              embeds: [newUnban]
-            });
+              await logsChannel.send({
+                embeds: [newUnban]
+              });
+            }
 
             return interaction.reply({
               embeds: [newUnban]
