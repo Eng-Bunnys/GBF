@@ -5,39 +5,46 @@ import {
   ColorResolvable,
   EmbedBuilder,
   Events,
-  Message
+  Message,
+  PermissionResolvable
 } from "discord.js";
 
-import { msToTime, missingPermissions } from "../../utils/Engine";
-
 import {
-  Developers,
-  PREFIX,
-  Partners,
-  TestGuilds
-} from "../../config/GBFconfig.json";
+  missingPermissions,
+  capitalize,
+  SendAndDelete
+} from "../../utils/Engine";
 
 import colours from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
 
-import blacklistSchema from "../../schemas/GBF Schemas/Bot Ban Schema";
-import guildConfigSchema from "../../schemas/GBF Schemas/Prefix Schema";
+import { GBFBotBanModel } from "../../schemas/GBF Schemas/Bot Ban Schema";
+import {
+  GBFGuildDataModel,
+  IGuildData
+} from "../../schemas/GBF Schemas/Guild Data Schema";
+import { CommandOptions } from "../../handler/commandhandler";
+import GBFClient from "../../handler/clienthandler";
 
 const cooldowns = new Collection();
 
-module.exports = (client) => {
+export default function messageCreate(client) {
   client.on(Events.MessageCreate, async (message: Message) => {
-    if (message.author.bot || message.channel.type === ChannelType.DM) return;
+    if (message.author.bot) return;
 
-    const blacklistData = await blacklistSchema.findOne({
+    const blacklistData = await GBFBotBanModel.findOne({
       userId: message.author.id
     });
 
-    const guildData = await guildConfigSchema.findOne({
-      guildID: message.guild.id
-    });
+    let guildData: IGuildData | null;
 
-    const suspendedEmbed = new EmbedBuilder()
+    if (message.channel.type === ChannelType.DM) guildData = null;
+    else
+      guildData = await GBFGuildDataModel.findOne({
+        guildID: message.guild.id
+      });
+
+    const SuspendedEmbed = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
       .setDescription(
         `You have been banned from using ${client.user.username}.`
@@ -45,11 +52,12 @@ module.exports = (client) => {
       .setColor(colours.ERRORRED as ColorResolvable);
 
     if (blacklistData)
-      return message.reply({
-        embeds: [suspendedEmbed]
+      return SendAndDelete(message.channel, {
+        content: `<@${message.author.id}>`,
+        embeds: [SuspendedEmbed]
       });
 
-    const prefix = guildData ? guildData.Prefix : PREFIX;
+    const prefix = guildData ? guildData.Prefix : (client as GBFClient).Prefix;
 
     if (!message.content.startsWith(prefix)) return;
 
@@ -58,23 +66,42 @@ module.exports = (client) => {
       .trim()
       .split(/ +/);
 
-    const command =
+    const command: CommandOptions =
       client.commands.get(cmd.toLowerCase()) ||
       client.commands.get(client.aliases.get(cmd.toLowerCase()));
 
     if (!command) return;
 
-    const testOnlyCommand = new EmbedBuilder()
+    const TestOnlyCommand = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't use that`)
       .setColor(colours.ERRORRED as ColorResolvable)
       .setDescription(`${command.name} is disabled globally`);
 
-    if (!TestGuilds.includes(message.guild.id))
-      return message.reply({
-        embeds: [testOnlyCommand]
+    if (
+      command.development &&
+      !(client as GBFClient).TestServers.includes(message.guild.id)
+    )
+      return SendAndDelete(message.channel, {
+        content: `<@${message.author.id}>`,
+        embeds: [TestOnlyCommand]
       });
 
-    if (command.devOnly && !Developers.includes(message.author.id)) {
+    if (!command.dmEnabled && message.channel.type === ChannelType.DM) {
+      const dmDisabled = new EmbedBuilder()
+        .setTitle(`${emojis.ERROR} You can't do that`)
+        .setColor(colours.ERRORRED as ColorResolvable)
+        .setDescription(`${capitalize(command.name)} is disabled in DMs.`);
+
+      return SendAndDelete(message.channel, {
+        content: `${message.author}`,
+        embeds: [dmDisabled]
+      });
+    }
+
+    if (
+      command.devOnly &&
+      !(client as GBFClient).Developers.includes(message.author.id)
+    ) {
       const DevOnly = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't use that`)
         .setDescription("This command is only available for developers.")
@@ -85,57 +112,79 @@ module.exports = (client) => {
       });
     }
 
-    if (command.Partner && !Partners.includes(message.author.id)) {
+    if (
+      command.partner &&
+      !(client as GBFClient).Partners.includes(message.author.id)
+    ) {
       const PartnerOnly = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't use that`)
         .setDescription(`This command is only available for partners.`)
         .setColor(colours.ERRORRED as ColorResolvable);
 
-      return message.reply({
+      return SendAndDelete(message.channel, {
+        content: `<@${message.author.id}>`,
         embeds: [PartnerOnly]
       });
     }
 
-    if (
-      command.userPermission &&
-      !message.member.permissions.has(command.userPermission, true)
-    ) {
-      const MissingUserPerms = new EmbedBuilder()
-        .setTitle("Missing Permissions")
-        .setDescription(
-          `${
-            message.author.username
-          }, You are missing the following permissions: ${missingPermissions(
-            message.member,
-            command.userPermission
-          )}`
-        )
-        .setColor(colours.ERRORRED as ColorResolvable);
+    const DisabledCommand = new EmbedBuilder()
+      .setTitle(`${emojis.ERROR} You can't do that`)
+      .setColor(colours.ERRORRED as ColorResolvable)
+      .setDescription(`This command is disabled in ${message.guild.name}`);
 
-      return message.reply({
-        embeds: [MissingUserPerms]
+    if (guildData && guildData.DisabledCommands.includes(command.name))
+      return SendAndDelete(message.channel, {
+        content: `<@${message.author.id}>`,
+        embeds: [DisabledCommand]
       });
-    }
 
-    if (
-      command.botPermission &&
-      !message.channel
-        .permissionsFor(message.guild.members.me)
-        .has(command.botPermission, true)
-    ) {
-      const missingPermBot = new EmbedBuilder()
-        .setTitle("Missing Permissions")
-        .setDescription(
-          `I am missing the following permissions: ${missingPermissions(
-            message.guild.members.me,
-            command.botPermission
-          )}`
+    if (message.channel.type !== ChannelType.DM) {
+      if (
+        command.userPermission &&
+        !message.member.permissions.has(
+          command.userPermission as PermissionResolvable,
+          true
         )
-        .setColor(colours.ERRORRED as ColorResolvable);
+      ) {
+        const MissingUserPerms = new EmbedBuilder()
+          .setTitle("Missing Permissions")
+          .setDescription(
+            `${
+              message.author.username
+            }, You are missing the following permissions: ${missingPermissions(
+              message.member,
+              command.userPermission
+            )}`
+          )
+          .setColor(colours.ERRORRED as ColorResolvable);
 
-      return message.reply({
-        embeds: [missingPermBot]
-      });
+        return SendAndDelete(message.channel, {
+          content: `<@${message.author.id}>`,
+          embeds: [MissingUserPerms]
+        });
+      }
+
+      if (
+        command.botPermission &&
+        !message.channel
+          .permissionsFor(message.guild.members.me)
+          .has(command.botPermission as PermissionResolvable, true)
+      ) {
+        const missingPermBot = new EmbedBuilder()
+          .setTitle("Missing Permissions")
+          .setDescription(
+            `I am missing the following permissions: ${missingPermissions(
+              message.guild.members.me,
+              command.botPermission
+            )}`
+          )
+          .setColor(colours.ERRORRED as ColorResolvable);
+
+        return SendAndDelete(message.channel, {
+          content: `<@${message.author.id}>`,
+          embeds: [missingPermBot]
+        });
+      }
     }
 
     /**
@@ -144,7 +193,8 @@ module.exports = (client) => {
      */
     if (
       !command.devBypass ||
-      (command.devBypass && !Developers.includes(message.member.id))
+      (command.devBypass &&
+        !(client as GBFClient).Developers.includes(message.member.id))
     ) {
       const cooldownAmountS: number = command.cooldown;
       if (cooldownAmountS) {
@@ -161,17 +211,25 @@ module.exports = (client) => {
 
           if (now < expirationTime) {
             const timeLeft: number = Number((expirationTime - now).toFixed(1));
-            const cooldownembed = new EmbedBuilder()
+
+            const unixExpirationTime = Math.round(
+              Date.now() / 1000 + timeLeft / 1000
+            );
+
+            const CooldownEmbed = new EmbedBuilder()
               .setDescription(
-                `${message.author}, please wait ${msToTime(
-                  timeLeft
-                )} before reusing the \`${command.name}\` command.`
+                `${message.author}, you can reuse "${command.name}" <t:${unixExpirationTime}:R>`
               )
               .setColor(colours.ERRORRED as ColorResolvable);
 
-            return message.reply({
-              embeds: [cooldownembed]
-            });
+            return SendAndDelete(
+              message.channel,
+              {
+                content: `${message.author}`,
+                embeds: [CooldownEmbed]
+              },
+              cooldownAmountMS / 1000
+            );
           }
         }
         timestamps.set(message.author.id, now);
@@ -185,21 +243,24 @@ module.exports = (client) => {
     interface CommandProps {
       client: Client;
       message: Message;
-      args: any;
+      args: string[];
     }
 
-    async function runCommand({ client, message, args }: CommandProps) {
+    async function runCommand({
+      client,
+      message,
+      args
+    }: CommandProps): Promise<void> {
       try {
+        //@ts-ignore
         await command.execute({ client, message, args });
       } catch (err) {
-        console.log(
-          `I ran into an error running "${command.name}" Error:`,
-          err
+        return console.log(
+          `I ran into an error running "${command.name}" Error:\n${err}`
         );
-        return;
       }
     }
 
     runCommand({ client, message, args });
   });
-};
+}
