@@ -1,15 +1,16 @@
+import GBFClient from "../handler/clienthandler";
 import Command from "../utils/command";
 
-import { Client, Message } from "discord.js";
+import { Message } from "discord.js";
 
 interface LegacyCommandExecute {
-  client: Client;
+  client: GBFClient;
   message: Message;
   args: [string];
 }
 
 export default class LegacyCommand extends Command {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "",
       aliases: [],
