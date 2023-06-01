@@ -1,7 +1,20 @@
 import {
   ApplicationCommandOptionType,
-  ApplicationCommandOptionData
+  ApplicationCommandOptionData,
+  CommandInteraction
 } from "discord.js";
+import GBFClient from "./clienthandler";
+
+interface IExecute {
+  client: GBFClient;
+  interaction: CommandInteraction;
+}
+
+export interface SubcommandData {
+  description: string;
+  args?: ApplicationCommandOptionData[];
+  execute?: ({ client, interaction }: IExecute) => unknown;
+}
 
 export interface GBFSlashOptions {
   name: string;
@@ -21,7 +34,7 @@ export interface GBFSlashOptions {
   development?: boolean;
   dmEnabled?: boolean;
   groups?: any;
-  subcommands?: any;
+  subcommands?: Record<string, SubcommandData>;
 }
 
 export class GBFSlash {
@@ -95,7 +108,11 @@ function getSubcommandGroupOptions(groups: any) {
   return options;
 }
 
-function getSubcommandOptions(subcommands: any) {
+function getSubcommandOptions(subcommands: {
+  name: string;
+  description: string;
+  options: any;
+}) {
   const names = Object.keys(subcommands);
   const options = [];
 
