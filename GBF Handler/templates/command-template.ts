@@ -16,6 +16,7 @@ export default class LegacyCommand extends Command {
       aliases: [],
       category: "",
       description: "",
+      NSFW: false,
       usage: "",
       examples: "",
       cooldown: 0,
@@ -25,8 +26,7 @@ export default class LegacyCommand extends Command {
       devBypass: false,
       partner: false,
       development: false,
-      dmEnabled: false,
-      canNotDisable: false
+      dmEnabled: false
     });
   }
   async execute({ client, message, args }: LegacyCommandExecute) {
