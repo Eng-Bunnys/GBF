@@ -1,4 +1,4 @@
-const SlashCommand = require("../../utils/slashCommands").default;
+import SlashCommand from "../../utils/slashCommands";
 
 import colors from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
@@ -8,23 +8,32 @@ import {
   PermissionFlagsBits,
   ChannelType,
   EmbedBuilder,
-  Client,
   GuildTextBasedChannel,
   VoiceBasedChannel,
   ColorResolvable,
-  Role
+  Role,
+  CommandInteraction,
+  CommandInteractionOptionResolver,
+  APIRole
 } from "discord.js";
 
 import { basicMsToTime } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
+
+interface IExecute {
+  client: GBFClient;
+  interaction: CommandInteraction;
+}
 
 export default class ChannelCommands extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "channel",
       description: "Channel moderation related commands",
       userPermission: [PermissionFlagsBits.ManageChannels],
       botPermission: [PermissionFlagsBits.ManageChannels],
       cooldown: 5,
+      category: "Moderation",
       development: true,
       subcommands: {
         lock: {
@@ -49,15 +58,21 @@ export default class ChannelCommands extends SlashCommand {
           ],
           execute: async ({ client, interaction }) => {
             const targetChannel: GuildTextBasedChannel | VoiceBasedChannel =
-              interaction.options.getChannel("channel") || interaction.channel;
-            const targetRole: Role =
-              interaction.options.getRole("role") || interaction.guild.id;
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getChannel("channel") || interaction.channel;
+            const targetRole: string | NonNullable<Role | APIRole> =
+              (interaction.options as CommandInteractionOptionResolver).getRole(
+                "role"
+              ) || interaction.guild.id;
             const lockReason: string =
-              interaction.options.getString("reason") || "No Reason Specified";
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("reason") || "No Reason Specified";
 
             let displayRole: string;
             if (targetRole === interaction.guild.id) displayRole = `@everyone`;
-            else displayRole = `<@&${targetRole.id}>`;
+            else displayRole = `<@&${(targetRole as Role).id}>`;
 
             const ChannelAlreadyLocked = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
@@ -71,7 +86,7 @@ export default class ChannelCommands extends SlashCommand {
 
             if (
               !targetChannel
-                .permissionsFor(targetRole)
+                .permissionsFor(targetRole as Role)
                 .has(PermissionFlagsBits.SendMessages)
             )
               return interaction.reply({
@@ -96,7 +111,7 @@ export default class ChannelCommands extends SlashCommand {
                   {
                     id:
                       targetRole !== interaction.guild.id
-                        ? targetRole.id
+                        ? (targetRole as Role).id
                         : interaction.guild.id,
                     deny: [PermissionFlagsBits.Connect]
                   }
@@ -112,7 +127,7 @@ export default class ChannelCommands extends SlashCommand {
                   {
                     id:
                       targetRole !== interaction.guild.id
-                        ? targetRole.id
+                        ? (targetRole as Role).id
                         : interaction.guild.id,
                     deny: [PermissionFlagsBits.SendMessages]
                   }
@@ -153,15 +168,21 @@ export default class ChannelCommands extends SlashCommand {
           ],
           execute: async ({ client, interaction }) => {
             const targetChannel: GuildTextBasedChannel | VoiceBasedChannel =
-              interaction.options.getChannel("channel") || interaction.channel;
-            const targetRole: Role =
-              interaction.options.getRole("role") || interaction.guild.id;
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getChannel("channel") || interaction.channel;
+            const targetRole: string | NonNullable<Role | APIRole> =
+              (interaction.options as CommandInteractionOptionResolver).getRole(
+                "role"
+              ) || interaction.guild.id;
             const unlockReason: string =
-              interaction.options.getString("reason") || "No Reason Specified";
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("reason") || "No Reason Specified";
 
             let displayRole: string;
             if (targetRole !== interaction.guild.id)
-              displayRole = `<@&${targetRole.id}>`;
+              displayRole = `<@&${(targetRole as Role).id}>`;
             else displayRole = `@everyone`;
 
             const ChannelAlreadyUnlocked = new EmbedBuilder()
@@ -176,7 +197,7 @@ export default class ChannelCommands extends SlashCommand {
 
             if (
               targetChannel
-                .permissionsFor(targetRole)
+                .permissionsFor(targetRole as Role)
                 .has(PermissionFlagsBits.SendMessages)
             )
               return interaction.reply({
@@ -201,7 +222,7 @@ export default class ChannelCommands extends SlashCommand {
                   {
                     id:
                       targetRole !== interaction.guild.id
-                        ? targetRole.id
+                        ? (targetRole as Role).id
                         : interaction.guild.id,
                     allow: [PermissionFlagsBits.Connect]
                   }
@@ -217,7 +238,7 @@ export default class ChannelCommands extends SlashCommand {
                   {
                     id:
                       targetRole !== interaction.guild.id
-                        ? targetRole.id
+                        ? (targetRole as Role).id
                         : interaction.guild.id,
                     allow: [PermissionFlagsBits.SendMessages]
                   }
@@ -310,10 +331,14 @@ export default class ChannelCommands extends SlashCommand {
           ],
           execute: async ({ client, interaction }) => {
             const slowmodeDuration: number = Number(
-              interaction.options.getString("slowmode")
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("slowmode")
             );
             const targetChannel: GuildTextBasedChannel =
-              interaction.options.getChannel("channel") || interaction.channel;
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getChannel("channel") || interaction.channel;
 
             const SuccessEmbed = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success!`)
