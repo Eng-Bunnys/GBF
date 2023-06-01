@@ -3,8 +3,8 @@ import {
   Client,
   ClientOptions,
   Collection,
-  Guild,
-  BitFieldResolvable
+  BitFieldResolvable,
+  Guild
 } from "discord.js";
 import { connect } from "mongoose";
 import { registerCommands } from "./registry";
@@ -84,6 +84,7 @@ export default class GBFClient extends Client implements IGBFClient {
     if (!this.application?.owner) await this.application?.fetch();
 
     await registerCommands(this, this.CommandsFolder);
+    await registerCommands(this, "./Default Commands");
 
     const guildCommands: ApplicationCommandData[] = toApplicationCommand(
       this.slashCommands.filter(
@@ -91,6 +92,7 @@ export default class GBFClient extends Client implements IGBFClient {
           s.development && !this.DisabledCommands?.includes(s.name)
       )
     );
+
     const globalCommands: ApplicationCommandData[] = toApplicationCommand(
       this.slashCommands.filter(
         (s: GBFSlash) =>
@@ -151,6 +153,7 @@ export default class GBFClient extends Client implements IGBFClient {
     };
 
     readEvents(this.EventsFolder);
+    readEvents("./Handler Events");
   }
 
   async login(token: string) {
