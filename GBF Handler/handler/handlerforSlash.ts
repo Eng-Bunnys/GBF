@@ -35,6 +35,7 @@ export interface GBFSlashOptions {
   dmEnabled?: boolean;
   groups?: any;
   subcommands?: Record<string, SubcommandData>;
+  execute?: ({ client, interaction }: IExecute) => unknown;
 }
 
 export class GBFSlash {
