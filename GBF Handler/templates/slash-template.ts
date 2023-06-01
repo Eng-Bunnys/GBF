@@ -27,6 +27,7 @@ export default class Name extends SlashCommand {
       ],
 
       devOnly: true,
+      NSFW: false,
       devBypass: true,
       userPermission: [],
       botPermission: [],
