@@ -1,4 +1,11 @@
-import { PermissionFlagsBits, Events, CommandInteraction } from "discord.js";
+import {
+  PermissionFlagsBits,
+  Events,
+  CommandInteraction,
+  GuildMember,
+  APIInteractionGuildMember,
+  NonThreadGuildBasedChannel
+} from "discord.js";
 
 import emojis from "../../GBF/GBFEmojis.json";
 import GBFClient from "../clienthandler";
@@ -19,7 +26,10 @@ export default class SimEvents extends SlashCommand {
         join: {
           description: "Simulate guildMemberAdd event",
           execute: async ({ client, interaction }) => {
-            client.emit(Events.GuildMemberAdd, interaction.member);
+            client.emit(
+              Events.GuildMemberAdd,
+              interaction.member as GuildMember
+            );
             return interaction.reply({
               content: `${emojis.VERIFY} Simulated User Join`
             });
@@ -28,7 +38,10 @@ export default class SimEvents extends SlashCommand {
         leave: {
           description: "Simulate guildMemberRemove event",
           execute: async ({ client, interaction }) => {
-            client.emit(Events.GuildMemberRemove, interaction.member);
+            client.emit(
+              Events.GuildMemberRemove,
+              interaction.member as GuildMember
+            );
             return interaction.reply({
               content: `${emojis.VERIFY} Simulated User Leave`
             });
@@ -36,9 +49,11 @@ export default class SimEvents extends SlashCommand {
         },
         channelcreate: {
           description: "Simulate channelCreate event",
-
           execute: async ({ client, interaction }) => {
-            client.emit(Events.ChannelCreate, interaction.channel);
+            client.emit(
+              Events.ChannelCreate,
+              interaction.channel as NonThreadGuildBasedChannel
+            );
             return interaction.reply({
               content: `${emojis.VERIFY} Simulated Channel Create`
             });
@@ -46,21 +61,13 @@ export default class SimEvents extends SlashCommand {
         },
         channeldelete: {
           description: "Simulate channelDelete event",
-
           execute: async ({ client, interaction }) => {
-            client.emit(Events.ChannelDelete, interaction.channel);
+            client.emit(
+              Events.ChannelDelete,
+              interaction.channel as NonThreadGuildBasedChannel
+            );
             return interaction.reply({
               content: `${emojis.VERIFY} Simulated Channel Delete`
-            });
-          }
-        },
-        channelupdate: {
-          description: "Simulate channelUpdate event",
-
-          execute: async ({ client, interaction }) => {
-            client.emit(Events.ChannelUpdate, interaction.channel);
-            return interaction.reply({
-              content: `${emojis.VERIFY} Simulated Channel Update`
             });
           }
         },
