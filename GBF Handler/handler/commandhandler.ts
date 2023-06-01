@@ -3,17 +3,17 @@ export interface CommandOptions {
   aliases?: string[];
   category: string;
   description: string;
+  NSFW?: boolean;
   usage?: string;
   examples?: string;
-  onHelpMenu?: boolean;
   cooldown?: number;
-  userPermission?: string[];
-  botPermission?: string[];
+  userPermission?: string | bigint[];
+  botPermission?: string | bigint[];
   devOnly?: boolean;
   devBypass?: boolean;
   development?: boolean;
   dmEnabled?: boolean;
-  Partner?: boolean;
+  partner?: boolean;
   args?: string[];
 }
 
@@ -23,12 +23,12 @@ export class GBFCmd {
   readonly aliases: string[];
   readonly category: string;
   readonly description: string;
+  readonly NSFW: boolean;
   readonly usage: string;
   readonly examples: string;
-  readonly onHelpMenu: boolean;
   readonly cooldown: number;
-  readonly userPermission: string[];
-  readonly botPermission: string[];
+  readonly userPermission: string | bigint[];
+  readonly botPermission: string | bigint[];
   readonly devOnly: boolean;
   readonly development: boolean;
   readonly devBypass: boolean;
@@ -43,9 +43,9 @@ export class GBFCmd {
       aliases = [],
       category = "",
       description = "",
+      NSFW = false,
       usage = "",
       examples = "",
-      onHelpMenu = true,
       cooldown = 0,
       userPermission = [],
       botPermission = [],
@@ -60,12 +60,12 @@ export class GBFCmd {
       aliases?: string[];
       category?: string;
       description?: string;
+      NSFW?: boolean;
       usage?: string;
       examples?: string;
-      onHelpMenu?: boolean;
       cooldown?: number;
-      userPermission?: string[];
-      botPermission?: string[];
+      userPermission?: string | bigint[];
+      botPermission?: string | bigint[];
       devOnly?: boolean;
       devBypass?: boolean;
       development?: boolean;
@@ -79,12 +79,12 @@ export class GBFCmd {
     this.aliases = aliases;
     this.category = category;
     this.description = description;
+    this.NSFW = NSFW || false;
     this.usage = usage;
     this.examples = examples;
-    this.onHelpMenu = onHelpMenu || true;
     this.cooldown = cooldown;
-    this.userPermission = userPermission;
-    this.botPermission = botPermission;
+    this.userPermission = userPermission || [];
+    this.botPermission = botPermission || [];
     this.devOnly = devOnly || false;
     this.devBypass = devBypass || false;
     this.development = development || false;
