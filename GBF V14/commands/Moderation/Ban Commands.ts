@@ -14,19 +14,29 @@ import {
   ColorResolvable,
   GuildMember,
   User,
-  Client
+  CommandInteraction,
+  CommandInteractionOptionResolver,
+  TextChannel,
+  GuildMemberRoleManager
 } from "discord.js";
 
 import { getLastDigits, msToTime } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
 
-module.exports = class BanCommands extends SlashCommand {
-  constructor(client: Client) {
+interface IExecute {
+  client: GBFClient;
+  interaction: CommandInteraction;
+}
+
+export default class BanCommands extends SlashCommand {
+  constructor(client: GBFClient) {
     super(client, {
       name: "ban",
       description: "Ban or unban a user from this server",
       userPermission: [PermissionFlagsBits.BanMembers],
       botPermission: [PermissionFlagsBits.BanMembers],
       cooldown: 0,
+      category: "Moderation",
       development: true,
       dmEnabled: false,
       subcommands: {
@@ -53,12 +63,16 @@ module.exports = class BanCommands extends SlashCommand {
               maxValue: 7
             }
           ],
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const targetUser = interaction.options.getUser("member", true);
             const banReason =
-              interaction.options.getString("reason") || "No Reason Specified";
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("reason") || "No Reason Specified";
             const deleteDays =
-              (interaction.options.getNumber("delete-days") || 0) * 86400;
+              ((
+                interaction.options as CommandInteractionOptionResolver
+              ).getNumber("delete-days") || 0) * 86400;
 
             const UserAlreadyBanned = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
@@ -130,7 +144,7 @@ module.exports = class BanCommands extends SlashCommand {
               (!serverSettingsDocs ||
                 (serverSettingsDocs && !serverSettingsDocs.AdminBan)) &&
               targetMember.permissions.has(PermissionFlagsBits.Administrator) &&
-              interaction.member.id !== interaction.guild.ownerId
+              interaction.user.id !== interaction.guild.ownerId
             )
               return interaction.reply({
                 embeds: [adminBan],
@@ -141,9 +155,10 @@ module.exports = class BanCommands extends SlashCommand {
               interaction.guild.members.me.roles.highest.position;
             const targetPosition: number = targetMember.roles.highest.position;
 
-            if (interaction.member.id !== interaction.guild.ownerId) {
-              const commandAuthorPosition: number =
-                interaction.member.roles.highest.position;
+            if (interaction.user.id !== interaction.guild.ownerId) {
+              const commandAuthorPosition: number | undefined = (
+                interaction.member.roles as GuildMemberRoleManager
+              ).highest?.position;
 
               const authorLower = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
@@ -246,9 +261,9 @@ module.exports = class BanCommands extends SlashCommand {
                   embeds: [DMBan]
                 });
               } catch (err) {
-                const logsChannel = await interaction.guild.channels.cache.get(
+                const logsChannel = interaction.guild.channels.cache.get(
                   serverSettingsDocs.LogsChannel
-                );
+                ) as TextChannel;
 
                 if (logsChannel)
                   return logsChannel.send({
@@ -317,10 +332,12 @@ module.exports = class BanCommands extends SlashCommand {
               type: ApplicationCommandOptionType.String
             }
           ],
-          execute: async ({ client, interaction }) => {
+          execute: async ({ client, interaction }: IExecute) => {
             const targetUser: User = interaction.options.getUser("user", true);
             const unbanReason: string =
-              interaction.options.getString("reason") || "No Reason Specified";
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("reason") || "No Reason Specified";
 
             const targetMember = await interaction.guild.members.cache.get(
               targetUser.id
@@ -406,4 +423,4 @@ module.exports = class BanCommands extends SlashCommand {
       }
     });
   }
-};
+}
