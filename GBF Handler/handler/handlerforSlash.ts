@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 import GBFClient from "./clienthandler";
 
-interface IExecute {
+export interface IExecute {
   client: GBFClient;
   interaction: CommandInteraction;
 }
@@ -35,7 +35,6 @@ export interface GBFSlashOptions {
   dmEnabled?: boolean;
   groups?: any;
   subcommands?: Record<string, SubcommandData>;
-  execute?: ({ client, interaction }: IExecute) => unknown;
 }
 
 export class GBFSlash {
