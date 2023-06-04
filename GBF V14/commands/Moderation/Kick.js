@@ -1,20 +1,25 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
-const KickSchema = require("../../schemas/Moderation Schemas/Kick Schema");
-const ServerSettings = require("../../schemas/Moderation Schemas/Server Settings");
-const CommandLinks = require("../../GBF/GBFCommands.json");
+import colors from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const {
+import KickSchema from "../../schemas/Moderation Schemas/Ban Schema";
+import ServerSettings from "../../schemas/Moderation Schemas/Server Settings";
+import CommandLinks from "../../GBF/GBFCommands.json";
+
+import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
-  EmbedBuilder
-} = require("discord.js");
-const { getLastDigits } = require("../../utils/Engine");
+  EmbedBuilder,
+  ColorResolvable,
+  GuildMember
+} from "discord.js";
 
-module.exports = class KickCommand extends SlashCommand {
-  constructor(client) {
+import { getLastDigits } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
+
+export default class KickCommand extends SlashCommand {
+  constructor(client: GBFClient) {
     super(client, {
       name: "kick",
       description: "Kick a member from this server",
@@ -35,22 +40,25 @@ module.exports = class KickCommand extends SlashCommand {
 
       devOnly: false,
       devBypass: false,
+      category: "Moderation",
       userPermission: [PermissionFlagsBits.KickMembers],
       botPermission: [PermissionFlagsBits.KickMembers],
       cooldown: 0,
       development: true,
-      Partner: false
     });
   }
 
   async execute({ client, interaction }) {
-    const targetMember = interaction.options.getMember("member");
+    const targetMember: GuildMember = interaction.options.getMember(
+      "member",
+      true
+    );
     const kickReason =
       interaction.options.getString("reason") || "No Reason Specified";
 
     const notInGuild = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(`The specified user is not in ${interaction.guild.name}`);
 
     if (!targetMember)
@@ -61,7 +69,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const ownerKick = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(`You can't kick the owner of this server!`);
 
     if (targetMember.id === interaction.guild.ownerId)
@@ -72,7 +80,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const selfKick = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(
         `You cannot kick yourself, if you want to leave, there's a leave button.`
       );
@@ -85,7 +93,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const botKick = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(`I can't kick myself from this server!`);
 
     if (targetMember.id === client.user.id)
@@ -100,7 +108,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const adminKick = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(
         `I can't kick an admin, if you'd like to turn off this feature please change it in the bot server settings using ${CommandLinks.ServerSettings}`
       );
@@ -124,7 +132,7 @@ module.exports = class KickCommand extends SlashCommand {
 
       const authorLower = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't do that`)
-        .setColor(colors.ERRORRED)
+        .setColor(colors.ERRORRED as ColorResolvable)
         .setDescription(
           `${targetMember.user.username}'s position is higher or equal to yours.`
         );
@@ -138,7 +146,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const botLower = new EmbedBuilder()
       .setTitle(`${emojis.ERROR} You can't do that`)
-      .setColor(colors.ERRORRED)
+      .setColor(colors.ERRORRED as ColorResolvable)
       .setDescription(
         `${targetMember.user.username}'s position is higher or equal to mine.`
       );
@@ -158,7 +166,7 @@ module.exports = class KickCommand extends SlashCommand {
 
     const userKicked = new EmbedBuilder()
       .setTitle(`${emojis.VERIFY} User Kicked`)
-      .setColor(colors.DEFAULT)
+      .setColor(colors.DEFAULT as ColorResolvable)
       .setFields(
         {
           name: "Moderator:",
@@ -229,4 +237,4 @@ module.exports = class KickCommand extends SlashCommand {
       return targetMember.kick(kickReason);
     }
   }
-};
+}
