@@ -1,5 +1,4 @@
 import SlashCommand from "../../utils/slashCommands";
-import os from "os";
 
 import {
   ApplicationCommandOptionType,
@@ -52,7 +51,7 @@ import {
   EpicGamesOneGameInfoEmbed,
   EpicGamesThreeGamesInfoEmbed,
   EpicGamesTwoGamesInfoEmbed
-} from "../../GBF/Freebies/Epic Games.ts/Epic Games UI";
+} from "../../GBF/Freebies/Epic Games/Epic Games UI";
 
 interface IExecute {
   client: GBFClient;
