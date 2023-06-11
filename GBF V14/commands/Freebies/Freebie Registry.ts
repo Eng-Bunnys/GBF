@@ -1,12 +1,14 @@
-const SlashCommand = require("../../utils/slashCommands").default;
+import SlashCommand from "../../utils/slashCommands";
+import os from "os";
 
 import {
   ApplicationCommandOptionType,
+  ButtonInteraction,
   ChannelType,
-  Client,
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
+  ComponentType,
   EmbedBuilder,
   PermissionFlagsBits,
   TextChannel,
@@ -19,14 +21,41 @@ import { FreebieProfileModel } from "../../schemas/Freebie Schemas/Server Profil
 
 import colors from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
-import { Developers, SupportServer } from "../../config/GBFconfig.json";
 import CommandLinks from "../../GBF/GBFCommands.json";
 import FreebieIDs from "../../GBF/Freebie Features.json";
 
-import { capitalize } from "../../utils/Engine";
+import { capitalize, delay } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
+import {
+  ConfirmButtons,
+  ControlPanel,
+  ControlPanelFirstRow,
+  ControlPanelFirstRowDisabled,
+  ControlPanelSecondRow,
+  ControlPanelSecondRowDisabled,
+  FreebieCodes,
+  LauncherGamesNumbers,
+  PanelEpicGamesEmbed,
+  PanelEpicGamesRow,
+  PanelGOGEmbed,
+  PanelGOGRow,
+  PanelOriginEmbed,
+  PanelOriginRow,
+  PanelPrimeEmbed,
+  PanelPrimeRow,
+  PanelSteamEmbed,
+  PanelSteamRow,
+  PanelUbisoftEmbed,
+  PanelUbisoftRow
+} from "../../GBF/Freebies/Send Embeds";
+import {
+  EpicGamesOneGameInfoEmbed,
+  EpicGamesThreeGamesInfoEmbed,
+  EpicGamesTwoGamesInfoEmbed
+} from "../../GBF/Freebies/Epic Games.ts/Epic Games UI";
 
 interface IExecute {
-  client: Client;
+  client: GBFClient;
   interaction: CommandInteraction;
 }
 
@@ -40,7 +69,7 @@ const WelcomeMessage = new EmbedBuilder()
   });
 
 export default class FreebieRegistry extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "freebie",
       description: "GBF Freebie commands",
@@ -49,6 +78,7 @@ export default class FreebieRegistry extends SlashCommand {
         PermissionFlagsBits.ManageChannels,
         PermissionFlagsBits.ManageRoles
       ],
+      category: "Freebie",
       cooldown: 5,
       devBypass: true,
       dmEnabled: false,
@@ -272,11 +302,11 @@ export default class FreebieRegistry extends SlashCommand {
               });
 
               let DevelopersMention: string = "";
-              for (let i = 0; i < Developers.length; i++) {
-                if (i === Developers.length - 1) {
-                  DevelopersMention += `<@${Developers[i]}>`;
+              for (let i = 0; i < client.Developers.length; i++) {
+                if (i === client.Developers.length - 1) {
+                  DevelopersMention += `<@${client.Developers[i]}>`;
                 } else {
-                  DevelopersMention += `<@${Developers[i]}>, `;
+                  DevelopersMention += `<@${client.Developers[i]}>, `;
                 }
               }
 
@@ -368,11 +398,11 @@ export default class FreebieRegistry extends SlashCommand {
               });
 
               let DevelopersMention: string = "";
-              for (let i = 0; i < Developers.length; i++) {
-                if (i === Developers.length - 1) {
-                  DevelopersMention += `<@${Developers[i]}>`;
+              for (let i = 0; i < client.Developers.length; i++) {
+                if (i === client.Developers.length - 1) {
+                  DevelopersMention += `<@${client.Developers[i]}>`;
                 } else {
-                  DevelopersMention += `<@${Developers[i]}>, `;
+                  DevelopersMention += `<@${client.Developers[i]}>, `;
                 }
               }
 
@@ -412,7 +442,7 @@ export default class FreebieRegistry extends SlashCommand {
                   "Secret Text"
                 )}\n• Support Server: ${hyperlink(
                   "GBF Support Server",
-                  SupportServer,
+                  client.SupportServer,
                   "Another secret text?"
                 )}`
               );
@@ -930,28 +960,28 @@ export default class FreebieRegistry extends SlashCommand {
             const DefaultChannelLink = interaction.guild.channels.cache.get(
               ServerData.DefaultChannel
             );
-            const DefaultRoleMention = interaction.guild.channels.cache.get(
+            const DefaultRoleMention = interaction.guild.roles.cache.get(
               ServerData.DefaultRole
             );
 
             const EpicGamesChannel = interaction.guild.channels.cache.get(
               ServerData.EGSChannel
             );
-            const EpicGamesRole = interaction.guild.channels.cache.get(
+            const EpicGamesRole = interaction.guild.roles.cache.get(
               ServerData.EGSRole
             );
 
             const SteamChannel = interaction.guild.channels.cache.get(
               ServerData.SteamChannel
             );
-            const SteamRole = interaction.guild.channels.cache.get(
+            const SteamRole = interaction.guild.roles.cache.get(
               ServerData.SteamRole
             );
 
             const OtherChannel = interaction.guild.channels.cache.get(
               ServerData.OtherChannel
             );
-            const OtherRole = interaction.guild.channels.cache.get(
+            const OtherRole = interaction.guild.roles.cache.get(
               ServerData.OtherRole
             );
 
@@ -1075,7 +1105,7 @@ export default class FreebieRegistry extends SlashCommand {
         },
         send: {
           description: "[Developer] Send the Freebies",
-          execute: async ({ client, interaction }: IExecute) => {
+          execute: async ({ client, interaction }) => {
             if (!FreebieIDs.AdminIDs.includes(interaction.user.id))
               return interaction.reply({
                 content: `You cannot use this command`,
@@ -1088,15 +1118,154 @@ export default class FreebieRegistry extends SlashCommand {
                 ephemeral: true
               });
 
-            const ControlPanel = new EmbedBuilder()
-              .setTitle("GBF Freebies Control Panel")
-              .setColor(colors.DEFAULT as ColorResolvable)
-              .setDescription(`Please use the buttons below to start`)
-              .addFields({
-                name: "Buttons:",
-                value: `**Guide:**\nEmoji 🡪 Button to click\nNumber 🡪 Number of games supported\n• Epic Games: ${emojis.EPIC} (3)\n• Steam: ${emojis.STEAMLOGO} (3)\n• GOG: ${emojis.GOGLOGO} (3)\n• Prime Gaming: ${emojis.PRIME} (3)\n• Origin: ${emojis.ORIGINLOGO} (3)\n• Ubisoft: ${emojis.UBISOFTLOGO} (3)`
-              })
-              .setTimestamp();
+            await interaction.reply({
+              embeds: [ControlPanel],
+              components: [ControlPanelFirstRow, ControlPanelSecondRow]
+            });
+
+            const filter = (i: ButtonInteraction) => {
+              return i.user.id === interaction.user.id;
+            };
+
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                idle: 30000,
+                componentType: ComponentType.Button
+              });
+            /**
+             * Launcher: Launcher Name
+             * Number Of Freebies: Number
+             */
+
+            let FreebieOptions = new Map();
+
+            collector.on("collect", async (i) => {
+              await i.deferUpdate();
+              await delay(750);
+
+              if (i.customId === "empty")
+                await interaction.followUp({
+                  content: `Why would you click an empty button, what did you expect would happen?`,
+                  ephemeral: true
+                });
+
+              if (i.customId === FreebieCodes.Exit) {
+                await interaction.editReply({
+                  content: `Menu Forcefully Closed`
+                });
+                collector.stop();
+              }
+
+              if (i.customId === FreebieCodes["Go Back"]) {
+                await interaction.editReply({
+                  embeds: [ControlPanel],
+                  components: [ControlPanelFirstRow, ControlPanelSecondRow]
+                });
+              }
+
+              if (i.customId === FreebieCodes["Epic Games"]) {
+                await interaction.editReply({
+                  embeds: [PanelEpicGamesEmbed],
+                  components: [PanelEpicGamesRow]
+                });
+                FreebieOptions.set("Launcher", "Epic Games");
+              }
+
+              if (i.customId === FreebieCodes.Steam) {
+                await interaction.editReply({
+                  embeds: [PanelSteamEmbed],
+                  components: [PanelSteamRow]
+                });
+                FreebieOptions.set("Launcher", "Steam");
+              }
+
+              if (i.customId === FreebieCodes.GOG) {
+                await interaction.editReply({
+                  embeds: [PanelGOGEmbed],
+                  components: [PanelGOGRow]
+                });
+                FreebieOptions.set("Launcher", "GOG");
+              }
+
+              if (i.customId === FreebieCodes["Prime Gaming"]) {
+                await interaction.editReply({
+                  embeds: [PanelPrimeEmbed],
+                  components: [PanelPrimeRow]
+                });
+                FreebieOptions.set("Launcher", "Prime Gaming");
+              }
+
+              if (i.customId === FreebieCodes.Ubisoft) {
+                await interaction.editReply({
+                  embeds: [PanelUbisoftEmbed],
+                  components: [PanelUbisoftRow]
+                });
+                FreebieOptions.set("Launcher", "Ubisoft");
+              }
+
+              if (i.customId === FreebieCodes.EA) {
+                await interaction.editReply({
+                  embeds: [PanelOriginEmbed],
+                  components: [PanelOriginRow]
+                });
+                FreebieOptions.set("Launcher", "EA");
+              }
+
+              if (i.customId === LauncherGamesNumbers["Epic Games One"]) {
+                await interaction.editReply({
+                  embeds: [EpicGamesOneGameInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 1);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Epic Games Two"]) {
+                await interaction.editReply({
+                  embeds: [EpicGamesTwoGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 2);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Epic Games Three"]) {
+                await interaction.editReply({
+                  embeds: [EpicGamesThreeGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 3);
+              }
+
+              if (i.customId === "ConfirmFreebieSend") {
+                await interaction.editReply({
+                  content: `Sent Freebies with the following settings 👇🏽`,
+                  components: []
+                });
+
+                client.emit(
+                  "FreebieSend",
+                  FreebieOptions.get("Launcher"),
+                  FreebieOptions.get("Games")
+                );
+              }
+
+              if (i.customId === "DenyFreebieSend") {
+                await interaction.editReply({
+                  content: `Stopped the Freebie Send Control Panel, no Freebie will be sent.`,
+                  components: []
+                });
+                collector.stop();
+              }
+            });
+
+            collector.on("end", async (collected, reason) => {
+              await interaction.editReply({
+                components: [
+                  ControlPanelFirstRowDisabled,
+                  ControlPanelSecondRowDisabled
+                ]
+              });
+            });
           }
         }
       }
