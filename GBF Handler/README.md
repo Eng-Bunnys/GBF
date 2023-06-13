@@ -1,23 +1,22 @@
 # GBF Handler [Discord.JS V14, GBF V2.5.0]
 
-## Info
-This is the latest version of the handler that GBF uses, this is the base of what GBF uses, to find commands and events please go to GBF vN where N is the version of Discord.JS that you use.
-
 ## Setup
-GBF Handler's setup involves a few steps with many optional features.
+### Token & Database
+To avoid hard-coding in your bot's token & mongoURI, they go into the config.json file, this can be found in the config folder by default but of-course you can change it's location, but if you choose to do so, you'll have to update the imports in the index.ts/js file 
 
-1. Setup your config.json file, you can choose to use a .env but you'll have to update the `index.js`, `clienthandler.js` (Found in handler), `interactionCreate.js` & `messageCreate.js`.
-2. Specify the intents you need in your `index.js` file, Guilds is requried while GuidMessages & MessageContent are required if you want to use the legacy command features
-3. To specify your test guilds go to `GBFconfig.json` in the config folder and specify your test guilds as `TestGuilds: [""]`
-4. Specify your developer & partner ID(s), default prefix in the `GBFconfig.json`
+### Handler Features
+The new and updated GBF Handler now has options in the index file, when setting up your client, you can add the following options: 
+1. Version : The version that you're bot is on, this helps you version track
+2. CommandsFolder : The location of the commands folder, this is where your commands are
+3. EventsFolder : The location of your events folder, this is where your events are
+4. Prefix : The default bot prefix for legacy commands
+5. LogActions : Choose whether the handler should inform you about the test only servers & non-registered commands
+6. SupportServer : An invite link to your bot's support server
+7. IgnoredHelpCategories : Ignored categories that won't be displayed in the help menu
+8. config : Location of the config file that contains your token and monogURI
+9. Developers : IDs of your bot's developers
+10. Partners : IDs of your bot's partners
+11. TestServers : IDs of the test only servers
+12. DisabledCommands : An array that contains all command names that won't be registered
 
-## Default Commands
-1. Blacklist / Bot Ban
-=> This is a developer only command that bans a user from using your bot, this can be effecitive for stopping bad actors from abusing your bot
-
-## Default Events
-1. Client#Ready
-=> This is emitted when your bot turns on, a UI has been designed for you but you can always change it to your liking. `Found in the events folder under ready.js`
-
-## The GBF Folder
-This is a folder that contains the emotes the bot uses, color codes and more quality of life files that make UI work a lot easier.
+## GBF Hanlder
