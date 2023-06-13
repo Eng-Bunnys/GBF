@@ -19,4 +19,5 @@ The new and updated GBF Handler now has options in the index file, when setting 
 11. TestServers : IDs of the test only servers
 12. DisabledCommands : An array that contains all command names that won't be registered
 
-## GBF Hanlder
+## Default Commands
+GBF offers a bot-ban command that allows you to ban users from using your bot and offers a simulate command that can be used to simulate client events, both can be disabled and an enum is available to help that
