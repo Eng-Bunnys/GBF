@@ -1,19 +1,24 @@
-const {
+import SlashCommand from "../../utils/slashCommands";
+
+import colors from "../../GBF/GBFColor.json";
+import emojis from "../../GBF/GBFEmojis.json";
+
+import {
   EmbedBuilder,
-  ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ApplicationCommandOptionType
-} = require("discord.js");
-const SlashCommand = require("../../utils/slashCommands");
+  ActionRowBuilder,
+  ApplicationCommandOptionType,
+  ColorResolvable,
+  CommandInteractionOptionResolver
+} from "discord.js";
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
+import fetch from "node-fetch";
 
-const fetch = require("node-fetch");
+import GBFClient from "../../handler/clienthandler";
 
-module.exports = class Search extends SlashCommand {
-  constructor(client) {
+export default class Search extends SlashCommand {
+  constructor(client: GBFClient) {
     super(client, {
       name: "search",
       description: "Search the wiki, urban dictionary or my anime list",
@@ -33,10 +38,13 @@ module.exports = class Search extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const question = interaction.options.getString("query");
+            const Question = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("query");
+
             try {
               const response = await fetch(
-                `https://mashape-community-urban-dictionary.p.rapidapi.com/define?term=${question}`,
+                `https://mashape-community-urban-dictionary.p.rapidapi.com/define?term=${Question}`,
                 {
                   method: "GET",
                   headers: {
@@ -48,7 +56,7 @@ module.exports = class Search extends SlashCommand {
                 }
               ).then((response) => response.json());
 
-              let definition;
+              let definition: string;
               if (response.list[0].definition.length > 1024) {
                 definition =
                   response.list[0].definition.substring(0, 983) +
@@ -57,7 +65,7 @@ module.exports = class Search extends SlashCommand {
                 definition = response.list[0].definition;
               }
 
-              let example;
+              let example: string;
               if (response.list[0].example == "") {
                 example = "None";
               } else {
@@ -70,38 +78,38 @@ module.exports = class Search extends SlashCommand {
                 }
               }
 
-              const questionButton = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                  .setLabel(question)
-                  .setStyle(ButtonStyle.Link)
-                  .setURL(`${response.list[0].permalink}`)
-              );
+              const QuestionButton: ActionRowBuilder<any> =
+                new ActionRowBuilder().addComponents(
+                  new ButtonBuilder()
+                    .setLabel(Question)
+                    .setStyle(ButtonStyle.Link)
+                    .setURL(`${response.list[0].permalink}`)
+                );
 
-              const firstDig = Number(response.list[0].thumbs_up);
-              const secondDig = Number(response.list[0].thumbs_down);
+              const ThumbsUp = Number(response.list[0].thumbs_up);
+              const ThumbsDown = Number(response.list[0].thumbs_down);
 
               const percentageDifference = (
-                ((firstDig - secondDig) / firstDig) *
+                ((ThumbsUp - ThumbsDown) / ThumbsUp) *
                 100
               ).toFixed(1);
 
-              const mainEmbed = new EmbedBuilder()
+              const ResponseEmbed = new EmbedBuilder()
                 .setTitle(`Definition of ${response.list[0].word}`)
                 .setDescription(`${definition}\n\n**Example**\n${example}`)
                 .addFields(
                   {
                     name: "👍",
-                    value: `${response.list[0].thumbs_up}`,
+                    value: `${ThumbsUp.toLocaleString()}`,
                     inline: true
                   },
                   {
                     name: "👎",
-                    value: `${response.list[0].thumbs_down}`,
+                    value: `${ThumbsDown.toLocaleString()}`,
                     inline: true
                   }
                 )
-
-                .setColor(colors.DEFAULT)
+                .setColor(colors.DEFAULT as ColorResolvable)
                 .setThumbnail(
                   "https://cdn.discordapp.com/emojis/839326629544722443.png?v=1"
                 )
@@ -112,22 +120,20 @@ module.exports = class Search extends SlashCommand {
                 });
 
               return interaction.reply({
-                embeds: [mainEmbed],
-                components: [questionButton]
+                embeds: [ResponseEmbed],
+                components: [QuestionButton]
               });
             } catch (error) {
-              const BadSearch = new EmbedBuilder()
+              const NoResponse = new EmbedBuilder()
                 .setTitle(`Search Error`)
-                .setDescription(
-                  `I was unable to find ${question}\nPlease provide a valid search query`
-                )
-                .setColor(colors.ERRORRED)
+                .setDescription(`No data was retrieved for ${Question}`)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setFooter({
                   text: `JS: ${error}`,
                   iconURL: interaction.user.displayAvatarURL()
                 });
               return interaction.reply({
-                embeds: [BadSearch],
+                embeds: [NoResponse],
                 ephemeral: true
               });
             }
@@ -144,10 +150,12 @@ module.exports = class Search extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const wiki = interaction.options.getString("query");
+            const SearchQuery = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("query");
 
             const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-              wiki
+              SearchQuery
             )}`;
 
             let response;
@@ -163,7 +171,7 @@ module.exports = class Search extends SlashCommand {
             //Multiple results
             try {
               if (response.type === "disambiguation") {
-                const mainembed = new EmbedBuilder()
+                const MultipleResults = new EmbedBuilder()
                   .setTitle(response.title)
                   .setThumbnail(
                     `https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Wikipedia-logo-v2.svg/2244px-Wikipedia-logo-v2.svg.png`
@@ -171,7 +179,7 @@ module.exports = class Search extends SlashCommand {
                   .setDescription(
                     `${response.extract}\nLinks For Topic You Searched [Link](${response.content_urls.desktop.page}).`
                   )
-                  .setColor(colors.DEFAULT)
+                  .setColor(colors.DEFAULT as ColorResolvable)
                   .setURL(response.content_urls.desktop.page)
                   .setFooter({
                     text: `Requested by: ${interaction.user.username}`,
@@ -179,33 +187,31 @@ module.exports = class Search extends SlashCommand {
                   });
 
                 return interaction.reply({
-                  embeds: [mainembed]
+                  embeds: [MultipleResults]
                 });
                 //One result
               } else {
-                const otherembed = new EmbedBuilder()
+                const OneResult = new EmbedBuilder()
                   .setTitle(response.title)
                   .setDescription(response.extract)
                   .setThumbnail(
                     `https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Wikipedia-logo-v2.svg/2244px-Wikipedia-logo-v2.svg.png`
                   )
-                  .setColor(colors.DEFAULT)
+                  .setColor(colors.DEFAULT as ColorResolvable)
                   .setFooter({
                     text: `Requested by: ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL()
                   })
                   .setURL(response.content_urls.desktop.page);
                 return interaction.reply({
-                  embeds: [otherembed]
+                  embeds: [OneResult]
                 });
               }
             } catch {
               const NotFound = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} Invalid Query`)
-                .setDescription(
-                  `I can't find anything for \`${wiki}\`\nPlease provide a valid query.`
-                )
-                .setColor("e91e63")
+                .setDescription(`I can't find anything for \`${SearchQuery}\``)
+                .setColor(colors.DEFAULT as ColorResolvable)
                 .setFooter({
                   text: `Requested by: ${interaction.user.username}`,
                   iconURL: interaction.user.displayAvatarURL()
@@ -255,36 +261,74 @@ module.exports = class Search extends SlashCommand {
               timeZone: "Asia/Dhaka"
             });
 
-            const worldClock = new EmbedBuilder()
+            const WorldClock = new EmbedBuilder()
               .setTitle("World Clock - Timezones")
-
-              .addField(":flag_us: New York (EST)", `${est}\n(GMT-5)`, true)
-              .addField(":flag_us: Los Angles (PST)", `${pst}\n(GMT-8)`, true)
-              .addField(":flag_us: Mexico City (CST)", `${cst}\n(GMT-7)`, true)
-
-              .addField(":flag_eu: London (GMT)", `${gmt}\n(GMT+0/GMT+1)`, true)
-              .addField(":flag_eu: Central (CET)", `${cet}\n(GMT+1)`, true)
-              .addField("\u200B", "\u200B", true)
-
-              .addField(":flag_kr: Korean (KST)", `${kst}\n(GMT+9)`, true)
-              .addField(":flag_in: India (IST)", `${ist}\n(GMT+05:30)`, true)
-              .addField(":flag_bd: Bangladesh (BST)", `${bst} (GMT+6)`, true)
-
-              .addField(":flag_au: Sydney (AEST)", `${aest}\n(GMT+11)`, true)
-              .addField(":flag_au: Perth (AWST)", `${awst}\n(GMT+8)`, true)
-              .addField("\u200B", "\u200B", true)
-              .setColor("#e91e63")
+              .addFields(
+                {
+                  name: ":flag_us: New York (EST)",
+                  value: `${est}\n(GMT-5)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_us: Los Angles (PST)",
+                  value: `${pst}\n(GMT-8)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_us: Mexico City (CST)",
+                  value: `${cst}\n(GMT-7)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_eu: London (GMT)",
+                  value: `${gmt}\n(GMT+0/GMT+1)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_eu: Central (CET)",
+                  value: `${cet}\n(GMT+1)`,
+                  inline: true
+                },
+                { name: "\u200B", value: "\u200B", inline: true },
+                {
+                  name: ":flag_kr: Korean (KST)",
+                  value: `${kst}\n(GMT+9)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_in: India (IST)",
+                  value: `${ist}\n(GMT+05:30)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_bd: Bangladesh (BST)",
+                  value: `${bst} (GMT+6)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_au: Sydney (AEST)",
+                  value: `${aest}\n(GMT+11)`,
+                  inline: true
+                },
+                {
+                  name: ":flag_au: Perth (AWST)",
+                  value: `${awst}\n(GMT+8)`,
+                  inline: true
+                },
+                { name: "\u200B", value: "\u200B", inline: true }
+              )
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setFooter({
                 text: `Requested by: ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
               });
 
             await interaction.reply({
-              embeds: [worldClock]
+              embeds: [WorldClock]
             });
           }
         }
       }
     });
   }
-};
+}
