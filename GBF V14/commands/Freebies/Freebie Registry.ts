@@ -52,6 +52,26 @@ import {
   EpicGamesThreeGamesInfoEmbed,
   EpicGamesTwoGamesInfoEmbed
 } from "../../GBF/Freebies/Epic Games/Epic Games UI";
+import {
+  SteamOneGameInfoEmbed,
+  SteamThreeGamesInfoEmbed,
+  SteamTwoGamesInfoEmbed
+} from "../../GBF/Freebies/Steam/Steam UI";
+import {
+  GOGOneGameInfoEmbed,
+  GOGThreeGamesInfoEmbed,
+  GOGsTwoGamesInfoEmbed
+} from "../../GBF/Freebies/GOG/GOG UI";
+import {
+  OriginOneGameInfoEmbed,
+  OriginThreeGamesInfoEmbed,
+  OriginTwoGamesInfoEmbed
+} from "../../GBF/Freebies/Origin/Origin UI";
+import {
+  UbisoftOneGameInfoEmbed,
+  UbisoftThreeGamesInfoEmbed,
+  UbisoftTwoGamesInfoEmbed
+} from "../../GBF/Freebies/Ubisoft/Ubisoft UI";
 
 interface IExecute {
   client: GBFClient;
@@ -458,19 +478,49 @@ export default class FreebieRegistry extends SlashCommand {
             {
               name: "enable-all",
               description: "Enable all the categories [Enabled by default]",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Enable All",
+                  value: "EnableAll"
+                },
+                {
+                  name: "Use Custom Settings",
+                  value: "CustomSettings"
+                }
+              ]
             },
             {
               name: "send-steam",
               description:
                 "Choose whether GBF should tell you when a Steam freebie is available.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Send Steam Freebies",
+                  value: "SendSteam"
+                },
+                {
+                  name: "Don't Send Steam Freebies",
+                  value: "NoSteam"
+                }
+              ]
             },
             {
               name: "steam-mention",
               description:
                 "Choose whether GBF should mention a role whenever a Steam freebe is sent.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Mention a role when a Steam freebie is sent",
+                  value: "SteamMention"
+                },
+                {
+                  name: "Don't mention a role",
+                  value: "NoSteamMention"
+                }
+              ]
             },
             {
               name: "steam-role",
@@ -492,13 +542,33 @@ export default class FreebieRegistry extends SlashCommand {
               name: "send-epic-games",
               description:
                 "Choose whether GBF should tell you when an Epic Games freebie is available.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Send Epic Games Freebies",
+                  value: "SendEpic"
+                },
+                {
+                  name: "Don't Send Epic Games Freebies",
+                  value: "NoEpic"
+                }
+              ]
             },
             {
               name: "epic-games-mention",
               description:
                 "Choose whether GBF should mention a role whenever an Epic Games freebe is sent.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Mention a role when an Epic Games freebie is sent",
+                  value: "EpicMention"
+                },
+                {
+                  name: "Don't mention a role",
+                  value: "NoEpicention"
+                }
+              ]
             },
             {
               name: "epic-games-role",
@@ -520,13 +590,33 @@ export default class FreebieRegistry extends SlashCommand {
               name: "send-other",
               description:
                 "Choose whether GBF should tell you when a freebie from another game store is available.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: 'Send "Other" Freebies',
+                  value: "SendOther"
+                },
+                {
+                  name: 'Don\'t Send "Other"  Freebies',
+                  value: "NoOther"
+                }
+              ]
             },
             {
               name: "other-mention",
               description:
                 "Choose whether GBF should mention a role whenever an Other game store freebe is sent.",
-              type: ApplicationCommandOptionType.Boolean
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: 'Mention a role when an "Other" freebie is sent',
+                  value: "OtherMention"
+                },
+                {
+                  name: "Don't mention a role",
+                  value: "NoOtherMention"
+                }
+              ]
             },
             {
               name: "other-role",
@@ -545,7 +635,7 @@ export default class FreebieRegistry extends SlashCommand {
               ]
             }
           ],
-          execute: async ({ client, interaction }: IExecute) => {
+          execute: async ({ client, interaction }) => {
             const ServerData = await FreebieProfileModel.findOne({
               guildId: interaction.guild.id
             });
@@ -576,18 +666,24 @@ export default class FreebieRegistry extends SlashCommand {
                 ephemeral: true
               });
 
-            const AllEnabled =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("enable-all", false) || true;
-            const SteamBoolean =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("send-steam", false) || AllEnabled;
-            const SteamMention =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("steam-mention", false) || false;
+            const AllEnabled = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("enable-all", false);
+
+            let AllCategories: boolean;
+
+            if (AllEnabled) {
+              if (AllEnabled === "EnableAll") AllCategories = true;
+              else AllCategories = false;
+            }
+            AllCategories = ServerData.AllEnabled;
+
+            const SteamBoolean = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("send-steam", false);
+            const SteamMention = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("steam-mention", false);
             const SteamRole = (
               interaction.options as CommandInteractionOptionResolver
             ).getRole("steam-role", false);
@@ -595,14 +691,26 @@ export default class FreebieRegistry extends SlashCommand {
               interaction.options as CommandInteractionOptionResolver
             ).getChannel("steam-channel", false) as TextChannel;
 
-            const EpicBoolean =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("send-epic-games", false) || AllEnabled;
-            const EpicMention =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("epic-games-mention", false) || false;
+            let SendSteamFreebies: boolean;
+
+            if (SteamBoolean) {
+              if (SteamBoolean === "SendSteam") SendSteamFreebies = true;
+              else SendSteamFreebies = false;
+            } else SendSteamFreebies = Boolean(ServerData.SteamEnabled);
+
+            let SteamPing: boolean;
+
+            if (SteamMention) {
+              if (SteamMention === "SteamMention") SteamPing = true;
+              else SteamPing = false;
+            } else SteamPing = ServerData.SteamMention;
+
+            const EpicBoolean = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("send-epic-games", false);
+            const EpicMention = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("epic-games-mention", false);
             const EpicRole = (
               interaction.options as CommandInteractionOptionResolver
             ).getRole("epic-games-role", false);
@@ -610,14 +718,26 @@ export default class FreebieRegistry extends SlashCommand {
               interaction.options as CommandInteractionOptionResolver
             ).getChannel("epic-games-channel", false) as TextChannel;
 
-            const OtherBoolean =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("send-other", false) || AllEnabled;
-            const OtherMention =
-              (
-                interaction.options as CommandInteractionOptionResolver
-              ).getBoolean("other-mention", false) || false;
+            let EpicEnabled: boolean;
+
+            if (EpicBoolean) {
+              if (EpicBoolean === "SendEpic") EpicEnabled = true;
+              else EpicEnabled = false;
+            } else EpicEnabled = ServerData.EGSEnabled;
+
+            let EpicPing: boolean;
+
+            if (EpicMention) {
+              if (EpicMention === "EpicMention") EpicPing = true;
+              else EpicPing = false;
+            } else EpicPing = ServerData.EGSMention;
+
+            const OtherBoolean = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("send-other", false);
+            const OtherMention = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("other-mention", false);
             const OtherRole = (
               interaction.options as CommandInteractionOptionResolver
             ).getRole("other-role", false);
@@ -625,7 +745,22 @@ export default class FreebieRegistry extends SlashCommand {
               interaction.options as CommandInteractionOptionResolver
             ).getChannel("other-channel", false) as TextChannel;
 
+            let OtherEnabled: boolean;
+
+            if (OtherBoolean) {
+              if (OtherBoolean === "SendOther") OtherEnabled = true;
+              else OtherEnabled = false;
+            } else OtherEnabled = ServerData.OtherEnabled;
+
+            let OtherPing: boolean;
+
+            if (OtherMention) {
+              if (OtherMention === "OtherMention") OtherPing = true;
+              else OtherPing = false;
+            } else OtherPing = ServerData.OtherMention;
+
             if (
+              !AllEnabled &&
               !SteamBoolean &&
               !SteamMention &&
               !SteamRole &&
@@ -646,35 +781,38 @@ export default class FreebieRegistry extends SlashCommand {
               });
             }
 
-            const SteamUpdatedSettings: string = `${
+            let DefaultSettings: boolean = ServerData.UseDefault;
+
+            if (
+              SendSteamFreebies === false ||
+              EpicEnabled === false ||
+              OtherEnabled
+            )
+              (AllCategories = false), (DefaultSettings = false);
+
+            const SteamUpdates: string = `${
               emojis.STEAMLOGO
-            } Steam\n• ${
-              SteamBoolean ? "Enabled" : "Disabled"
-            }\n• Mention: ${capitalize(SteamMention.toString())}\n• Role: ${
-              SteamRole ? SteamRole : "No Role Specified"
-            }\n• Channel: ${
-              SteamChannel ? SteamChannel : "No Channel Specified"
-            }`;
+            } Steam\n• Enabled: ${capitalize(
+              SendSteamFreebies.toString()
+            )}\n• Mention: ${capitalize(SteamPing.toString())}\n• Role: ${
+              SteamRole ? SteamRole : "No changes made"
+            }\n• Channel: ${SteamChannel ? SteamChannel : "No changes made"}`;
 
-            const EpicGamesUpdatedSettings: string = `${
+            const EpicUpdates: string = `${
               emojis.EPIC
-            } Epic Games\n• ${
-              EpicBoolean ? "Enabled" : "Disabled"
-            }\n• Mention: ${capitalize(EpicMention.toString())}\n• Role: ${
-              EpicRole ? EpicRole : "No Role Specified"
-            }\n• Channel: ${
-              EpicChannel ? EpicChannel : "No Channel Specified"
-            }`;
+            } Epic Games\n• Enabled: ${capitalize(
+              EpicEnabled.toString()
+            )}\n• Mention: ${capitalize(EpicPing.toString())}\n• Role: ${
+              EpicRole ? EpicRole : "No changes made"
+            }\n• Channel: ${EpicChannel ? EpicChannel : "No changes made"}`;
 
-            const OtherUpdatedSettings: string = `${emojis.GOGLOGO} ${
-              emojis.UBISOFTLOGO
-            } ${emojis.ORIGINLOGO} Other\n• ${
-              OtherBoolean ? "Enabled" : "Disabled"
-            }\n• Mention: ${capitalize(OtherMention.toString())}\n• Role: ${
-              OtherRole ? OtherRole : "No Role Specified"
-            }\n• Channel: ${
-              OtherChannel ? OtherChannel : "No Channel Specified"
-            }`;
+            const OtherUpdates: string = `${emojis.UBISOFTLOGO}${
+              emojis.GOGLOGO
+            }${emojis.ORIGINLOGO} Other\n• Enabled: ${capitalize(
+              OtherEnabled.toString()
+            )}\n• Mention: ${capitalize(OtherPing.toString())}\n• Role: ${
+              OtherRole ? OtherRole : "No changes made"
+            }\n• Channel: ${OtherChannel ? OtherChannel : "No changes made"}`;
 
             if (SteamChannel) {
               await SteamChannel.permissionOverwrites.set(
@@ -739,19 +877,20 @@ export default class FreebieRegistry extends SlashCommand {
             }
 
             await ServerData.updateOne({
-              AllEnabled: AllEnabled,
-              EGSEnabled: EpicBoolean,
+              UseDefault: DefaultSettings,
+              AllEnabled: AllCategories,
+              EGSEnabled: EpicEnabled,
               EGSRole: EpicRole ? EpicRole.id : ServerData.EGSRole,
-              EGSMention: EpicMention,
+              EGSMention: EpicPing,
               EGSChannel: EpicChannel ? EpicChannel.id : ServerData.EGSChannel,
-              SteamEnabled: SteamBoolean,
-              SteamMention: SteamMention,
+              SteamEnabled: Boolean(SendSteamFreebies),
+              SteamMention: SteamPing,
               SteamChannel: SteamChannel
                 ? SteamChannel.id
                 : ServerData.SteamChannel,
               SteamRole: SteamRole ? SteamRole.id : ServerData.SteamRole,
-              OtherEnabled: OtherBoolean,
-              OtherMention: OtherMention,
+              OtherEnabled: OtherEnabled,
+              OtherMention: OtherPing,
               OtherChannel: OtherChannel
                 ? OtherChannel.id
                 : ServerData.OtherChannel,
@@ -761,7 +900,7 @@ export default class FreebieRegistry extends SlashCommand {
             const FreebieCategoryUpdated = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success`)
               .setDescription(
-                `Updated GBF Freebies Settings\n\n${EpicGamesUpdatedSettings}\n\n${SteamUpdatedSettings}\n\n${OtherUpdatedSettings}`
+                `Updated GBF Freebies Settings\n\n${EpicUpdates}\n\n${SteamUpdates}\n\n${OtherUpdates}`
               )
               .setColor(ServerData.EmbedColor as ColorResolvable)
               .setFooter({
@@ -999,7 +1138,9 @@ export default class FreebieRegistry extends SlashCommand {
             }\n\n**Category Settings:**\n**${
               emojis.EPIC
             } Epic Games**\n• Enabled: ${
-              ServerData.EGSEnabled || ServerData.AllEnabled ? "True" : "False"
+              ServerData.EGSEnabled === true || ServerData.AllEnabled
+                ? "True"
+                : "False"
             }\n• Channel: ${
               EpicGamesChannel ? EpicGamesChannel : "Default Channel"
             }\n• Role: ${
@@ -1007,7 +1148,7 @@ export default class FreebieRegistry extends SlashCommand {
             }\n• Mention: ${capitalize(
               ServerData.EGSMention.toString()
             )}\n\n**${emojis.STEAMLOGO} Steam**\n• Enabled: ${
-              ServerData.SteamEnabled || ServerData.AllEnabled
+              ServerData.SteamEnabled === true || ServerData.AllEnabled
                 ? "True"
                 : "False"
             }\n• Channel: ${
@@ -1019,7 +1160,7 @@ export default class FreebieRegistry extends SlashCommand {
             )}\n\n**${emojis.UBISOFTLOGO} ${emojis.GOGLOGO} ${
               emojis.ORIGINLOGO
             } Other**\n• Enabled: ${
-              ServerData.OtherEnabled || ServerData.AllEnabled
+              ServerData.OtherEnabled === true || ServerData.AllEnabled
                 ? "True"
                 : "False"
             }\n• Channel: ${
@@ -1188,11 +1329,14 @@ export default class FreebieRegistry extends SlashCommand {
               }
 
               if (i.customId === FreebieCodes["Prime Gaming"]) {
-                await interaction.editReply({
-                  embeds: [PanelPrimeEmbed],
-                  components: [PanelPrimeRow]
+                await interaction.followUp({
+                  content: `This launcher is incomplete`
                 });
-                FreebieOptions.set("Launcher", "Prime Gaming");
+                // await interaction.editReply({
+                //   embeds: [PanelPrimeEmbed],
+                //   components: [PanelPrimeRow]
+                // });
+                // FreebieOptions.set("Launcher", "Prime Gaming");
               }
 
               if (i.customId === FreebieCodes.Ubisoft) {
@@ -1235,6 +1379,104 @@ export default class FreebieRegistry extends SlashCommand {
                 FreebieOptions.set("Games", 3);
               }
 
+              if (i.customId === LauncherGamesNumbers["Steam One"]) {
+                await interaction.editReply({
+                  embeds: [SteamOneGameInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 1);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Steam Two"]) {
+                await interaction.editReply({
+                  embeds: [SteamTwoGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 2);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Steam Three"]) {
+                await interaction.editReply({
+                  embeds: [SteamThreeGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 3);
+              }
+
+              if (i.customId === LauncherGamesNumbers["GOG One"]) {
+                await interaction.editReply({
+                  embeds: [GOGOneGameInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 1);
+              }
+
+              if (i.customId === LauncherGamesNumbers["GOG Two"]) {
+                await interaction.editReply({
+                  embeds: [GOGsTwoGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 2);
+              }
+
+              if (i.customId === LauncherGamesNumbers["GOG Three"]) {
+                await interaction.editReply({
+                  embeds: [GOGThreeGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 3);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Origin One"]) {
+                await interaction.editReply({
+                  embeds: [OriginOneGameInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 1);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Origin Two"]) {
+                await interaction.editReply({
+                  embeds: [OriginTwoGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 2);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Origin Three"]) {
+                await interaction.editReply({
+                  embeds: [OriginThreeGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 3);
+              }
+
+              //
+
+              if (i.customId === LauncherGamesNumbers["Ubisoft One"]) {
+                await interaction.editReply({
+                  embeds: [UbisoftOneGameInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 1);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Ubisoft Two"]) {
+                await interaction.editReply({
+                  embeds: [UbisoftTwoGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 2);
+              }
+
+              if (i.customId === LauncherGamesNumbers["Ubisoft Three"]) {
+                await interaction.editReply({
+                  embeds: [UbisoftThreeGamesInfoEmbed],
+                  components: [ConfirmButtons]
+                });
+                FreebieOptions.set("Games", 3);
+              }
+
               if (i.customId === "ConfirmFreebieSend") {
                 await interaction.editReply({
                   content: `Sent Freebies with the following settings 👇🏽`,
@@ -1246,6 +1488,7 @@ export default class FreebieRegistry extends SlashCommand {
                   FreebieOptions.get("Launcher"),
                   FreebieOptions.get("Games")
                 );
+                collector.stop();
               }
 
               if (i.customId === "DenyFreebieSend") {
