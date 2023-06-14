@@ -10,7 +10,13 @@ import {
   TwoGamesEpicGamesEmbed
 } from "../../GBF/Freebies/Epic Games/Epic Games Messages";
 
-import { ColorResolvable, TextBasedChannel } from "discord.js";
+import {
+  ColorResolvable,
+  Guild,
+  Role,
+  TextBasedChannel,
+  hyperlink
+} from "discord.js";
 import { TipButtons, TipMessage } from "../../GBF/Freebies/Extras/Promotions";
 
 import {
@@ -37,6 +43,15 @@ import {
   OriginTwoGamesButton,
   OriginTwoGamesEmbed
 } from "../../GBF/Freebies/Origin/Origin Messages";
+import {
+  UbisoftOneGameButton,
+  UbisoftOneGameEmbed,
+  UbisoftThreeGamesButton,
+  UbisoftThreeGamesEmbed,
+  UbisoftTwoGamesButton,
+  UbisoftTwoGamesEmbed
+} from "../../GBF/Freebies/Ubisoft/Ubisoft Messages";
+import { getRole } from "../../utils/Engine";
 
 enum LauncherNames {
   "Epic Games" = "Epic Games",
@@ -63,8 +78,8 @@ export default function SendFreebie(client: GBFClient) {
       console.log(chalk.redBright("There are no default servers"));
     else
       console.log(
-        chalk.greenBright(
-          `There are ${DefaultFreebieServers.length.toLocaleString()} default servers`
+        chalk.cyanBright(
+          `Attempting to send ${launcher} Freebies to ${DefaultFreebieServers.length.toLocaleString()} default servers`
         )
       );
 
@@ -72,8 +87,8 @@ export default function SendFreebie(client: GBFClient) {
       console.log(chalk.redBright("There are no custom servers"));
     else
       console.log(
-        chalk.greenBright(
-          `There are ${CustomFreebieServers.length.toLocaleString()} custom servers`
+        chalk.cyanBright(
+          `Attempting to send ${launcher} Freebies to ${CustomFreebieServers.length.toLocaleString()} custom servers`
         )
       );
 
@@ -125,9 +140,35 @@ export default function SendFreebie(client: GBFClient) {
       3: OriginThreeGamesButton
     };
 
+    const UbisfotEmbeds = {
+      1: UbisoftOneGameEmbed,
+      2: UbisoftTwoGamesEmbed,
+      3: UbisoftThreeGamesEmbed
+    };
+
+    const UbisoftButtons = {
+      1: UbisoftOneGameButton,
+      2: UbisoftTwoGamesButton,
+      3: UbisoftThreeGamesButton
+    };
+
+    function MentionRole(
+      Enabled: boolean,
+      Server: Guild,
+      RoleID: string
+    ): [boolean, Role?] {
+      if (!Enabled) return [false, null];
+
+      const MentionedRole = getRole(Server, RoleID);
+
+      if (!MentionRole) return [false, null];
+      else return [true, MentionedRole];
+    }
+
     //Default
 
     const DefaultPromises = [];
+    let DefaultServers = 0;
 
     for (let i = 0; i < DefaultFreebieServers.length; i++) {
       const CurrentServerData = DefaultFreebieServers[i];
@@ -142,7 +183,15 @@ export default function SendFreebie(client: GBFClient) {
 
       if (!FreebieChannel) continue;
 
+      DefaultServers++;
+
       TipMessage.setColor(CurrentServerData.EmbedColor as ColorResolvable);
+
+      const DefaultMentionMessage = MentionRole(
+        CurrentServerData.DefaultMention,
+        FreebieServer,
+        CurrentServerData.DefaultRole
+      );
 
       if (launcher === LauncherNames["Epic Games"]) {
         EpicGamesEmbeds[games].setColor(
@@ -155,12 +204,21 @@ export default function SendFreebie(client: GBFClient) {
             components: [EpicGamesButtons[games]]
           })
         );
+
         DefaultPromises.push(
           FreebieChannel.send({
             embeds: [TipMessage],
             components: [TipButtons]
           })
         );
+
+        if (DefaultMentionMessage[0]) {
+          DefaultPromises.push(
+            FreebieChannel.send({
+              content: `${DefaultMentionMessage[1]}`
+            })
+          );
+        }
       }
 
       if (launcher === LauncherNames.Steam) {
@@ -174,12 +232,21 @@ export default function SendFreebie(client: GBFClient) {
             components: [SteamButtons[games]]
           })
         );
+
         DefaultPromises.push(
           FreebieChannel.send({
             embeds: [TipMessage],
             components: [TipButtons]
           })
         );
+
+        if (DefaultMentionMessage[0]) {
+          DefaultPromises.push(
+            FreebieChannel.send({
+              content: `${DefaultMentionMessage[1]}`
+            })
+          );
+        }
       }
 
       if (launcher === LauncherNames.GOG) {
@@ -193,12 +260,21 @@ export default function SendFreebie(client: GBFClient) {
             components: [GOGButtons[games]]
           })
         );
+
         DefaultPromises.push(
           FreebieChannel.send({
             embeds: [TipMessage],
             components: [TipButtons]
           })
         );
+
+        if (DefaultMentionMessage[0]) {
+          DefaultPromises.push(
+            FreebieChannel.send({
+              content: `${DefaultMentionMessage[1]}`
+            })
+          );
+        }
       }
 
       if (launcher === LauncherNames.EA) {
@@ -212,15 +288,292 @@ export default function SendFreebie(client: GBFClient) {
             components: [EAButtons[games]]
           })
         );
+
         DefaultPromises.push(
           FreebieChannel.send({
             embeds: [TipMessage],
             components: [TipButtons]
           })
         );
+
+        if (DefaultMentionMessage[0]) {
+          DefaultPromises.push(
+            FreebieChannel.send({
+              content: `${DefaultMentionMessage[1]}`
+            })
+          );
+        }
+      }
+
+      if (launcher === LauncherNames.Ubisoft) {
+        UbisfotEmbeds[games].setColor(
+          CurrentServerData.EmbedColor as ColorResolvable
+        );
+
+        DefaultPromises.push(
+          FreebieChannel.send({
+            embeds: [UbisfotEmbeds[games]],
+            components: [UbisoftButtons[games]]
+          })
+        );
+
+        DefaultPromises.push(
+          FreebieChannel.send({
+            embeds: [TipMessage],
+            components: [TipButtons]
+          })
+        );
+
+        if (DefaultMentionMessage[0]) {
+          DefaultPromises.push(
+            FreebieChannel.send({
+              content: `${DefaultMentionMessage[1]}`
+            })
+          );
+        }
       }
     }
 
     await Promise.all(DefaultPromises);
+    if (DefaultServers > 0)
+      console.log(
+        chalk.greenBright(
+          `Sent ${launcher} Freebies to ${DefaultServers.toLocaleString()} default servers`
+        )
+      );
+
+    // Custom
+
+    let CustomServers = 0;
+    const CustomPromises = [];
+
+    for (let j = 0; j < CustomFreebieServers.length; j++) {
+      const CurrentServerData = CustomFreebieServers[j];
+
+      const FreebieServer = client.guilds.cache.get(CurrentServerData.guildId);
+
+      if (!FreebieServer) continue;
+
+      let FreebieChannel: TextBasedChannel;
+
+      TipMessage.setColor(CurrentServerData.EmbedColor as ColorResolvable);
+
+      if (launcher === LauncherNames["Epic Games"]) {
+        if (!CurrentServerData.EGSEnabled) continue;
+
+        FreebieChannel = FreebieServer.channels.cache.get(
+          CurrentServerData.EGSChannel
+        ) as TextBasedChannel;
+
+        if (!FreebieChannel)
+          FreebieChannel = FreebieServer.channels.cache.get(
+            CurrentServerData.DefaultChannel
+          ) as TextBasedChannel;
+
+        if (!FreebieChannel) continue;
+
+        CustomServers++;
+
+        const MentionedRoleMessage = MentionRole(
+          CurrentServerData.EGSMention,
+          FreebieServer,
+          CurrentServerData.EGSRole
+        );
+
+        EpicGamesEmbeds[games].setColor(
+          CurrentServerData.EmbedColor as ColorResolvable
+        );
+
+        CustomPromises.push(
+          FreebieChannel.send({
+            embeds: [EpicGamesEmbeds[games]],
+            components: [EpicGamesButtons[games]]
+          })
+        );
+
+        CustomPromises.push(
+          FreebieChannel.send({
+            embeds: [TipMessage],
+            components: [TipButtons]
+          })
+        );
+
+        if (MentionedRoleMessage[0]) {
+          CustomPromises.push(
+            FreebieChannel.send({
+              content: `${MentionedRoleMessage[1]}`
+            })
+          );
+        }
+      }
+
+      if (launcher === LauncherNames.Steam) {
+        if (!CurrentServerData.SteamEnabled) continue;
+
+        FreebieChannel = FreebieServer.channels.cache.get(
+          CurrentServerData.SteamChannel
+        ) as TextBasedChannel;
+
+        if (!FreebieChannel)
+          FreebieChannel = FreebieServer.channels.cache.get(
+            CurrentServerData.DefaultChannel
+          ) as TextBasedChannel;
+
+        if (!FreebieChannel) continue;
+
+        CustomServers++;
+
+        const MentionedRoleMessage = MentionRole(
+          CurrentServerData.SteamMention,
+          FreebieServer,
+          CurrentServerData.SteamRole
+        );
+
+        SteamEmbeds[games].setColor(
+          CurrentServerData.EmbedColor as ColorResolvable
+        );
+
+        CustomPromises.push(
+          FreebieChannel.send({
+            embeds: [SteamEmbeds[games]],
+            components: [SteamButtons[games]]
+          })
+        );
+
+        CustomPromises.push(
+          FreebieChannel.send({
+            embeds: [TipMessage],
+            components: [TipButtons]
+          })
+        );
+
+        if (MentionedRoleMessage[0]) {
+          CustomPromises.push(
+            FreebieChannel.send({
+              content: `${MentionedRoleMessage[1]}`
+            })
+          );
+        }
+      }
+
+      if (
+        launcher === LauncherNames.GOG ||
+        launcher === LauncherNames.EA ||
+        launcher === LauncherNames.Ubisoft
+      ) {
+        if (!CurrentServerData.OtherEnabled) continue;
+
+        FreebieChannel = FreebieServer.channels.cache.get(
+          CurrentServerData.OtherChannel
+        ) as TextBasedChannel;
+
+        if (!FreebieChannel)
+          FreebieChannel = FreebieServer.channels.cache.get(
+            CurrentServerData.DefaultChannel
+          ) as TextBasedChannel;
+
+        if (!FreebieChannel) continue;
+
+        CustomServers++;
+
+        const MentionedRoleMessage = MentionRole(
+          CurrentServerData.OtherMention,
+          FreebieServer,
+          CurrentServerData.OtherRole
+        );
+
+        if (launcher === LauncherNames.GOG) {
+          GOGEmbeds[games].setColor(
+            CurrentServerData.EmbedColor as ColorResolvable
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [GOGEmbeds[games]],
+              components: [GOGButtons[games]]
+            })
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [TipMessage],
+              components: [TipButtons]
+            })
+          );
+
+          if (MentionedRoleMessage[0]) {
+            CustomPromises.push(
+              FreebieChannel.send({
+                content: `${MentionedRoleMessage[1]}`
+              })
+            );
+          }
+        }
+
+        if (launcher === LauncherNames.Ubisoft) {
+          UbisfotEmbeds[games].setColor(
+            CurrentServerData.EmbedColor as ColorResolvable
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [UbisfotEmbeds[games]],
+              components: [UbisoftButtons[games]]
+            })
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [TipMessage],
+              components: [TipButtons]
+            })
+          );
+
+          if (MentionedRoleMessage[0]) {
+            CustomPromises.push(
+              FreebieChannel.send({
+                content: `${MentionedRoleMessage[1]}`
+              })
+            );
+          }
+        }
+
+        if (launcher === LauncherNames.EA) {
+          EAEmbeds[games].setColor(
+            CurrentServerData.EmbedColor as ColorResolvable
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [EAEmbeds[games]],
+              components: [EAButtons[games]]
+            })
+          );
+
+          CustomPromises.push(
+            FreebieChannel.send({
+              embeds: [TipMessage],
+              components: [TipButtons]
+            })
+          );
+
+          if (MentionedRoleMessage[0]) {
+            CustomPromises.push(
+              FreebieChannel.send({
+                content: `${MentionedRoleMessage[1]}`
+              })
+            );
+          }
+        }
+      }
+    }
+
+    await Promise.all(CustomPromises);
+    if (CustomServers > 0)
+      console.log(
+        chalk.greenBright(
+          `Sent ${launcher} Freebies to ${CustomServers.toLocaleString()} custom servers`
+        )
+      );
   });
 }
