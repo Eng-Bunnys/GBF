@@ -4,12 +4,11 @@ interface IFreebieProfile extends Document {
   Enabled: boolean;
   FreebieId: string;
   guildId: string;
-  Channel: string;
-  Ping: boolean;
-  rolePing: string;
-  embedColor: string;
-  activeCategory: number;
-  useDefault: boolean;
+  DefaultChannel: string;
+  DefaultMention: boolean;
+  DefaultRole: string;
+  EmbedColor: string;
+  UseDefault: boolean;
   AllEnabled: boolean | true;
   EGSEnabled: boolean | false;
   EGSRole: string | null;
@@ -40,11 +39,11 @@ const FreebieProfileSchema = new Schema<IFreebieProfile>(
     Enabled: Boolean,
     FreebieId: String,
     guildId: String,
-    Channel: String,
-    Ping: Boolean,
-    rolePing: String,
-    embedColor: String,
-    useDefault: {
+    DefaultChannel: String,
+    DefaultMention: Boolean,
+    DefaultRole: String,
+    EmbedColor: String,
+    UseDefault: {
       type: Boolean,
       default: true
     },
@@ -55,7 +54,7 @@ const FreebieProfileSchema = new Schema<IFreebieProfile>(
     EGSEnabled: falseBoolean,
     EGSRole: nullString,
     EGSMention: falseBoolean,
-    SteamEnabled: nullString,
+    SteamEnabled: falseBoolean,
     SteamRole: nullString,
     SteamMention: falseBoolean,
     OtherEnabled: falseBoolean,
