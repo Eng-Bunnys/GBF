@@ -1,6 +1,21 @@
-import { Guild, Snowflake, TextChannel } from "discord.js";
+import {
+  APIEmbedField,
+  BaseMessageOptions,
+  Collection,
+  DMChannel,
+  Guild,
+  Interaction,
+  Message,
+  PermissionsBitField,
+  Snowflake,
+  StringSelectMenuBuilder,
+  TextBasedChannel,
+  TextChannel
+} from "discord.js";
 
 import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
+import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
+import { CommandOptions } from "../handler/commandhandler";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
@@ -170,14 +185,14 @@ export function resume(text = "", number: number) {
  * const chunks = MessageSplit(messages, 500, ";");
  */
 
-export function MessageSplit(message, codeLength, separator = "\n") {
+export function MessageSplit(
+  message: string | string[],
+  codeLength: number,
+  separator: string = "\n"
+): string[] {
   if (!message) return [];
 
-  if (!Number.isInteger(codeLength) || codeLength <= 0) {
-    return "Code length must be a positive integer";
-  }
-
-  const arrayNeeded = [];
+  const arrayNeeded: string[] = [];
 
   if (Array.isArray(message)) {
     message = message.join(separator);
@@ -300,72 +315,33 @@ export function rolePermissions(targetRole) {
     : rolePerms[0];
 }
 
-/**
- * Returns the permissions of a role as a string, with the most powerful permission listed first.
- *
- * @param {Role} role - The role whose permissions will be listed.
- * @returns {string} A string listing the permissions of the role.
- *
- * @example
- * // Returns "Administrator, Manage Server, Kick Members"
- * const role = interaction.guild.roles.cache.find(role => role.name === "Moderator");
- * const perms = KeyPerms(role);
- * console.log(perms);
- */
-
-export function KeyPerms(role) {
-  const permissions = [
-    { name: "Administrator", flag: PermissionFlagsBits.Administrator },
-    { name: "Manage Server", flag: PermissionFlagsBits.ManageGuild },
-    { name: "Manage Roles", flag: PermissionFlagsBits.ManageRoles },
-    { name: "Manage Channels", flag: PermissionFlagsBits.ManageChannels },
-    { name: "Kick Members", flag: PermissionFlagsBits.KickMembers },
-    { name: "Ban Members", flag: PermissionFlagsBits.BanMembers },
-    { name: "Manage Nicknames", flag: PermissionFlagsBits.ManageNicknames },
-    { name: "Change Nickname", flag: PermissionFlagsBits.ChangeNickname },
-    {
-      name: "Manage Emojis & Stickers",
-      flag: PermissionFlagsBits.ManageEmojisAndStickers
-    },
-    { name: "Manage Webhooks", flag: PermissionFlagsBits.ManageWebhooks },
-    { name: "Manage Messages", flag: PermissionFlagsBits.ManageMessages },
-    { name: "Mention Everyone", flag: PermissionFlagsBits.MentionEveryone },
-    {
-      name: "Use External Emojis",
-      flag: PermissionFlagsBits.UseExternalEmojis
-    },
-    { name: "Add Reactions", flag: PermissionFlagsBits.AddReactions },
-    { name: "Mute Members", flag: PermissionFlagsBits.MuteMembers },
-    { name: "Deafen Members", flag: PermissionFlagsBits.DeafenMembers },
-    { name: "Move Members", flag: PermissionFlagsBits.MoveMembers },
-    { name: "Moderate Members", flag: PermissionFlagsBits.ModerateMembers },
-    { name: "View Audit Log", flag: PermissionFlagsBits.ViewAuditLog },
-    { name: "Send Messages", flag: PermissionFlagsBits.SendMessages },
-    { name: "Attach Files", flag: PermissionFlagsBits.AttachFiles },
-    {
-      name: "Read Message History",
-      flag: PermissionFlagsBits.ReadMessageHistory
-    },
-    {
-      name: "Create Instant Invite",
-      flag: PermissionFlagsBits.CreateInstantInvite
-    }
-  ];
-
-  const sortedPermissions = permissions
-    .filter((perm) => role.permissions.has(perm.flag))
-    .sort((permA, permB) => Number(permB.flag) - Number(permA.flag));
-
+export function KeyPerms(role: GuildMember) {
+  let KeyPermissions = [];
   if (role.permissions.has(PermissionFlagsBits.Administrator))
-    return "Administrator";
-
-  if (role.managed) {
-    return "Administrator";
-  } else {
-    return sortedPermissions.length > 0
-      ? sortedPermissions.map((perm) => perm.name).join(", ")
-      : "No permissions";
+    return ["Administrator", 1];
+  else {
+    if (role.permissions.has(PermissionFlagsBits.ManageGuild))
+      KeyPermissions.push(`Manage Server`);
+    if (role.permissions.has(PermissionFlagsBits.ManageRoles))
+      KeyPermissions.push(`Manage Roles`);
+    if (role.permissions.has(PermissionFlagsBits.ManageChannels))
+      KeyPermissions.push(`Manage Channels`);
+    if (role.permissions.has(PermissionFlagsBits.KickMembers))
+      KeyPermissions.push(`Kick Members`);
+    if (role.permissions.has(PermissionFlagsBits.BanMembers))
+      KeyPermissions.push(`Ban Members`);
+    if (role.permissions.has(PermissionFlagsBits.ManageNicknames))
+      KeyPermissions.push(`Manage Nicknames`);
+    if (role.permissions.has(PermissionFlagsBits.ManageGuildExpressions))
+      KeyPermissions.push(`Manage Emojis & Stickers`);
+    if (role.permissions.has(PermissionFlagsBits.ManageMessages))
+      KeyPermissions.push(`Manage Messages`);
+    if (role.permissions.has(PermissionFlagsBits.MentionEveryone))
+      KeyPermissions.push(`Mention Everyone`);
+    if (role.permissions.has(PermissionFlagsBits.ModerateMembers))
+      KeyPermissions.push(`Moderate Members`);
   }
+  return [KeyPermissions.join(", ") || "No Permissions", KeyPermissions.length];
 }
 
 //Better Key Permissions
@@ -406,21 +382,19 @@ export function roleInGuildCheck(roleIds, interaction) {
 }
 
 /**
-
-Capitalizes the first letter of a string.
-@param {string} string - The string to capitalize the first letter of.
-@returns {string} The input string with the first letter capitalized.
-If the input string is empty or undefined, an error message is returned.
-@example
-capitalizeFirstLetter("hello world"); // "Hello world"
-capitalizeFirstLetter("jOHN"); // "JOHN"
-capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
-capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
-*/
-
-export function capitalizeFirstLetter(string) {
+ * Capitalizes the first letter of a string.
+ * @param string - The string to capitalize the first letter of.
+ * @returns The input string with the first letter capitalized.
+ * If the input string is empty or undefined, an error message is returned.
+ * @example
+ * capitalizeFirstLetter("hello world"); // "Hello world"
+ * capitalizeFirstLetter("jOHN"); // "JOHN"
+ * capitalizeFirstLetter(""); // "Error: Input string is empty or undefined."
+ * capitalizeFirstLetter(); // "Error: Input string is empty or undefined."
+ */
+export function capitalizeFirstLetter(string?: string): string {
   if (!string || !string.trim().length) {
-    return "Error: **Input string is empty or undefined.**";
+    return "Error: Input string is empty or undefined.";
   }
 
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -465,16 +439,12 @@ export function channelSlowMode(channel) {
 
 /**
  * Takes a string and lowercases it then uppercase the first word of each sentence you could say
- * @param {string} the word - The word to be like Custom Status instead of just CUSTOM STATUS
+ * @param {string}  word - The word to be like Custom Status instead of just CUSTOM STATUS
  * @returns {string} - Returns a beautified converted string
  * @example capitalize(string)
  */
 
 export function capitalize(str: string): string {
-  if (typeof str !== "string") {
-    throw new Error("Argument must be a string");
-  }
-
   return str.replace(/(?<=(^|\s))(\w)/g, (char) => char.toUpperCase());
 }
 
@@ -568,10 +538,10 @@ twentyFourToTwelve(24)
 twentyFourToTwelve(-1)
 */
 
-export function twentyFourToTwelve(hours) {
+export function twentyFourToTwelve(hours: number): string {
   if (isNaN(hours) || hours < 0 || hours > 23) return;
 
-  let displayTime;
+  let displayTime: string;
 
   if (hours < 12) {
     if (hours === 0) {
@@ -648,7 +618,7 @@ return Output: 'Rank must be a positive integer.'
 RPRequiredToLevelUp(-3);
 */
 
-export function RPRequiredToLevelUp(rank: number) {
+export function RPRequiredToLevelUp(rank: number): number {
   return rank * 800 + (rank - 1) * 400;
 }
 
@@ -779,11 +749,148 @@ export function levelUpReward(level: number): number {
   return rewardArray[rewardPosition - 1];
 }
 
+export function toLowerCaseArray(arr: string[]): string[] {
+  return arr.map((elem) => elem.toLowerCase());
+}
+
+export function generateHelpMenuFields(
+  commands: Collection<string, CommandOptions | GBFSlashOptions>,
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): APIEmbedField[][] {
+  const fields = commands.reduce<APIEmbedField[]>((fieldAccumulator, cmd) => {
+    if (
+      toLowerCaseArray(excludedCategories).includes(
+        cmd.category.toLocaleLowerCase()
+      ) ||
+      cmd.category === ""
+    ) {
+      return fieldAccumulator;
+    }
+    const categoryIndex = categories.findIndex((c) => c.name === cmd.category);
+    const categoryName =
+      categoryIndex === -1
+        ? cmd.category
+        : `${categories[categoryIndex].emoji} ${categories[categoryIndex].name}`;
+    let category: {
+      name: string;
+      value: string;
+      inline?: boolean;
+    } = {
+      name: `• ${capitalize(categoryName)}`,
+      value: `**/${cmd.name}**`,
+      inline: true
+    };
+    const existingCategoryField = fieldAccumulator.find(
+      (field) => field.name === category.name
+    );
+    if (existingCategoryField) {
+      category = existingCategoryField;
+    } else {
+      fieldAccumulator.push(category);
+    }
+    if (cmd instanceof GBFSlash) {
+      if (cmd.subcommands) {
+        const subcommands = Object.keys(cmd.subcommands)
+          .map((key) => `${key}`)
+          .join(", ");
+        category.value += ` - ${subcommands}`;
+      }
+    }
+    return fieldAccumulator;
+  }, []);
+
+  const groupedFields: APIEmbedField[][] = [];
+
+  for (let i = 0; i < fields.length; i += 25) {
+    groupedFields.push(fields.slice(i, i + 25));
+  }
+
+  return groupedFields;
+}
+
+export function generateCategorySelectMenu(
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): StringSelectMenuBuilder {
+  const filteredCategories = categories.filter(
+    (cat) =>
+      cat.name !== "" &&
+      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
+  );
+
+  const selectOptions = filteredCategories.map((c) => {
+    return {
+      label: c.emoji + " " + c.name,
+      value: c.name.toLowerCase()
+    };
+  });
+
+  const HelpMenuSelect = new StringSelectMenuBuilder()
+    .setCustomId("HelpMenuSelect")
+    .setPlaceholder("Select a category")
+    .addOptions(selectOptions);
+
+  return HelpMenuSelect;
+}
+
+export function generateCategorySelectMenuWithReturn(
+  categories: { name: string; emoji: string }[],
+  excludedCategories: string[] = []
+): StringSelectMenuBuilder {
+  const filteredCategories = categories.filter(
+    (cat) =>
+      cat.name !== "" &&
+      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
+  );
+
+  const selectOptions = filteredCategories.map((c) => {
+    return {
+      label: c.emoji + " " + c.name,
+      value: c.name.toLowerCase()
+    };
+  });
+
+  const HelpMenuSelect = new StringSelectMenuBuilder()
+    .setCustomId("HelpMenuSelect")
+    .setPlaceholder("Select a category")
+    .addOptions(selectOptions);
+
+  HelpMenuSelect.addOptions({
+    label: "Main Menu",
+    value: "HelpMenu"
+  });
+
+  return HelpMenuSelect;
+}
+
+export async function SendAndDelete(
+  Channel: TextBasedChannel,
+  MessageOptions: BaseMessageOptions,
+  TimeInSeconds = 5
+): Promise<Message<false>> {
+  if (Channel instanceof DMChannel) return Channel.send(MessageOptions);
+  const message: Message | Interaction = await Channel.send(MessageOptions);
+
+  setTimeout(async () => {
+    await message.delete();
+  }, TimeInSeconds * 1000);
+}
+
+export function chooseRandomFromArray<T>(array: T[]): T {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}
+
+export function getRole(Server: Guild, roleID: string) {
+  return Server.roles.cache.get(roleID);
+}
+
 interface TimeUnits {
   [key: string]: string[];
 }
 
-const timeUnits: TimeUnits = {
+export const timeUnits: TimeUnits = {
   s: ["sec(s)", "second(s)"],
   min: ["minute(s)", "m", "min(s)"],
   h: ["hr(s)", "hour(s)"],
