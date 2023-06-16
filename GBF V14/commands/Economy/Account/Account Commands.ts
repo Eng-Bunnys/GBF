@@ -1,34 +1,40 @@
-const SlashCommand = require("../../../utils/slashCommands").default;
+import SlashCommand from "../../../utils/slashCommands";
 
 import {
   ApplicationCommandOptionType,
-  Client,
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
   EmbedBuilder
 } from "discord.js";
 
-import UserProfileSchema from "../../../schemas/User Schemas/User Profile Schema";
-
 import colors from "../../../GBF/GBFColor.json";
 import emojis from "../../../GBF/GBFEmojis.json";
 import CommandLinks from "../../../GBF/GBFCommands.json";
-import { genderString, getTruePercentage } from "../../../utils/SueLuz Engine";
+
+import {
+  OwnedItems,
+  genderString,
+  getTruePercentage
+} from "../../../utils/SueLuz Engine";
 import { xpRequiredAccount } from "../../../utils/TimerLogic";
+import GBFClient from "../../../handler/clienthandler";
+import { GBFUserProfileModel } from "../../../schemas/User Schemas/User Profile Schema";
+import { GBFCasinoModel } from "../../../schemas/User Schemas/Casino Schema";
+import { capitalize } from "../../../utils/Engine";
 
 interface ExecuteFunction {
-  client: Client;
+  client: GBFClient;
   interaction: CommandInteraction;
 }
 
 export default class SueLuzAccountCommands extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "account",
       description: "SueLuz Economy account commands",
+      category: "Economy",
       cooldown: 5,
-      development: true,
       subcommands: {
         create: {
           description: "Create your SueLuz character",
@@ -70,7 +76,7 @@ export default class SueLuzAccountCommands extends SlashCommand {
               interaction.options as CommandInteractionOptionResolver
             ).getString("gender", true);
 
-            const userProfile = await UserProfileSchema.findOne({
+            const userProfile = await GBFUserProfileModel.findOne({
               userID: interaction.user.id
             });
 
@@ -78,7 +84,7 @@ export default class SueLuzAccountCommands extends SlashCommand {
               .setTitle(`${emojis.MaxRank} Welcome to SueLuz ✈️`)
               .setColor(colors.DEFAULT as ColorResolvable)
               .setDescription(
-                `\`Sue:\` "Welcome to SueLuz ${characterName}, a city of sinners and saints, your goal is to survive, you do that by climbing the leaderboard and taking out the top leaders, it won't be easy though.\n\nI'll give you ₲500 and a pistol to help you get started, you'll need it.`
+                `\`Sue:\` "Welcome to SueLuz ${characterName}, a city of sinners and saints, your goal is to survive, you do that by climbing the leaderboard and taking out the top leaders, it won't be easy though.\n\nI'll give you ₲500 and a pistol to help you get started, you'll need it, and one more thing, I'll tell my friend Robin about you go check talk to him ${CommandLinks.MeetRobin}`
               )
               .setFooter({
                 text: `SueLuz: The city of saints and sinners`
@@ -96,7 +102,7 @@ export default class SueLuzAccountCommands extends SlashCommand {
               });
 
             if (!userProfile) {
-              const newUserProfile = new UserProfileSchema({
+              const newUserProfile = new GBFUserProfileModel({
                 userID: interaction.user.id,
                 creationDate: new Date(Date.now()),
                 characterProfile: {
@@ -124,10 +130,13 @@ export default class SueLuzAccountCommands extends SlashCommand {
                 cash: userProfile.cash + 500,
                 totalEarned: userProfile.totalEarned + 500,
                 completedMissions: {
-                  intro: true
+                  intro: true,
+                  MeetRobin: false,
+                  MojaveJob: false
                 },
                 weapons: {
-                  pistol: true
+                  pistol: true,
+                  uzi: userProfile.weapons.uzi ? true : false
                 }
               });
             }
@@ -166,9 +175,22 @@ export default class SueLuzAccountCommands extends SlashCommand {
             const targetUser =
               interaction.options.getUser("user", false) || interaction.user;
 
-            const userData = await UserProfileSchema.findOne({
+            const userData = await GBFUserProfileModel.findOne({
               userID: targetUser.id
             });
+
+            let casinoData = await GBFCasinoModel.findOne({
+              userID: interaction.user.id
+            });
+
+            if (!casinoData)
+              //@ts-ignore
+              casinoData = {
+                Wins: 0,
+                Losses: 0,
+                CashSpent: 0,
+                CashEarned: 0
+              };
 
             const noData = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
@@ -203,25 +225,38 @@ export default class SueLuzAccountCommands extends SlashCommand {
                 ephemeral: true
               });
 
-            const missionsCompleted = getTruePercentage(
-              userData.completedMissions
+            const missionsCompleted = Math.round(
+              getTruePercentage(userData.completedMissions)
             );
 
-            const achievementsUnlocked = getTruePercentage(
-              userData.achievements
+            const achievementsUnlocked = Math.round(
+              getTruePercentage(userData.achievements)
             );
 
-            const badgesEarned = getTruePercentage(userData.badges);
+            const badgesEarned = Math.round(getTruePercentage(userData.badges));
 
-            const weaponsPurchased = getTruePercentage(userData.weapons);
+            const weaponsPurchased = Math.round(
+              getTruePercentage(userData.weapons)
+            );
 
             const rankProgression = (
               (userData.RP / xpRequiredAccount(userData.Rank + 1)) *
               100
             ).toFixed(0);
 
-            const userProfile = new EmbedBuilder()
-              .setTitle(`${targetUser.username}'s SueLuz Stats`)
+            const casinoWinRate: string = `${(
+              (casinoData.Wins / (casinoData.Wins + casinoData.Losses)) *
+              100
+            ).toFixed(0)}%`;
+
+            const OwnedRingsPercentage = Math.round(
+              getTruePercentage(userData.inventory.rings)
+            );
+
+            const OwnedRings = OwnedItems(userData.inventory.rings);
+
+            const UserProfile = new EmbedBuilder()
+              .setTitle(`${capitalize(targetUser.username)}'s SueLuz Stats`)
               .setColor(colors.DEFAULT as ColorResolvable)
               .addFields(
                 {
@@ -250,15 +285,26 @@ export default class SueLuzAccountCommands extends SlashCommand {
                   inline: true
                 },
                 {
+                  name: "💍 Rings:",
+                  value: `• Owned: ${OwnedRingsPercentage}%\n${OwnedRings}`,
+                  inline: true
+                },
+                {
+                  name: "🎰 Casino:",
+                  value: `• Wins: \`${casinoData.Wins.toLocaleString()}\`\n• Losses: \`${casinoData.Losses.toLocaleString()}\`\n• Win Rate: \`${casinoWinRate}\`\n• Money Spent: \`₲${casinoData.CashSpent.toLocaleString()}\`\n• Money Earned: \`₲${casinoData.CashEarned.toLocaleString()}\``,
+                  inline: true
+                },
+                {
                   name: "🥇 Rank:",
                   value: `• Rank: \`${userData.Rank.toLocaleString()}\`\n• RP: \`${userData.RP.toLocaleString()} / ${xpRequiredAccount(
                     userData.Rank + 1
-                  ).toLocaleString()} [${rankProgression}%]\``
+                  ).toLocaleString()} [${rankProgression}%]\``,
+                  inline: true
                 }
               );
 
             return interaction.reply({
-              embeds: [userProfile]
+              embeds: [UserProfile]
             });
           }
         }
