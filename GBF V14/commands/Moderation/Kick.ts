@@ -3,8 +3,8 @@ import SlashCommand from "../../utils/slashCommands";
 import colors from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
 
-import KickSchema from "../../schemas/Moderation Schemas/Ban Schema";
-import ServerSettings from "../../schemas/Moderation Schemas/Server Settings";
+import { GBFUserKickModel } from "../../schemas/Moderation Schemas/Kick Schema";
+import { GBFServerModerationSettingsModel } from "../../schemas/Moderation Schemas/Server Settings";
 import CommandLinks from "../../GBF/GBFCommands.json";
 
 import {
@@ -44,7 +44,7 @@ export default class KickCommand extends SlashCommand {
       userPermission: [PermissionFlagsBits.KickMembers],
       botPermission: [PermissionFlagsBits.KickMembers],
       cooldown: 0,
-      development: true,
+      development: true
     });
   }
 
@@ -102,7 +102,7 @@ export default class KickCommand extends SlashCommand {
         ephemeral: true
       });
 
-    const serverSettingsDocs = await ServerSettings.findOne({
+    const serverSettingsDocs = await GBFServerModerationSettingsModel.findOne({
       guildId: interaction.guild.id
     });
 
@@ -157,7 +157,7 @@ export default class KickCommand extends SlashCommand {
         ephemeral: true
       });
 
-    const kickData = await KickSchema.findOne({
+    const kickData = await GBFUserKickModel.findOne({
       userId: targetMember.id,
       guildId: interaction.guild.id
     });
@@ -220,7 +220,7 @@ export default class KickCommand extends SlashCommand {
 
       return targetMember.kick(kickReason);
     } else {
-      const newData = new KickSchema({
+      const newData = new GBFUserKickModel({
         userId: targetMember.id,
         guildId: interaction.guild.id,
         TotalCases: 1,
