@@ -1,26 +1,30 @@
-const SlashCommand = require("../../utils/slashCommands");
+import SlashCommand from "../../utils/slashCommands";
 
-const colors = require("../../GBF/GBFColor.json");
-const emojis = require("../../GBF/GBFEmojis.json");
-const CommandLinks = require("../../GBF/GBFCommands.json");
+import colors from "../../GBF/GBFColor.json";
+import CommandLinks from "../../GBF/GBFCommands.json";
+import emojis from "../../GBF/GBFEmojis.json";
 
-const {
+import { GBFServerModerationSettingsModel } from "../../schemas/Moderation Schemas/Server Settings";
+
+import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
-  EmbedBuilder
-} = require("discord.js");
+  EmbedBuilder,
+  ColorResolvable,
+  GuildMember,
+  CommandInteractionOptionResolver
+} from "discord.js";
 
-const { msToTime } = require("../../utils/Engine");
-const ServerSettings = require("../../schemas/Moderation Schemas/Server Settings");
+import { msToTime } from "../../utils/Engine";
+import GBFClient from "../../handler/clienthandler";
 
-module.exports = class MuteCommand extends SlashCommand {
-  constructor(client) {
+export default class MuteCommand extends SlashCommand {
+  constructor(client: GBFClient) {
     super(client, {
       name: "mute",
       description: "Mute or un-mute a user from this server",
       userPermission: [PermissionFlagsBits.ModerateMembers],
       botPermission: [PermissionFlagsBits.ModerateMembers],
-      cooldown: 0,
       development: true,
       subcommands: {
         add: {
@@ -66,15 +70,23 @@ module.exports = class MuteCommand extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetMember = interaction.options.getMember("user");
-            const setDuration = interaction.options.getNumber("duration");
-            const durationUnit = interaction.options.getString("unit");
+            const targetMember = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getMember("user") as GuildMember;
+            const setDuration = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getNumber("duration");
+            const durationUnit = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("unit");
             const muteReason =
-              interaction.options.getString("reason") || "No Reason Specified";
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("reason") || "No Reason Specified";
 
             const notInGuild = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The specified user is not in ${interaction.guild.name}`
               );
@@ -85,7 +97,7 @@ module.exports = class MuteCommand extends SlashCommand {
                 ephemeral: true
               });
 
-            let msDuration;
+            let msDuration: number;
 
             if (durationUnit === "m") msDuration = setDuration * 60000;
             if (durationUnit === "h") msDuration = setDuration * 3600000;
@@ -96,7 +108,7 @@ module.exports = class MuteCommand extends SlashCommand {
               .setDescription(
                 `The time you specified is too long, you can't mute for more than 10 days.`
               )
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `${interaction.guild.name} logging powered by GBF`,
                 iconURL: interaction.guild.iconURL()
@@ -108,7 +120,7 @@ module.exports = class MuteCommand extends SlashCommand {
               .setDescription(
                 `The time you specified is too short, you need to specifiy a time longer than one minute.`
               )
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `${interaction.guild.name} logging powered by GBF`,
                 iconURL: interaction.guild.iconURL()
@@ -131,7 +143,7 @@ module.exports = class MuteCommand extends SlashCommand {
 
             if (targetMember.isCommunicationDisabled() === true) {
               combinedTime =
-                targetMember.communicationDisabledUntil -
+                targetMember.communicationDisabledUntil.getTime() -
                 Date.now() +
                 msDuration;
             } else combinedTime = msDuration;
@@ -140,13 +152,14 @@ module.exports = class MuteCommand extends SlashCommand {
 
             const unixTime = Date.now() + combinedTime;
 
-            const serverSettingsDocs = await ServerSettings.findOne({
-              guildId: interaction.guild.id
-            });
+            const serverSettingsDocs =
+              await GBFServerModerationSettingsModel.findOne({
+                guildId: interaction.guild.id
+              });
 
             const adminMute = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `I can't mute an admin, if you'd like to turn off this feature please change it in the bot server settings using ${CommandLinks.ServerSettings}`
               );
@@ -155,7 +168,7 @@ module.exports = class MuteCommand extends SlashCommand {
               (!serverSettingsDocs ||
                 (serverSettingsDocs && !serverSettingsDocs.AdminMute)) &&
               targetMember.permissions.has(PermissionFlagsBits.Administrator) &&
-              interaction.member.id !== interaction.guild.ownerId
+              interaction.user.id !== interaction.guild.ownerId
             )
               return interaction.reply({
                 embeds: [adminMute],
@@ -166,13 +179,13 @@ module.exports = class MuteCommand extends SlashCommand {
               interaction.guild.members.me.roles.highest.position;
             const targetPosition = targetMember.roles.highest.position;
 
-            if (interaction.member.id !== interaction.guild.ownerId) {
-              const commandAuthorPosition =
-                interaction.member.roles.highest.position;
+            if (interaction.user.id !== interaction.guild.ownerId) {
+              const commandAuthorPosition = (interaction.member as GuildMember)
+                .roles.highest.position;
 
               const authorLower = new EmbedBuilder()
                 .setTitle(`${emojis.ERROR} You can't do that`)
-                .setColor(colors.ERRORRED)
+                .setColor(colors.ERRORRED as ColorResolvable)
                 .setDescription(
                   `${targetMember.user.username}'s position is higher or equal to yours.`
                 );
@@ -186,7 +199,7 @@ module.exports = class MuteCommand extends SlashCommand {
 
             const botLower = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `${targetMember.user.username}'s position is higher or equal to mine.`
               );
@@ -202,7 +215,7 @@ module.exports = class MuteCommand extends SlashCommand {
               .setDescription(
                 `${targetMember.user.tag} (${targetMember.id}) has been muted`
               )
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .addFields(
                 {
                   name: "Duration:",
@@ -249,11 +262,13 @@ module.exports = class MuteCommand extends SlashCommand {
             }
           ],
           execute: async ({ client, interaction }) => {
-            const targetMember = interaction.options.getMember("user");
+            const targetMember = interaction.options.getMember(
+              "user"
+            ) as GuildMember;
 
             const notInGuild = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setDescription(
                 `The specified user is not in ${interaction.guild.name}`
               );
@@ -267,7 +282,7 @@ module.exports = class MuteCommand extends SlashCommand {
             const notMuted = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
               .setDescription(`The user you specified isn't muted.`)
-              .setColor(colors.ERRORRED)
+              .setColor(colors.ERRORRED as ColorResolvable)
               .setFooter({
                 text: `${interaction.guild.name} logging powered by GBF`,
                 iconURL: interaction.guild.iconURL()
@@ -284,7 +299,7 @@ module.exports = class MuteCommand extends SlashCommand {
 
             const userUnmuted = new EmbedBuilder()
               .setTitle(`${emojis.VERIFY} Success`)
-              .setColor(colors.DEFAULT)
+              .setColor(colors.DEFAULT as ColorResolvable)
               .setDescription(`${targetMember.user.tag} has been unmuted`)
               .addFields({
                 name: "Moderator:",
@@ -304,4 +319,4 @@ module.exports = class MuteCommand extends SlashCommand {
       }
     });
   }
-};
+}
