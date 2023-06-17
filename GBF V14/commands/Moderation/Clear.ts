@@ -1,5 +1,4 @@
 import SlashCommand from "../../utils/slashCommands";
-
 import colors from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
 
@@ -7,12 +6,14 @@ import {
   ApplicationCommandOptionType,
   PermissionFlagsBits,
   EmbedBuilder,
-  Client,
-  ColorResolvable
+  ColorResolvable,
+  CommandInteractionOptionResolver
 } from "discord.js";
 
-module.exports = class ClearCommand extends SlashCommand {
-  constructor(client: Client) {
+import GBFClient from "../../handler/clienthandler";
+
+export default class ClearCommand extends SlashCommand {
+  constructor(client: GBFClient) {
     super(client, {
       name: "clear",
       description: "Delete a number of messages",
@@ -32,14 +33,18 @@ module.exports = class ClearCommand extends SlashCommand {
       userPermission: [PermissionFlagsBits.ManageMessages],
       botPermission: [PermissionFlagsBits.ManageMessages],
       cooldown: 4,
+      category: "Moderation",
       devBypass: true,
       development: false,
-      Partner: false
+      dmEnabled: false,
+      partner: false
     });
   }
 
   async execute({ client, interaction }) {
-    const count = interaction.options.getInteger("amount", true);
+    const count = (
+      interaction.options as CommandInteractionOptionResolver
+    ).getInteger("amount", true);
 
     const messagesToBeDeleted = await interaction.channel.messages.fetch({
       limit: count
@@ -62,4 +67,4 @@ module.exports = class ClearCommand extends SlashCommand {
 
     setTimeout(() => interaction.deleteReply(), 5000);
   }
-};
+}
