@@ -3,8 +3,8 @@ import SlashCommand from "../../utils/slashCommands";
 import colors from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
 
-import BanSchema from "../../schemas/Moderation Schemas/Ban Schema";
-import ServerSettings from "../../schemas/Moderation Schemas/Server Settings";
+import { GBFUserBanModel } from "../../schemas/Moderation Schemas/Ban Schema";
+import { GBFServerModerationSettingsModel } from "../../schemas/Moderation Schemas/Server Settings";
 import CommandLinks from "../../GBF/GBFCommands.json";
 
 import {
@@ -14,7 +14,6 @@ import {
   ColorResolvable,
   GuildMember,
   User,
-  CommandInteraction,
   CommandInteractionOptionResolver,
   TextChannel,
   GuildMemberRoleManager
@@ -22,11 +21,7 @@ import {
 
 import { getLastDigits, msToTime } from "../../utils/Engine";
 import GBFClient from "../../handler/clienthandler";
-
-interface IExecute {
-  client: GBFClient;
-  interaction: CommandInteraction;
-}
+import { GBFBotBanModel } from "../../schemas/GBF Schemas/Bot Ban Schema";
 
 export default class BanCommands extends SlashCommand {
   constructor(client: GBFClient) {
@@ -63,7 +58,7 @@ export default class BanCommands extends SlashCommand {
               maxValue: 7
             }
           ],
-          execute: async ({ client, interaction }: IExecute) => {
+          execute: async ({ client, interaction }) => {
             const targetUser = interaction.options.getUser("member", true);
             const banReason =
               (
@@ -91,8 +86,9 @@ export default class BanCommands extends SlashCommand {
                 });
             }
 
-            const targetMember: GuildMember =
-              await interaction.guild.members.cache.get(targetUser.id);
+            const targetMember = interaction.guild.members.cache.get(
+              targetUser.id
+            );
 
             if (targetMember) {
               const ownerBan = new EmbedBuilder()
@@ -129,9 +125,10 @@ export default class BanCommands extends SlashCommand {
                 });
             }
 
-            const serverSettingsDocs = await ServerSettings.findOne({
-              guildId: interaction.guild.id
-            });
+            const serverSettingsDocs =
+              await GBFServerModerationSettingsModel.findOne({
+                guildId: interaction.guild.id
+              });
 
             const adminBan = new EmbedBuilder()
               .setTitle(`${emojis.ERROR} You can't do that`)
@@ -151,9 +148,9 @@ export default class BanCommands extends SlashCommand {
                 ephemeral: true
               });
 
-            const botPosition: number =
+            const botPosition =
               interaction.guild.members.me.roles.highest.position;
-            const targetPosition: number = targetMember.roles.highest.position;
+            const targetPosition = targetMember.roles.highest.position;
 
             if (interaction.user.id !== interaction.guild.ownerId) {
               const commandAuthorPosition: number | undefined = (
@@ -187,7 +184,7 @@ export default class BanCommands extends SlashCommand {
                 ephemeral: true
               });
 
-            const BanData = await BanSchema.findOne({
+            const BanData = await GBFUserBanModel.findOne({
               userId: targetMember.id,
               guildId: interaction.guild.id
             });
@@ -292,7 +289,7 @@ export default class BanCommands extends SlashCommand {
                 reason: banReason
               });
             } else {
-              const newBanData = new BanSchema({
+              const newBanData = new GBFBotBanModel({
                 guildId: interaction.guild.id,
                 userId: targetMember.id,
                 Cases: [
@@ -332,14 +329,14 @@ export default class BanCommands extends SlashCommand {
               type: ApplicationCommandOptionType.String
             }
           ],
-          execute: async ({ client, interaction }: IExecute) => {
+          execute: async ({ client, interaction }) => {
             const targetUser: User = interaction.options.getUser("user", true);
             const unbanReason: string =
               (
                 interaction.options as CommandInteractionOptionResolver
               ).getString("reason") || "No Reason Specified";
 
-            const targetMember = await interaction.guild.members.cache.get(
+            const targetMember = interaction.guild.members.cache.get(
               targetUser.id
             );
 
