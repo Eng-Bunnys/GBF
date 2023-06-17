@@ -12,18 +12,12 @@ import {
   VoiceBasedChannel,
   ColorResolvable,
   Role,
-  CommandInteraction,
   CommandInteractionOptionResolver,
   APIRole
 } from "discord.js";
 
 import { basicMsToTime } from "../../utils/Engine";
 import GBFClient from "../../handler/clienthandler";
-
-interface IExecute {
-  client: GBFClient;
-  interaction: CommandInteraction;
-}
 
 export default class ChannelCommands extends SlashCommand {
   constructor(client: GBFClient) {
