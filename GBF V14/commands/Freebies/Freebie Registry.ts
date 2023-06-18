@@ -1,14 +1,18 @@
 import SlashCommand from "../../utils/slashCommands";
 
 import {
+  ActionRowBuilder,
   ApplicationCommandOptionType,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
   ChannelType,
   ColorResolvable,
   CommandInteraction,
   CommandInteractionOptionResolver,
   ComponentType,
   EmbedBuilder,
+  Interaction,
   PermissionFlagsBits,
   TextChannel,
   hyperlink
@@ -92,15 +96,16 @@ export default class FreebieRegistry extends SlashCommand {
     super(client, {
       name: "freebie",
       description: "GBF Freebie commands",
-      userPermission: [PermissionFlagsBits.Administrator],
+      userPermission: [
+        PermissionFlagsBits.ManageChannels,
+        PermissionFlagsBits.ManageRoles
+      ],
       botPermission: [
         PermissionFlagsBits.ManageChannels,
         PermissionFlagsBits.ManageRoles
       ],
       category: "Freebie",
       cooldown: 5,
-      devBypass: true,
-      dmEnabled: false,
       subcommands: {
         register: {
           description: "Register your server to be part of GBF Freebies",
@@ -1507,6 +1512,109 @@ export default class FreebieRegistry extends SlashCommand {
                   ControlPanelSecondRowDisabled
                 ]
               });
+            });
+          }
+        },
+        announce: {
+          description: "[Developer] Announce a GBF Freebies message",
+          args: [
+            {
+              name: "message",
+              description: "The message that you want to send",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+              maxLength: 1024
+            },
+            {
+              name: "mention",
+              description:
+                "Mention the free games role in the server [Default]",
+              type: ApplicationCommandOptionType.Boolean,
+              required: false
+            }
+          ],
+          execute: async ({ client, interaction }: IExecute) => {
+            if (!FreebieIDs.AdminIDs.includes(interaction.user.id))
+              return interaction.reply({
+                content: `You cannot use this command`,
+                ephemeral: true
+              });
+
+            if (!FreebieIDs.AdminChannels.includes(interaction.channel.id))
+              return interaction.reply({
+                content: `This command is disabled in this channel`,
+                ephemeral: true
+              });
+
+            const announcementText = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("message");
+            const mentionBoolean =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("mention") || false;
+
+            const ConfirmMessage = new EmbedBuilder()
+              .setTitle(`${emojis.VERIFY} Please verify the information below`)
+              .setColor(colors.DEFAULT as ColorResolvable)
+              .setDescription(
+                `**Message:** ${announcementText}\n**Mention:** ${
+                  mentionBoolean ? "Yes" : "No"
+                }`
+              )
+              .setTimestamp();
+
+            const ConfirmRow: ActionRowBuilder<any> =
+              new ActionRowBuilder().addComponents([
+                new ButtonBuilder()
+                  .setCustomId(`confirmAnnouncement`)
+                  .setEmoji(emojis.VERIFY)
+                  .setLabel(`Confirm`)
+                  .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                  .setCustomId(`denyAnnouncement`)
+                  .setLabel(`Deny`)
+                  .setEmoji(emojis.ERROR)
+                  .setStyle(ButtonStyle.Danger)
+              ]);
+
+            await interaction.reply({
+              embeds: [ConfirmMessage],
+              components: [ConfirmRow]
+            });
+
+            const filter = (i: Interaction) => {
+              return i.user.id === interaction.user.id;
+            };
+
+            const collector =
+              interaction.channel.createMessageComponentCollector({
+                filter,
+                componentType: ComponentType.Button
+              });
+
+            collector.on("collect", async (i) => {
+              if (i.customId === "confirmAnnouncement") {
+                ConfirmMessage.setTitle(`${emojis.VERIFY} Announcement Sent`);
+                collector.stop();
+                await interaction.editReply({
+                  embeds: [ConfirmMessage],
+                  components: []
+                });
+                client.emit(
+                  "freebieAnnouncement",
+                  announcementText,
+                  mentionBoolean,
+                  interaction.user
+                );
+              } else if (i.customId === "denyAnnouncement") {
+                ConfirmMessage.setTitle(`${emojis.ERROR} Announcement Denied`);
+                collector.stop();
+                interaction.editReply({
+                  embeds: [ConfirmMessage],
+                  components: []
+                });
+              }
             });
           }
         }
