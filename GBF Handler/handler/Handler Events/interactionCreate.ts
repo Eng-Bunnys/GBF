@@ -1,10 +1,13 @@
 import {
+    Client,
   Collection,
   ColorResolvable,
   CommandInteraction,
   EmbedBuilder,
   Events,
   GuildMember,
+  Interaction,
+  PartialWebhookMixin,
   PermissionResolvable,
   TextChannel
 } from "discord.js";
@@ -27,10 +30,10 @@ import GBFClient from "../clienthandler";
 
 const cooldowns = new Collection();
 
-export default function interactionCreate(client) {
+export default function interactionCreate(client: GBFClient) {
   client.on(
     Events.InteractionCreate,
-    async (interaction: CommandInteraction) => {
+    async (interaction: Interaction) => {
       const blackListData = await GBFBotBanModel.findOne({
         userId: interaction.user.id
       });
@@ -42,7 +45,19 @@ export default function interactionCreate(client) {
         guildData = await GBFGuildDataModel.findOne({
           guildID: interaction.guild.id
         });
-
+      //if interaction is slash, context menu message, or context menu user
+      if(interaction.isCommand()) { 
+          
+        if(interaction.isContextMenuCommand()) {
+            
+            const contextCmd = client.contextCmds.get(interaction.commandName)
+            //does not distinguish between context menu or context message, be careful if 
+            // a context user menu is the same name as context message menu
+            // Add more checks if this concerns you
+            // Also, all options should be availible, i never do checks for them however
+            contextCmd.execute(interaction as never);
+        }
+      }
       const suspendedEmbed = new EmbedBuilder()
         .setTitle(`${emojis.ERROR} You can't do that`)
         .setDescription(
@@ -50,7 +65,7 @@ export default function interactionCreate(client) {
         )
         .setColor(colours.ERRORRED as ColorResolvable);
 
-      if (blackListData)
+      if (blackListData && interaction.isChatInputCommand()) 
         return interaction.reply({
           embeds: [suspendedEmbed],
           ephemeral: true
@@ -80,7 +95,7 @@ export default function interactionCreate(client) {
 
         if (
           command.devOnly &&
-          !(client as GBFClient).Developers.includes(interaction.user.id)
+          !client.Developers.includes(interaction.user.id)
         ) {
           const DevOnly = new EmbedBuilder()
             .setTitle(`${emojis.ERROR} You can't use that`)
