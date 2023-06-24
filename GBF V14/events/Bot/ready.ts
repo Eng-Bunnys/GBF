@@ -27,7 +27,7 @@ export default function botReady(client: GBFClient) {
 
     if (NumberOfFreebies === 1) {
       FreebiePresence = `${GameTitle}, free on Epic Games!`;
-      PresenceType = ActivityType.Streaming;
+      PresenceType = ActivityType.Playing;
     }
     if (NumberOfFreebies === 2) {
       FreebiePresence = `${GameTitle} & ${GameTwoTitle} are Free on Epic Games!`;
