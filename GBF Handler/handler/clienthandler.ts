@@ -12,6 +12,7 @@ import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
+import { ContextCommand, ContextMessageCommand, ContextUserCommand } from "../utils/context";
 
 export interface IGBFClient {
   CommandsFolder: string;
@@ -47,7 +48,7 @@ export default class GBFClient extends Client implements IGBFClient {
   public readonly buttonCommands: Collection<string, unknown> =
     new Collection();
   public readonly selectCmds: Collection<string, unknown> = new Collection();
-  public readonly contextCmds: Collection<string, unknown> = new Collection();
+  public readonly contextCmds: Collection<string, ContextUserCommand|ContextMessageCommand> = new Collection();
   public readonly aliases: Collection<string, unknown> = new Collection();
   public readonly events: Collection<string, unknown> = new Collection();
   public readonly config: any;

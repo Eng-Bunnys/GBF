@@ -18,13 +18,13 @@
     "humanize-duration": "^3.28.0",
     "mongoose": "^5.13.13",
     "nekos.life": "^2.0.9",
-    "node-fetch": "^2.6.7",
-    "ts-node-dev": "^2.0.0"
+    "node-fetch": "^2.6.7"
   },
   "nodemonConfig": {
     "ext": "js,json,ts"
   },
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "ts-node-dev": "^2.0.0"
   }
 }

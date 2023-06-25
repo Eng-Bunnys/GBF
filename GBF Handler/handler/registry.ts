@@ -2,6 +2,7 @@ import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import Command from "../utils/command";
 import GBFClient from "./clienthandler";
+import { ContextMessageCommand, ContextUserCommand } from "../utils/context";
 
 export async function registerCommands(client: GBFClient, ...dirs: string[]) {
   for (const dir of dirs) {
@@ -64,7 +65,10 @@ export async function registerCommands(client: GBFClient, ...dirs: string[]) {
                 );
                 continue;
               }
-
+              if(cmdModule instanceof ContextMessageCommand || cmdModule instanceof ContextUserCommand) {
+                client.contextCmds.set(name, cmdModule);
+                console.log('set: ', cmdModule, 'to ', join(__dirname, dir, file));
+              }
               if (client.slashCommands.has(name)) {
                 console.log(
                   `The '${name}' (${join(
