@@ -2,7 +2,8 @@ import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import Command from "../utils/command";
 import GBFClient from "./clienthandler";
-import { ContextMessageCommand, ContextUserCommand } from "../utils/context";
+import { ContextCommand } from "../utils/context";
+import SlashCommand from "../utils/slashCommands";
 
 export async function registerCommands(client: GBFClient, ...dirs: string[]) {
   for (const dir of dirs) {
@@ -52,7 +53,7 @@ export async function registerCommands(client: GBFClient, ...dirs: string[]) {
 
               if (aliases)
                 aliases.map((alias) => client.aliases!.set(alias, name));
-            } else {
+            } else if (cmdModule instanceof SlashCommand) {
               const { name } = cmdModule;
 
               if (!name) {
@@ -65,10 +66,7 @@ export async function registerCommands(client: GBFClient, ...dirs: string[]) {
                 );
                 continue;
               }
-              if(cmdModule instanceof ContextMessageCommand || cmdModule instanceof ContextUserCommand) {
-                client.contextCmds.set(name, cmdModule);
-                console.log('set: ', cmdModule, 'to ', join(__dirname, dir, file));
-              }
+
               if (client.slashCommands.has(name)) {
                 console.log(
                   `The '${name}' (${join(
@@ -80,6 +78,32 @@ export async function registerCommands(client: GBFClient, ...dirs: string[]) {
                 continue;
               }
               client.slashCommands.set(name, cmdModule);
+            } else if (cmdModule instanceof ContextCommand) {
+              const { name } = cmdModule;
+
+              if (!name) {
+                console.log(
+                  `The '${join(
+                    __dirname,
+                    dir,
+                    file
+                  )}' command doesn't have a name. Please double check the code!`
+                );
+                continue;
+              }
+
+              if (client.contextCmds.has(name)) {
+                console.log(
+                  `The '${name}' (${join(
+                    __dirname,
+                    dir,
+                    file
+                  )}) context command name has already been added. Please double check the code!`
+                );
+                continue;
+              }
+
+              client.contextCmds.set(name, cmdModule);
             }
           } catch (e) {
             console.log(`Error for loading the commands: ${e.message}`);
