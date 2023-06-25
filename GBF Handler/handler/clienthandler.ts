@@ -5,7 +5,6 @@ import {
   Collection,
   BitFieldResolvable,
   Guild,
-  ApplicationCommandType,
   UserApplicationCommandData,
   MessageApplicationCommandData
 } from "discord.js";
@@ -16,6 +15,7 @@ import { join } from "path";
 import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
 import { ContextCommand } from "../utils/context";
+import { GBFCtx } from "./contextHandler";
 
 export interface IGBFClient {
   CommandsFolder: string;
@@ -107,7 +107,20 @@ export default class GBFClient extends Client implements IGBFClient {
 
     const contextCommands:
       | UserApplicationCommandData[]
-      | MessageApplicationCommandData[] = toContextCommand(this.contextCmds);
+      | MessageApplicationCommandData[] = toContextCommand(
+      this.contextCmds.filter(
+        (s: GBFCtx) =>
+          !s.development && !this.DisabledCommands?.includes(s.name)
+      )
+    );
+
+    const privateContextCommands:
+      | UserApplicationCommandData[]
+      | MessageApplicationCommandData[] = toContextCommand(
+      this.contextCmds.filter(
+        (s: GBFCtx) => s.development && !this.DisabledCommands?.includes(s.name)
+      )
+    );
 
     if (this.LogActions)
       for (let j = 0; j < this.DisabledCommands.length; j++)
@@ -119,6 +132,7 @@ export default class GBFClient extends Client implements IGBFClient {
           let testServer = await this.guilds.fetch(this.TestServers[i]);
           if (testServer instanceof Guild && testServer !== undefined) {
             await testServer.commands.set(guildCommands);
+            await testServer.commands.set(privateContextCommands);
             if (this.LogActions)
               console.log(
                 `Registering Guild Only Commands in: ${testServer.name}`
@@ -129,11 +143,23 @@ export default class GBFClient extends Client implements IGBFClient {
     }
 
     if (globalCommands.length) {
-      await this.application.commands.set(globalCommands);
+      try {
+        await this.application.commands.set(globalCommands);
+      } catch (err) {
+        console.log(err);
+      }
+      if (this.LogActions)
+        console.log(`Registered ${globalCommands.length} global commands`);
     }
 
     if (contextCommands.length) {
-      await this.application.commands.set(contextCommands);
+      try {
+        await this.application.commands.set(contextCommands);
+      } catch (err) {
+        console.log(err);
+      }
+      if (this.LogActions)
+        console.log(`Registered ${contextCommands.length} context commands`);
     }
   }
 
@@ -214,8 +240,7 @@ function toApplicationCommand(collection) {
       name: s.name,
       description: s.description,
       options: s.options,
-      defaultPermission: s.development ? false : true,
-      type: ApplicationCommandType.ChatInput
+      defaultPermission: s.development ? false : true
     };
   });
 }
