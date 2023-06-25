@@ -4,7 +4,10 @@ import {
   ClientOptions,
   Collection,
   BitFieldResolvable,
-  Guild
+  Guild,
+  ApplicationCommandType,
+  UserApplicationCommandData,
+  MessageApplicationCommandData
 } from "discord.js";
 import { connect } from "mongoose";
 import { registerCommands } from "./registry";
@@ -12,7 +15,7 @@ import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
-import { ContextCommand, ContextMessageCommand, ContextUserCommand } from "../utils/context";
+import { ContextCommand } from "../utils/context";
 
 export interface IGBFClient {
   CommandsFolder: string;
@@ -48,7 +51,8 @@ export default class GBFClient extends Client implements IGBFClient {
   public readonly buttonCommands: Collection<string, unknown> =
     new Collection();
   public readonly selectCmds: Collection<string, unknown> = new Collection();
-  public readonly contextCmds: Collection<string, ContextUserCommand|ContextMessageCommand> = new Collection();
+  public readonly contextCmds: Collection<string, ContextCommand> =
+    new Collection();
   public readonly aliases: Collection<string, unknown> = new Collection();
   public readonly events: Collection<string, unknown> = new Collection();
   public readonly config: any;
@@ -101,6 +105,10 @@ export default class GBFClient extends Client implements IGBFClient {
       )
     );
 
+    const contextCommands:
+      | UserApplicationCommandData[]
+      | MessageApplicationCommandData[] = toContextCommand(this.contextCmds);
+
     if (this.LogActions)
       for (let j = 0; j < this.DisabledCommands.length; j++)
         console.log(`Will not register: ${this.DisabledCommands[j]}`);
@@ -109,7 +117,7 @@ export default class GBFClient extends Client implements IGBFClient {
       if (this.TestServers && this.TestServers.length > 0) {
         for (let i = 0; i <= this.TestServers.length; i++) {
           let testServer = await this.guilds.fetch(this.TestServers[i]);
-          if (testServer instanceof Guild) {
+          if (testServer instanceof Guild && testServer !== undefined) {
             await testServer.commands.set(guildCommands);
             if (this.LogActions)
               console.log(
@@ -122,6 +130,10 @@ export default class GBFClient extends Client implements IGBFClient {
 
     if (globalCommands.length) {
       await this.application.commands.set(globalCommands);
+    }
+
+    if (contextCommands.length) {
+      await this.application.commands.set(contextCommands);
     }
   }
 
@@ -187,13 +199,23 @@ export default class GBFClient extends Client implements IGBFClient {
   }
 }
 
+function toContextCommand(collection) {
+  return collection.map((s) => {
+    return {
+      name: s.name,
+      type: s.type
+    };
+  });
+}
+
 function toApplicationCommand(collection) {
   return collection.map((s) => {
     return {
       name: s.name,
       description: s.description,
       options: s.options,
-      defaultPermission: s.development ? false : true
+      defaultPermission: s.development ? false : true,
+      type: ApplicationCommandType.ChatInput
     };
   });
 }
