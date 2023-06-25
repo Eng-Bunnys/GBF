@@ -9,7 +9,6 @@ import {
   ButtonStyle,
   ChannelType,
   ColorResolvable,
-  CommandInteractionOptionResolver,
   EmbedBuilder,
   GuildPremiumTier,
   UserFlags,
@@ -25,7 +24,6 @@ import {
   chooseRandomFromArray,
   msToTime
 } from "../../utils/Engine";
-import { Color } from "discord-image-generation";
 
 export default class UserInfoCommands extends SlashCommand {
   constructor(client: GBFClient) {
@@ -36,7 +34,6 @@ export default class UserInfoCommands extends SlashCommand {
       userPermission: [],
       botPermission: [],
       cooldown: 5,
-      development: true,
       subcommands: {
         avatar: {
           description: "View a user's avatar",
@@ -512,7 +509,10 @@ export default class UserInfoCommands extends SlashCommand {
 
                   if (GameName === "YouTube") {
                     if (UserActivity.state === null) {
-                      if (UserActivity.timestamps?.start) {
+                      if (
+                        UserActivity.timestamps &&
+                        UserActivity.timestamps?.start
+                      ) {
                         const StartTime =
                           UserActivity.timestamps.start?.getTime();
                         const CurrentTime = Date.now();
@@ -557,43 +557,43 @@ export default class UserInfoCommands extends SlashCommand {
                     }
                   } else {
                     let PlayTimeText: string;
-                    const { timestamps } = UserActivity;
-                    switch (true) {
-                      case timestamps?.start !== null:
-                        const StartedPlayingTimeStamp = new Date(
-                          timestamps.start
-                        ).getTime();
-                        const CurrentTime = Date.now();
-                        StartedPlaying = duration(
-                          StartedPlayingTimeStamp - CurrentTime,
-                          {
-                            units: ["y", "mo", "w", "d", "h", "m", "s"],
-                            round: true
-                          }
-                        );
-                        PlayTimeText = `Current Session:`;
-                        break;
-                      case timestamps?.start === null ||
-                        timestamps?.end !== null:
-                        StartedPlaying = "";
-                        PlayTimeText = `In-Game`;
-                        break;
-                      default:
-                        StartedPlaying = "Just Started";
-                        PlayTimeText = `Current Session:`;
-                        break;
+                    if (
+                      UserActivity.timestamps !== null &&
+                      UserActivity.timestamps.start !== null
+                    ) {
+                      const StartedPlayingTimeStamp = new Date(
+                        UserActivity.timestamps.start
+                      ).getTime();
+                      const now = new Date().getTime();
+                      StartedPlaying = duration(StartedPlayingTimeStamp - now, {
+                        units: ["y", "mo", "w", "d", "h", "m", "s"],
+                        round: true
+                      });
+                      PlayTimeText = `Current Session:`;
+                    } else if (
+                      UserActivity.timestamps.start === null ||
+                      UserActivity.timestamps.end !== null
+                    ) {
+                      StartedPlaying = "";
+                      PlayTimeText = `In-Game`;
+                    } else {
+                      StartedPlaying = "Just Started";
+                      PlayTimeText = `Current Session:`;
                     }
 
-                    const DetailsValue =
-                      GameDetails !== "" && GameState !== ""
-                        ? `🕑 ${PlayTimeText} ${StartedPlaying}\n\n${GameDetails}\n${GameState}`
-                        : `${PlayTimeText} ${StartedPlaying}`;
-
-                    UserInfoEmbed.addFields({
-                      name: `Playing ${GameName}:`,
-                      value: `${DetailsValue}`,
-                      inline: true
-                    });
+                    if (GameDetails !== "" && GameState !== "") {
+                      UserInfoEmbed.addFields({
+                        name: `Playing ${GameName}:`,
+                        value: `🕑 ${PlayTimeText} ${StartedPlaying}\n\n${GameDetails}\n${GameState}`,
+                        inline: true
+                      });
+                    } else {
+                      UserInfoEmbed.addFields({
+                        name: `Playing ${GameName}:`,
+                        value: `${PlayTimeText} ${StartedPlaying}`,
+                        inline: true
+                      });
+                    }
                   }
                 }
               }
