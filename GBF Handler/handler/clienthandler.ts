@@ -8,6 +8,7 @@ import {
   UserApplicationCommandData,
   MessageApplicationCommandData
 } from "discord.js";
+
 import { connect } from "mongoose";
 import { registerCommands } from "./registry";
 import { lstatSync, readdirSync } from "fs";
@@ -130,7 +131,7 @@ export default class GBFClient extends Client implements IGBFClient {
       if (this.TestServers && this.TestServers.length > 0) {
         for (let i = 0; i <= this.TestServers.length; i++) {
           let testServer = await this.guilds.fetch(this.TestServers[i]);
-          if (testServer instanceof Guild && testServer !== undefined) {
+          if (testServer instanceof Guild) {
             await testServer.commands.set(guildCommands);
             await testServer.commands.set(privateContextCommands);
             if (this.LogActions)
@@ -229,7 +230,9 @@ function toContextCommand(collection) {
   return collection.map((s) => {
     return {
       name: s.name,
-      type: s.type
+      type: s.type,
+      dm_permission: s.dmEnabled,
+      nsfw: s.NSFW
     };
   });
 }
@@ -240,7 +243,9 @@ function toApplicationCommand(collection) {
       name: s.name,
       description: s.description,
       options: s.options,
-      defaultPermission: s.development ? false : true
+      defaultPermission: s.development ? false : true,
+      dm_permission: s.dmEnabled,
+      nsfw: s.NSFW
     };
   });
 }
