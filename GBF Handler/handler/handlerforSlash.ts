@@ -83,7 +83,7 @@ export class GBFSlash {
   readonly groups?: any;
   readonly subcommands?: any;
 
-  constructor(client: any, options: GBFSlashOptions) {
+  constructor(client: GBFClient, options: GBFSlashOptions) {
     this.client = client;
     this.name = options.name || "";
     this.category = options.category || "";
@@ -101,7 +101,7 @@ export class GBFSlash {
     this.botPermission = options.botPermission || [];
     this.cooldown = options.cooldown || 0;
     this.development = options.development || false;
-    this.dmEnabled = options.dmEnabled || false;
+    this.dmEnabled = options.dmEnabled || client.DMCommands;
     this.groups = options.groups ?? null;
     this.subcommands = options.subcommands ?? null;
 
@@ -125,7 +125,9 @@ function getSubcommandGroupOptions(groups: any) {
       options: getSubcommandOptions(groups[name].subcommands),
       userPermission: groups[name].userPermission,
       botPermission: groups[name].botPermission,
-      type: ApplicationCommandOptionType.SubcommandGroup
+      type: ApplicationCommandOptionType.SubcommandGroup,
+      nsfw: groups[name].NSFW,
+      dm_permission: groups[name].dmEnabled
     };
 
     options.push(option);
@@ -149,7 +151,9 @@ function getSubcommandOptions(subcommands: {
       options: subcommands[name].args,
       userPermission: subcommands[name].userPermission,
       botPermission: subcommands[name].botPermission,
-      type: ApplicationCommandOptionType.Subcommand
+      type: ApplicationCommandOptionType.Subcommand,
+      nsfw: subcommands[name].NSFW,
+      dm_permission: subcommands[name].dmEnabled
     };
 
     options.push(option);
