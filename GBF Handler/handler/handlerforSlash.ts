@@ -1,7 +1,8 @@
 import {
   ApplicationCommandOptionType,
   ApplicationCommandOptionData,
-  CommandInteraction
+  CommandInteraction,
+  ApplicationCommandType
 } from "discord.js";
 import GBFClient from "./clienthandler";
 
@@ -17,21 +18,41 @@ export interface SubcommandData {
 }
 
 export interface GBFSlashOptions {
+  /** The command's name [Required] */
   name: string;
-  category: string;
+  /** The command's category */
+  category?: string;
+  /** The command's description [Required] */
   description: string;
+  /** Set the command to NSFW channels only */
+  /** Specfiy the type of interaction, set to 1 by default */
+  type?:
+    | ApplicationCommandType.User
+    | ApplicationCommandType.Message
+    | ApplicationCommandType.ChatInput;
   NSFW?: boolean;
+  /** Usage doc */
   usage?: string;
+  /** Example of how to use it */
   examples?: string;
+  /** Command Options */
   options?: ApplicationCommandOptionData[];
   defaultPermission?: boolean;
+  /** Only developers can use this command */
   devOnly?: boolean;
+  /** Only partners can use this command */
   partner?: boolean;
+  /** Developers bypass the cooldown */
   devBypass?: boolean;
+  /** The permissions that the user needs to run the command */
   userPermission?: string | bigint[];
+  /** The permissions that the bot needs to execute the command */
   botPermission?: string | bigint[];
+  /** The command cooldown in seconds */
   cooldown?: number;
+  /** Test Server Only command */
   development?: boolean;
+  /** If the command can be used in DMs */
   dmEnabled?: boolean;
   groups?: any;
   subcommands?: Record<string, SubcommandData>;
@@ -40,8 +61,12 @@ export interface GBFSlashOptions {
 export class GBFSlash {
   readonly client: any;
   readonly name: string;
-  readonly category: string;
+  readonly category?: string;
   readonly description: string;
+  readonly type?:
+    | ApplicationCommandType.User
+    | ApplicationCommandType.Message
+    | ApplicationCommandType.ChatInput;
   readonly NSFW: boolean;
   readonly usage: string;
   readonly examples: string;
@@ -63,6 +88,7 @@ export class GBFSlash {
     this.name = options.name || "";
     this.category = options.category || "";
     this.description = options.description || "";
+    this.type = options.type || ApplicationCommandType.ChatInput;
     this.NSFW = options.NSFW || false;
     this.usage = options.usage || "";
     this.examples = options.examples || "";
