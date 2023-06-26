@@ -16,21 +16,38 @@ import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
 
 export interface IGBFClient {
+  /**The location of your commands folder Eg. ../../commands */
   CommandsFolder: string;
+  /**The location of your commands folder Eg. ../../events */
   EventsFolder: string;
+  /**Log handler events like when your commands register etc. */
   LogActions?: boolean;
+  /**Your bot's default prefix */
   Prefix: string;
+  /**An array that contains all of the bot's developer's IDs */
   Developers?: string[];
+  /**The location of your config folder Eg. path.join(__dirname, "./config/GBFconfig.json") */
   config?: any;
+  /**The bot's intents */
   intents: BitFieldResolvable<string, number>;
+  /**An array that contains all of the test servers that get the development commands */
   TestServers?: string[];
+  /**A channel to log important bot activity like bot user bans */
   LogsChannel?: string;
+  /**An array that contains all of your bot's partners */
   Partners?: string[];
+  /**A URL to your bot's support server */
   SupportServer?: string;
+  /**Ignored help categories that won't be displayed */
   IgnoredHelpCategories?: string[];
+  /**Your bot's version Default: 1.0.0 */
   Version?: string;
+  /**An array that contains all of the disabled commands, case sensitive */
   DisabledCommands?: string[];
+  /**A boolean that disables / enables the default bot commands */
   DisableDefaultCommands?: boolean;
+  /**A boolean that sets whether the bot's commands can be ran in DMs or not Default: false */
+  DMCommands?: boolean;
 }
 
 export enum DefaultCommands {
@@ -61,6 +78,7 @@ export default class GBFClient extends Client implements IGBFClient {
   public readonly DisabledCommands?: string[];
   public readonly LogActions?: boolean;
   public readonly DisableDefaultCommands?: boolean;
+  public readonly DMCommands?: boolean;
 
   constructor(options: IGBFClient & ClientOptions) {
     super(options);
@@ -87,6 +105,7 @@ export default class GBFClient extends Client implements IGBFClient {
     this.DisabledCommands = options.DisabledCommands || [];
     this.LogActions = options.LogActions || false;
     this.DisableDefaultCommands = options.DisableDefaultCommands || false;
+    this.DMCommands = options.DMCommands || false;
   }
 
   public async loadCommands(): Promise<void> {
