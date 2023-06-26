@@ -5,8 +5,7 @@ import {
   Collection,
   BitFieldResolvable,
   Guild,
-  UserApplicationCommandData,
-  MessageApplicationCommandData
+  GatewayIntentBits
 } from "discord.js";
 
 import { connect } from "mongoose";
@@ -15,8 +14,6 @@ import { lstatSync, readdirSync } from "fs";
 import { join } from "path";
 import { GBFSlash, GBFSlashOptions } from "./handlerforSlash";
 import { CommandOptions } from "./commandhandler";
-import { ContextCommand } from "../utils/context";
-import { GBFCtx } from "./contextHandler";
 
 export interface IGBFClient {
   CommandsFolder: string;
@@ -31,8 +28,9 @@ export interface IGBFClient {
   Partners?: string[];
   SupportServer?: string;
   IgnoredHelpCategories?: string[];
-  Version: string;
+  Version?: string;
   DisabledCommands?: string[];
+  DisableDefaultCommands?: boolean;
 }
 
 export enum DefaultCommands {
@@ -49,11 +47,6 @@ export default class GBFClient extends Client implements IGBFClient {
     new Collection();
   public readonly slashCommands: Collection<string, GBFSlashOptions> =
     new Collection();
-  public readonly buttonCommands: Collection<string, unknown> =
-    new Collection();
-  public readonly selectCmds: Collection<string, unknown> = new Collection();
-  public readonly contextCmds: Collection<string, ContextCommand> =
-    new Collection();
   public readonly aliases: Collection<string, unknown> = new Collection();
   public readonly events: Collection<string, unknown> = new Collection();
   public readonly config: any;
@@ -67,30 +60,42 @@ export default class GBFClient extends Client implements IGBFClient {
   public readonly Version: string;
   public readonly DisabledCommands?: string[];
   public readonly LogActions?: boolean;
+  public readonly DisableDefaultCommands?: boolean;
 
   constructor(options: IGBFClient & ClientOptions) {
     super(options);
     this.CommandsFolder = options.CommandsFolder;
     this.EventsFolder = options.EventsFolder;
-    this.Prefix = options.Prefix;
+    this.Prefix = options.Prefix || "!!";
     this.config = require(options.config);
-    this.intents = options.intents;
-    this.TestServers = options.TestServers;
-    this.Developers = options.Developers;
-    this.LogsChannel = options.LogsChannel;
-    this.Partners = options.Partners;
+    this.intents = options.intents || [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildPresences,
+      GatewayIntentBits.GuildEmojisAndStickers,
+      GatewayIntentBits.GuildWebhooks
+    ];
+    this.TestServers = options.TestServers || [];
+    this.Developers = options.Developers || [];
+    this.LogsChannel = options.LogsChannel || "";
+    this.Partners = options.Partners || [];
     this.SupportServer = options.SupportServer;
     this.IgnoredHelpCategories = options.IgnoredHelpCategories;
-    this.Version = options.Version;
-    this.DisabledCommands = options.DisabledCommands;
-    this.LogActions = options.LogActions;
+    this.Version = options.Version || "1.0.0";
+    this.DisabledCommands = options.DisabledCommands || [];
+    this.LogActions = options.LogActions || false;
+    this.DisableDefaultCommands = options.DisableDefaultCommands || false;
   }
 
   public async loadCommands(): Promise<void> {
     if (!this.application?.owner) await this.application?.fetch();
 
     await registerCommands(this, this.CommandsFolder);
-    await registerCommands(this, "./Default Commands");
+
+    if (this.DisableDefaultCommands)
+      await registerCommands(this, "./Default Commands");
 
     const guildCommands: ApplicationCommandData[] = toApplicationCommand(
       this.slashCommands.filter(
@@ -106,61 +111,30 @@ export default class GBFClient extends Client implements IGBFClient {
       )
     );
 
-    const contextCommands:
-      | UserApplicationCommandData[]
-      | MessageApplicationCommandData[] = toContextCommand(
-      this.contextCmds.filter(
-        (s: GBFCtx) =>
-          !s.development && !this.DisabledCommands?.includes(s.name)
-      )
-    );
-
-    const privateContextCommands:
-      | UserApplicationCommandData[]
-      | MessageApplicationCommandData[] = toContextCommand(
-      this.contextCmds.filter(
-        (s: GBFCtx) => s.development && !this.DisabledCommands?.includes(s.name)
-      )
-    );
-
     if (this.LogActions)
       for (let j = 0; j < this.DisabledCommands.length; j++)
         console.log(`Will not register: ${this.DisabledCommands[j]}`);
 
-    if (guildCommands.length) {
-      if (this.TestServers && this.TestServers.length > 0) {
-        for (let i = 0; i <= this.TestServers.length; i++) {
-          let testServer = await this.guilds.fetch(this.TestServers[i]);
+    if (guildCommands.length && this.TestServers.length > 0) {
+      await Promise.all(
+        this.TestServers.map(async (serverId) => {
+          const testServer = await this.guilds.fetch(serverId);
           if (testServer instanceof Guild) {
             await testServer.commands.set(guildCommands);
-            await testServer.commands.set(privateContextCommands);
-            if (this.LogActions)
+            if (this.LogActions) {
               console.log(
                 `Registering Guild Only Commands in: ${testServer.name}`
               );
+            }
           }
-        }
-      }
+        })
+      );
     }
 
     if (globalCommands.length) {
-      try {
-        await this.application.commands.set(globalCommands);
-      } catch (err) {
-        console.log(err);
-      }
+      await this.application.commands.set(globalCommands);
       if (this.LogActions)
         console.log(`Registered ${globalCommands.length} global commands`);
-    }
-
-    if (contextCommands.length) {
-      try {
-        await this.application.commands.set(contextCommands);
-      } catch (err) {
-        console.log(err);
-      }
-      if (this.LogActions)
-        console.log(`Registered ${contextCommands.length} context commands`);
     }
   }
 
@@ -226,17 +200,6 @@ export default class GBFClient extends Client implements IGBFClient {
   }
 }
 
-function toContextCommand(collection) {
-  return collection.map((s) => {
-    return {
-      name: s.name,
-      type: s.type,
-      dm_permission: s.dmEnabled,
-      nsfw: s.NSFW
-    };
-  });
-}
-
 function toApplicationCommand(collection) {
   return collection.map((s) => {
     return {
@@ -244,6 +207,7 @@ function toApplicationCommand(collection) {
       description: s.description,
       options: s.options,
       defaultPermission: s.development ? false : true,
+      type: s.type,
       dm_permission: s.dmEnabled,
       nsfw: s.NSFW
     };
