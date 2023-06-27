@@ -5,7 +5,7 @@ import { DefaultCommands } from "./handler/clienthandler";
 const { TOKEN } = require(path.join(__dirname, "./config/GBFconfig.json"));
 
 export const client = new GBFClient({
-  Version: "2.5.0", // The version that your bot is running on [Required]
+  Version: "2.5.0", // The version that your bot is running on [1.0.0 by default]
   CommandsFolder: "../commands", // The commands folder [Req]
   EventsFolder: "../events", // The events folder [Req]
   Prefix: "!!", // Your bot's prefix [Req]
