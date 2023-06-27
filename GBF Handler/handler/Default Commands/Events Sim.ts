@@ -1,9 +1,7 @@
 import {
   PermissionFlagsBits,
   Events,
-  CommandInteraction,
   GuildMember,
-  APIInteractionGuildMember,
   NonThreadGuildBasedChannel
 } from "discord.js";
 
@@ -23,6 +21,15 @@ export default class SimEvents extends SlashCommand {
       development: true,
       devOnly: true,
       subcommands: {
+        freebie: {
+          description: "Simulate FreebieSend event",
+          execute: async ({ client, interaction }) => {
+            client.emit("FreebieSend", "Epic Games", 2);
+            return interaction.reply({
+              content: `${emojis.VERIFY} Simulated Freebie Send`
+            });
+          }
+        },
         join: {
           description: "Simulate guildMemberAdd event",
           execute: async ({ client, interaction }) => {
