@@ -2,7 +2,6 @@ import {
   APIEmbedField,
   BaseMessageOptions,
   Collection,
-  CommandInteraction,
   DMChannel,
   Guild,
   Interaction,
@@ -185,14 +184,14 @@ export function resume(text = "", number: number) {
  * const chunks = MessageSplit(messages, 500, ";");
  */
 
-export function MessageSplit(message, codeLength, separator = "\n") {
+export function MessageSplit(
+  message: string | string[],
+  codeLength: number,
+  separator: string = "\n"
+): string[] {
   if (!message) return [];
 
-  if (!Number.isInteger(codeLength) || codeLength <= 0) {
-    return "Code length must be a positive integer";
-  }
-
-  const arrayNeeded = [];
+  const arrayNeeded: string[] = [];
 
   if (Array.isArray(message)) {
     message = message.join(separator);
@@ -315,72 +314,33 @@ export function rolePermissions(targetRole) {
     : rolePerms[0];
 }
 
-/**
- * Returns the permissions of a role as a string, with the most powerful permission listed first.
- *
- * @param {Role} role - The role whose permissions will be listed.
- * @returns {string} A string listing the permissions of the role.
- *
- * @example
- * // Returns "Administrator, Manage Server, Kick Members"
- * const role = interaction.guild.roles.cache.find(role => role.name === "Moderator");
- * const perms = KeyPerms(role);
- * console.log(perms);
- */
-
-export function KeyPerms(role) {
-  const permissions = [
-    { name: "Administrator", flag: PermissionFlagsBits.Administrator },
-    { name: "Manage Server", flag: PermissionFlagsBits.ManageGuild },
-    { name: "Manage Roles", flag: PermissionFlagsBits.ManageRoles },
-    { name: "Manage Channels", flag: PermissionFlagsBits.ManageChannels },
-    { name: "Kick Members", flag: PermissionFlagsBits.KickMembers },
-    { name: "Ban Members", flag: PermissionFlagsBits.BanMembers },
-    { name: "Manage Nicknames", flag: PermissionFlagsBits.ManageNicknames },
-    { name: "Change Nickname", flag: PermissionFlagsBits.ChangeNickname },
-    {
-      name: "Manage Emojis & Stickers",
-      flag: PermissionFlagsBits.ManageEmojisAndStickers
-    },
-    { name: "Manage Webhooks", flag: PermissionFlagsBits.ManageWebhooks },
-    { name: "Manage Messages", flag: PermissionFlagsBits.ManageMessages },
-    { name: "Mention Everyone", flag: PermissionFlagsBits.MentionEveryone },
-    {
-      name: "Use External Emojis",
-      flag: PermissionFlagsBits.UseExternalEmojis
-    },
-    { name: "Add Reactions", flag: PermissionFlagsBits.AddReactions },
-    { name: "Mute Members", flag: PermissionFlagsBits.MuteMembers },
-    { name: "Deafen Members", flag: PermissionFlagsBits.DeafenMembers },
-    { name: "Move Members", flag: PermissionFlagsBits.MoveMembers },
-    { name: "Moderate Members", flag: PermissionFlagsBits.ModerateMembers },
-    { name: "View Audit Log", flag: PermissionFlagsBits.ViewAuditLog },
-    { name: "Send Messages", flag: PermissionFlagsBits.SendMessages },
-    { name: "Attach Files", flag: PermissionFlagsBits.AttachFiles },
-    {
-      name: "Read Message History",
-      flag: PermissionFlagsBits.ReadMessageHistory
-    },
-    {
-      name: "Create Instant Invite",
-      flag: PermissionFlagsBits.CreateInstantInvite
-    }
-  ];
-
-  const sortedPermissions = permissions
-    .filter((perm) => role.permissions.has(perm.flag))
-    .sort((permA, permB) => Number(permB.flag) - Number(permA.flag));
-
+export function KeyPerms(role: GuildMember) {
+  let KeyPermissions = [];
   if (role.permissions.has(PermissionFlagsBits.Administrator))
-    return "Administrator";
-
-  if (role.managed) {
-    return "Administrator";
-  } else {
-    return sortedPermissions.length > 0
-      ? sortedPermissions.map((perm) => perm.name).join(", ")
-      : "No permissions";
+    return ["Administrator", 1];
+  else {
+    if (role.permissions.has(PermissionFlagsBits.ManageGuild))
+      KeyPermissions.push(`Manage Server`);
+    if (role.permissions.has(PermissionFlagsBits.ManageRoles))
+      KeyPermissions.push(`Manage Roles`);
+    if (role.permissions.has(PermissionFlagsBits.ManageChannels))
+      KeyPermissions.push(`Manage Channels`);
+    if (role.permissions.has(PermissionFlagsBits.KickMembers))
+      KeyPermissions.push(`Kick Members`);
+    if (role.permissions.has(PermissionFlagsBits.BanMembers))
+      KeyPermissions.push(`Ban Members`);
+    if (role.permissions.has(PermissionFlagsBits.ManageNicknames))
+      KeyPermissions.push(`Manage Nicknames`);
+    if (role.permissions.has(PermissionFlagsBits.ManageGuildExpressions))
+      KeyPermissions.push(`Manage Emojis & Stickers`);
+    if (role.permissions.has(PermissionFlagsBits.ManageMessages))
+      KeyPermissions.push(`Manage Messages`);
+    if (role.permissions.has(PermissionFlagsBits.MentionEveryone))
+      KeyPermissions.push(`Mention Everyone`);
+    if (role.permissions.has(PermissionFlagsBits.ModerateMembers))
+      KeyPermissions.push(`Moderate Members`);
   }
+  return [KeyPermissions.join(", ") || "No Permissions", KeyPermissions.length];
 }
 
 //Better Key Permissions
@@ -478,19 +438,14 @@ export function channelSlowMode(channel) {
 
 /**
  * Takes a string and lowercases it then uppercase the first word of each sentence you could say
- * @param {string} the word - The word to be like Custom Status instead of just CUSTOM STATUS
+ * @param {string}  word - The word to be like Custom Status instead of just CUSTOM STATUS
  * @returns {string} - Returns a beautified converted string
  * @example capitalize(string)
  */
 
 export function capitalize(str: string): string {
-  if (typeof str !== "string") {
-    throw new Error("Argument must be a string");
-  }
-
-  return str.replace(/(?<=(^|\s))(\w)/g, (char) => char.toUpperCase());
+  return str.replace(/(?<=\W)(\w)/g, (char) => char.toUpperCase());
 }
-
 /**
 Calculates the BMI scale based on the BMI value.
 @param {number} bmi - The BMI value.
@@ -581,10 +536,10 @@ twentyFourToTwelve(24)
 twentyFourToTwelve(-1)
 */
 
-export function twentyFourToTwelve(hours: number): number {
+export function twentyFourToTwelve(hours: number): string {
   if (isNaN(hours) || hours < 0 || hours > 23) return;
 
-  let displayTime;
+  let displayTime: string;
 
   if (hours < 12) {
     if (hours === 0) {
@@ -780,7 +735,9 @@ export function levelUpReward(level: number): number {
   const rank = Math.abs(level);
 
   // The array of rewards for each level
-  const rewardArray = [200, 400, 600, 800, 1200, 1400, 1600, 1800, 2000, 2000];
+  const rewardArray = [
+    2000, 4000, 6000, 8000, 12000, 14000, 16000, 18000, 20000, 20000
+  ];
 
   // Calculate the position of the reward in the array based on the modulo of the rank,
   // if it's a multiple of 10 then the position will be 10
@@ -800,7 +757,7 @@ export function generateHelpMenuFields(
   commands: Collection<string, CommandOptions | GBFSlashOptions>,
   categories: { name: string; emoji: string }[],
   excludedCategories: string[] = []
-): APIEmbedField[] {
+): APIEmbedField[][] {
   const fields = commands.reduce<APIEmbedField[]>((fieldAccumulator, cmd) => {
     if (
       toLowerCaseArray(excludedCategories).includes(
@@ -842,7 +799,14 @@ export function generateHelpMenuFields(
     }
     return fieldAccumulator;
   }, []);
-  return fields;
+
+  const groupedFields: APIEmbedField[][] = [];
+
+  for (let i = 0; i < fields.length; i += 25) {
+    groupedFields.push(fields.slice(i, i + 25));
+  }
+
+  return groupedFields;
 }
 
 export function generateCategorySelectMenu(
@@ -900,13 +864,6 @@ export function generateCategorySelectMenuWithReturn(
   return HelpMenuSelect;
 }
 
-/**
- * Sends a message to the given channel and deletes it after a specified time.
- * @param {TextBasedChannel} Channel - The channel to send the message to.
- * @param {BaseMessageOptions} MessageOptions - The message options to use when sending the message.
- * @param {number} TimeInSeconds - The time to wait before deleting the message, in seconds.
- * @return {Promise<void>} - A Promise that resolves when the message has been sent and scheduled for deletion.
- */
 export async function SendAndDelete(
   Channel: TextBasedChannel,
   MessageOptions: BaseMessageOptions,
@@ -920,11 +877,29 @@ export async function SendAndDelete(
   }, TimeInSeconds * 1000);
 }
 
+export function chooseRandomFromArray<T>(array: T[]): T {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}
+
+export function getRole(Server: Guild, roleID: string) {
+  return Server.roles.cache.get(roleID);
+}
+
+type Obj = Record<string, boolean>;
+
+export function stringifyObjects(obj: Obj, text = "true"): string {
+  return Object.entries(obj)
+    .filter(([key, value]) => value === true)
+    .map(([key]) => `${key}: ${text}`)
+    .join("\n");
+}
+
 interface TimeUnits {
   [key: string]: string[];
 }
 
-const timeUnits: TimeUnits = {
+export const timeUnits: TimeUnits = {
   s: ["sec(s)", "second(s)"],
   min: ["minute(s)", "m", "min(s)"],
   h: ["hr(s)", "hour(s)"],
