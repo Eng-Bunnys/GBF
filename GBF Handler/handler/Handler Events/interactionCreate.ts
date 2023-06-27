@@ -1,4 +1,5 @@
 import {
+  ApplicationCommandType,
   Collection,
   ColorResolvable,
   CommandInteraction,
@@ -66,41 +67,45 @@ export default function interactionCreate(client) {
         .setDescription("This command is only available for developers.")
         .setColor(colours.ERRORRED as ColorResolvable);
 
-      if (interaction.isContextMenuCommand) {
-        const command: GBFSlashOptions = client.slashCommands.get(
-          interaction.commandName
-        );
+      if (interaction.isCommand()) {
+        if (interaction.isContextMenuCommand) {
+          const command: GBFSlashOptions = client.slashCommands.get(
+            interaction.commandName
+          );
 
-        if (!command) return;
+          if (command.type === ApplicationCommandType.ChatInput) return;
 
-        if (
-          command.partner &&
-          !(client as GBFClient).Partners.includes(interaction.user.id)
-        ) {
-          return interaction.reply({
-            embeds: [PartnerOnly],
-            ephemeral: true
-          });
-        }
+          if (!command) return;
 
-        if (
-          command.devOnly &&
-          !(client as GBFClient).Developers.includes(interaction.user.id)
-        ) {
-          return interaction.reply({
-            embeds: [DevOnly],
-            ephemeral: true
-          });
-        }
+          if (
+            command.partner &&
+            !(client as GBFClient).Partners.includes(interaction.user.id)
+          ) {
+            return interaction.reply({
+              embeds: [PartnerOnly],
+              ephemeral: true
+            });
+          }
 
-        try {
-          //@ts-ignore
-          await command.execute({
-            client,
-            interaction
-          });
-        } catch (err) {
-          console.log(`Error running command '${command.name}'\n${err}`);
+          if (
+            command.devOnly &&
+            !(client as GBFClient).Developers.includes(interaction.user.id)
+          ) {
+            return interaction.reply({
+              embeds: [DevOnly],
+              ephemeral: true
+            });
+          }
+
+          try {
+            //@ts-ignore
+            await command.execute({
+              client,
+              interaction
+            });
+          } catch (err) {
+            console.log(`Error running command '${command.name}'\n${err}`);
+          }
         }
       }
 
@@ -110,6 +115,8 @@ export default function interactionCreate(client) {
         );
 
         if (!command) return;
+
+        if (command.type !== ApplicationCommandType.ChatInput) return;
 
         if (
           command.partner &&
