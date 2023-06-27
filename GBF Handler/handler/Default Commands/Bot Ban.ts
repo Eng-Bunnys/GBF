@@ -101,10 +101,6 @@ export default class botBans extends SlashCommand {
                 iconURL: client.user.displayAvatarURL()
               });
 
-            const logsChannel = (await client.channels.cache.get(
-              deverloperID.GBFLogsChannel
-            )) as TextChannel;
-
             const dmBan = new EmbedBuilder()
               .setTitle(`📩 You have received a new message`)
               .setDescription(
