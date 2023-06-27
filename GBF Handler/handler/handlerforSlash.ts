@@ -23,7 +23,7 @@ export interface GBFSlashOptions {
   /** The command's category */
   category?: string;
   /** The command's description [Required] */
-  description: string;
+  description?: string;
   /** Set the command to NSFW channels only */
   /** Specfiy the type of interaction, set to 1 by default */
   type?:
