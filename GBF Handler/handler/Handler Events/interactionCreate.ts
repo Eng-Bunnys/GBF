@@ -68,12 +68,13 @@ export default function interactionCreate(client) {
         .setColor(colours.ERRORRED as ColorResolvable);
 
       if (interaction.isCommand()) {
-        if (interaction.isContextMenuCommand) {
+        if (
+          interaction.isUserContextMenuCommand() ||
+          interaction.isMessageContextMenuCommand()
+        ) {
           const command: GBFSlashOptions = client.slashCommands.get(
             interaction.commandName
           );
-
-          if (command.type === ApplicationCommandType.ChatInput) return;
 
           if (!command) return;
 
@@ -115,8 +116,6 @@ export default function interactionCreate(client) {
         );
 
         if (!command) return;
-
-        if (command.type !== ApplicationCommandType.ChatInput) return;
 
         if (
           command.partner &&
