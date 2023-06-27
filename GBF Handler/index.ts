@@ -25,7 +25,8 @@ export const client = new GBFClient({
   Developers: [], // Developer IDs
   TestServers: [], // The test server IDs
   Partners: [], // Partner IDs
-  DisabledCommands: [] // Disabled command names (Have to match)
+  DisabledCommands: [], // Disabled command names (Have to match)
+  DMCommands: false // If false, commands can't be ran in DMs, will be overriden in commands if the dmEnabled option is set
 });
 
 (async () => {
