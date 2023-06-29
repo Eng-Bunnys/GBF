@@ -10,7 +10,10 @@ import {
   ChannelType,
   ColorResolvable,
   EmbedBuilder,
+  GuildNSFWLevel,
   GuildPremiumTier,
+  GuildVerificationLevel,
+  User,
   UserFlags,
   hyperlink
 } from "discord.js";
@@ -557,43 +560,43 @@ export default class UserInfoCommands extends SlashCommand {
                     }
                   } else {
                     let PlayTimeText: string;
-                    if (
-                      UserActivity.timestamps !== null &&
-                      UserActivity.timestamps.start !== null
-                    ) {
-                      const StartedPlayingTimeStamp = new Date(
-                        UserActivity.timestamps.start
-                      ).getTime();
-                      const now = new Date().getTime();
-                      StartedPlaying = duration(StartedPlayingTimeStamp - now, {
-                        units: ["y", "mo", "w", "d", "h", "m", "s"],
-                        round: true
-                      });
-                      PlayTimeText = `Current Session:`;
-                    } else if (
-                      UserActivity.timestamps.start === null ||
-                      UserActivity.timestamps.end !== null
-                    ) {
-                      StartedPlaying = "";
-                      PlayTimeText = `In-Game`;
-                    } else {
-                      StartedPlaying = "Just Started";
-                      PlayTimeText = `Current Session:`;
+                    const { timestamps } = UserActivity;
+                    switch (true) {
+                      case timestamps?.start !== null:
+                        const StartedPlayingTimeStamp = new Date(
+                          timestamps.start
+                        ).getTime();
+                        const CurrentTime = Date.now();
+                        StartedPlaying = duration(
+                          StartedPlayingTimeStamp - CurrentTime,
+                          {
+                            units: ["y", "mo", "w", "d", "h", "m", "s"],
+                            round: true
+                          }
+                        );
+                        PlayTimeText = `Current Session:`;
+                        break;
+                      case timestamps?.start === null ||
+                        timestamps?.end !== null:
+                        StartedPlaying = "";
+                        PlayTimeText = `In-Game`;
+                        break;
+                      default:
+                        StartedPlaying = "Just Started";
+                        PlayTimeText = `Current Session:`;
+                        break;
                     }
 
-                    if (GameDetails !== "" && GameState !== "") {
-                      UserInfoEmbed.addFields({
-                        name: `Playing ${GameName}:`,
-                        value: `🕑 ${PlayTimeText} ${StartedPlaying}\n\n${GameDetails}\n${GameState}`,
-                        inline: true
-                      });
-                    } else {
-                      UserInfoEmbed.addFields({
-                        name: `Playing ${GameName}:`,
-                        value: `${PlayTimeText} ${StartedPlaying}`,
-                        inline: true
-                      });
-                    }
+                    const DetailsValue =
+                      GameDetails !== "" && GameState !== ""
+                        ? `🕑 ${PlayTimeText} ${StartedPlaying}\n\n${GameDetails}\n${GameState}`
+                        : `${PlayTimeText} ${StartedPlaying}`;
+
+                    UserInfoEmbed.addFields({
+                      name: `Playing ${GameName}:`,
+                      value: `${DetailsValue}`,
+                      inline: true
+                    });
                   }
                 }
               }
@@ -607,11 +610,30 @@ export default class UserInfoCommands extends SlashCommand {
         serverinfo: {
           description: "Show's information about this server",
           execute: async ({ client, interaction }) => {
-            const BoostTierMap = {
-              [GuildPremiumTier[GuildPremiumTier.None]]: "",
-              [GuildPremiumTier[GuildPremiumTier.Tier1]]: "1",
-              [GuildPremiumTier[GuildPremiumTier.Tier2]]: "2",
-              [GuildPremiumTier[GuildPremiumTier.Tier3]]: "3"
+            const TierMap = {
+              [GuildPremiumTier.None]: "Tier 0",
+              [GuildPremiumTier.Tier1]: "Tier 1",
+              [GuildPremiumTier.Tier2]: "Tier 2",
+              [GuildPremiumTier.Tier3]: "Tier 3"
+            };
+
+            const NSFWMap = {
+              [GuildNSFWLevel.Default]: "Default",
+              [GuildNSFWLevel.Safe]: "Safe",
+              [GuildNSFWLevel.Explicit]: "Explicit",
+              [GuildNSFWLevel.AgeRestricted]: "Age Restricted"
+            };
+
+            const VerificationMap = {
+              [GuildVerificationLevel.None]: "Unrestricted",
+              [GuildVerificationLevel.Low]:
+                "Must have verified email on account",
+              [GuildVerificationLevel.Medium]:
+                "Must be registered on Discord for longer than 5 minutes",
+              [GuildVerificationLevel.High]:
+                "Must be a member of the server for longer than 10 minutes",
+              [GuildVerificationLevel.VeryHigh]:
+                "Must have a verified phone number"
             };
 
             const ServerInformationEmbed = new EmbedBuilder()
@@ -684,21 +706,19 @@ export default class UserInfoCommands extends SlashCommand {
                 },
                 {
                   name: "Boost Tier",
-                  value: `${BoostTierMap[interaction.guild.premiumTier]}`,
+                  value: `${TierMap[interaction.guild.premiumTier]}`,
                   inline: true
                 },
                 {
                   name: "Explicit Content Filter",
-                  value: `${capitalize(
-                    interaction.guild.explicitContentFilter.toString()
-                  )}`,
+                  value: `${NSFWMap[interaction.guild.nsfwLevel]}`,
                   inline: true
                 },
                 {
                   name: "Verification Level",
-                  value: `${capitalize(
-                    interaction.guild.verificationLevel.toString()
-                  )}`,
+                  value: `${
+                    VerificationMap[interaction.guild.verificationLevel]
+                  }`,
                   inline: true
                 },
                 {
@@ -709,7 +729,7 @@ export default class UserInfoCommands extends SlashCommand {
                 {
                   name: "AFK Timeout",
                   value: interaction.guild.afkChannel
-                    ? `${msToTime(interaction.guild.afkTimeout)}`
+                    ? `${msToTime(interaction.guild.afkTimeout * 1000)}`
                     : "None",
                   inline: true
                 },
@@ -743,16 +763,25 @@ export default class UserInfoCommands extends SlashCommand {
                 inline: true
               });
 
+            function formatFeatures(arr: string[]): string {
+              return arr
+                .map((str) => {
+                  const lowercased = str.toLowerCase();
+                  const replaced = lowercased.replace(/_/g, " ");
+                  const words = replaced.split(" ");
+                  const formattedWords = words.map((word) => {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                  });
+                  return formattedWords.join(" ");
+                })
+                .join(", ");
+            }
+
             if (interaction.guild.features.length > 0) {
-              let guildFeatures = ``;
-              for (let i = 0; i < interaction.guild.features.length; i++) {
-                guildFeatures =
-                  guildFeatures + `${interaction.guild.features[i]}, `;
-              }
+              const GuildFeatures = formatFeatures(interaction.guild.features);
               ServerInformationEmbed.addFields({
-                name: "Server Features",
-                value: `${capitalize(guildFeatures)}`,
-                inline: false
+                name: "Features",
+                value: `${GuildFeatures}`
               });
             }
             return interaction.reply({
