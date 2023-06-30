@@ -895,6 +895,15 @@ export function stringifyObjects(obj: Obj, text = "true"): string {
     .join("\n");
 }
 
+export function trimArray<T>(arr: T[], maxLen = 10, type = `role(s)`): T[] {
+  if (arr.length > maxLen) {
+    const len = arr.length - maxLen;
+    arr = arr.slice(0, maxLen);
+    arr.push(` and ${len} more ${type}...` as unknown as T);
+  }
+  return arr;
+}
+
 interface TimeUnits {
   [key: string]: string[];
 }
