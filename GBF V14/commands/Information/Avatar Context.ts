@@ -3,12 +3,12 @@ import GBFClient from "../../handler/clienthandler";
 import {
   ActionRowBuilder,
   ApplicationCommandType,
-  BaseImageURLOptions,
   ButtonBuilder,
   ButtonStyle,
   ColorResolvable,
   EmbedBuilder,
   GuildMember,
+  ImageURLOptions,
   UserContextMenuCommandInteraction,
   hyperlink
 } from "discord.js";
@@ -39,7 +39,7 @@ export default class ContextAvatar extends SlashCommand {
       TargetMember = interaction.guild.members.cache.get(TargetUser.id);
     else TargetMember = undefined;
 
-    const ImageSettings: BaseImageURLOptions = {
+    const ImageSettings: ImageURLOptions = {
       extension: "png",
       size: 1024
     };
