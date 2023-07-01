@@ -9,10 +9,12 @@ import {
   ButtonStyle,
   ChannelType,
   ColorResolvable,
+  CommandInteractionOptionResolver,
   EmbedBuilder,
   GuildNSFWLevel,
   GuildPremiumTier,
   GuildVerificationLevel,
+  ImageURLOptions,
   User,
   UserFlags,
   hyperlink
@@ -25,7 +27,8 @@ import {
   KeyPerms,
   capitalize,
   chooseRandomFromArray,
-  msToTime
+  msToTime,
+  trimArray
 } from "../../utils/Engine";
 
 export default class UserInfoCommands extends SlashCommand {
@@ -33,9 +36,7 @@ export default class UserInfoCommands extends SlashCommand {
     super(client, {
       name: "info",
       description: "User information commands",
-      category: "",
-      userPermission: [],
-      botPermission: [],
+      dmEnabled: false,
       cooldown: 5,
       subcommands: {
         avatar: {
@@ -45,73 +46,90 @@ export default class UserInfoCommands extends SlashCommand {
               name: "user",
               description: "View this user's avatar",
               type: ApplicationCommandOptionType.User
+            },
+            {
+              name: "prioritize",
+              description: `Prioritize either global or server avatar`,
+              type: ApplicationCommandOptionType.String,
+              choices: [
+                {
+                  name: "Global Avatar",
+                  value: `global`
+                },
+                {
+                  name: "Server Avatar",
+                  value: `server`
+                }
+              ]
             }
           ],
           execute: async ({ client, interaction }) => {
             const TargetUser =
               interaction.options.getUser("user", false) || interaction.user;
 
+            const AvatarPriority =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getString("prioritize") || "global";
+
+            const ImageSettings: ImageURLOptions = {
+              extension: "png",
+              size: 1024
+            };
+
             const TargetMember = interaction.guild.members.cache.get(
               TargetUser.id
             );
 
-            let AvatarURLs: string = `${hyperlink(
+            let AvatarURLs = `${hyperlink(
               "Avatar URL",
-              TargetUser.displayAvatarURL({
-                extension: "png"
-              })
+              TargetUser.displayAvatarURL(ImageSettings)
             )}`;
 
             const AvatarEmbed = new EmbedBuilder()
               .setTitle(`${capitalize(TargetUser.username)}'s Avatar`)
-              .setColor(colors.DEFAULT as ColorResolvable)
-              .setImage(
-                TargetUser.displayAvatarURL({
-                  extension: "png",
-                  size: 1024
-                })
-              );
+              .setColor(colors.DEFAULT as ColorResolvable);
+
+            if (AvatarPriority === "global")
+              AvatarEmbed.setImage(TargetUser.displayAvatarURL(ImageSettings));
 
             const AvatarButtons: ActionRowBuilder<any> =
               new ActionRowBuilder().addComponents([
                 new ButtonBuilder()
-                  .setLabel("Avatar URL")
+                  .setLabel("Global Avatar")
                   .setStyle(ButtonStyle.Link)
-                  .setURL(
-                    TargetUser.displayAvatarURL({
-                      extension: "png"
-                    })
-                  )
+                  .setURL(TargetUser.displayAvatarURL(ImageSettings))
               ]);
 
             if (
               TargetMember &&
               TargetMember.displayAvatarURL() !== TargetUser.displayAvatarURL()
             ) {
-              AvatarEmbed.setThumbnail(
-                TargetMember.displayAvatarURL({
-                  extension: "png"
-                })
-              );
+              if (AvatarPriority === "server") {
+                AvatarEmbed.setImage(
+                  TargetMember.displayAvatarURL(ImageSettings)
+                ).setThumbnail(TargetUser.displayAvatarURL(ImageSettings));
+              }
 
-              AvatarURLs += ` ${hyperlink(
+              if (AvatarPriority === "global") {
+                AvatarEmbed.setImage(
+                  TargetUser.displayAvatarURL(ImageSettings)
+                ).setThumbnail(TargetMember.displayAvatarURL(ImageSettings));
+              }
+
+              AvatarURLs += ` | ${hyperlink(
                 "Server Avatar",
-                TargetMember.displayAvatarURL({
-                  extension: "png"
-                })
+                TargetMember.displayAvatarURL(ImageSettings)
               )}`;
 
               AvatarButtons.addComponents([
                 new ButtonBuilder()
-                  .setLabel("Server Avatar URL")
+                  .setLabel("Server Avatar")
                   .setStyle(ButtonStyle.Link)
-                  .setURL(
-                    TargetMember.displayAvatarURL({
-                      extension: "png"
-                    })
-                  )
+                  .setURL(TargetMember.displayAvatarURL(ImageSettings))
               ]);
-            }
+            } else
+              AvatarEmbed.setImage(TargetUser.displayAvatarURL(ImageSettings));
 
             AvatarEmbed.setDescription(AvatarURLs);
 
@@ -142,17 +160,18 @@ export default class UserInfoCommands extends SlashCommand {
               TargetUser.createdTimestamp / 1000
             );
 
+            const ImageSettings: ImageURLOptions = {
+              extension: "png",
+              size: 1024
+            };
+
             if (!TargetMember) {
               const DiscordUser = new EmbedBuilder()
                 .setAuthor({
                   name: `${TargetUser.username}`,
-                  iconURL: TargetUser.displayAvatarURL()
+                  iconURL: TargetUser.displayAvatarURL(ImageSettings)
                 })
-                .setThumbnail(
-                  TargetUser.displayAvatarURL({
-                    extension: "png"
-                  })
-                )
+                .setThumbnail(TargetUser.displayAvatarURL(ImageSettings))
                 .addFields(
                   {
                     name: "Joined Discord:",
@@ -198,15 +217,6 @@ export default class UserInfoCommands extends SlashCommand {
                 embeds: [DiscordUser]
               });
             }
-
-            const trimArray = <T>(arr: T[], maxLen = 10): T[] => {
-              if (arr.length > maxLen) {
-                const len = arr.length - maxLen;
-                arr = arr.slice(0, maxLen);
-                arr.push(` and ${len} more role(s)...` as unknown as T);
-              }
-              return arr;
-            };
 
             const TipMessages = [
               "The user color is clickable",
@@ -306,17 +316,13 @@ export default class UserInfoCommands extends SlashCommand {
             const UserInfoEmbed = new EmbedBuilder()
               .setAuthor({
                 name: `${TargetUser.username} ${UserDevice}`,
-                iconURL: TargetUser.displayAvatarURL({})
+                iconURL: TargetUser.displayAvatarURL(ImageSettings)
               })
               .setColor(
                 TargetMember.displayHexColor ??
                   (colors.DEFAULT as ColorResolvable)
               )
-              .setThumbnail(
-                TargetUser.displayAvatarURL({
-                  extension: "png"
-                })
-              )
+              .setThumbnail(TargetUser.displayAvatarURL(ImageSettings))
               .setFooter({
                 text: `TIP: ${DisplayTipMessage}`,
                 iconURL: `https://emoji.gg/assets/emoji/2487-badge-serverbooster9.png`
@@ -339,7 +345,11 @@ export default class UserInfoCommands extends SlashCommand {
                 },
                 {
                   name: "Nickname:",
-                  value: `${TargetMember.nickname || TargetUser.username}`,
+                  value: `${
+                    TargetMember.nickname
+                      ? TargetMember.nickname
+                      : TargetUser.username
+                  }`,
                   inline: true
                 },
                 {
@@ -383,10 +393,10 @@ export default class UserInfoCommands extends SlashCommand {
               });
 
             const PublicAvatar = `[Public Avatar](${TargetUser.displayAvatarURL(
-              { extension: "png" }
+              ImageSettings
             )})`;
             const ServerAvatar = `[Server Avatar](${TargetUser.displayAvatarURL(
-              { extension: "png" }
+              ImageSettings
             )})`;
 
             const AvatarLinks =
