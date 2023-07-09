@@ -1,4 +1,4 @@
-const SlashCommand = require("../../utils/slashCommands").default;
+import SlashCommand from "../../utils/slashCommands";
 
 import {
   CommandInteraction,
@@ -6,20 +6,18 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Client,
   ColorResolvable,
   Interaction,
   ComponentType,
   CommandInteractionOptionResolver,
-  User,
-  DMChannel
+  User
 } from "discord.js";
 
 import colours from "../../GBF/GBFColor.json";
 import emojis from "../../GBF/GBFEmojis.json";
+import CommandLinks from "../../GBF/GBFCommands.json";
 
 import timerSchema from "../../schemas/User Schemas/Timer Schema";
-import userSchema from "../../schemas/User Schemas/User Profile Schema";
 
 import { msToTime, chunkAverage, twentyFourToTwelve } from "../../utils/Engine";
 
@@ -34,22 +32,20 @@ import {
 
 import fetch from "node-fetch";
 import { promises as fs } from "fs";
+import GBFClient from "../../handler/clienthandler";
+import { GBFUserProfileModel } from "../../schemas/User Schemas/User Profile Schema";
 
 interface IExecute {
-  client: Client;
+  client: GBFClient;
   interaction: CommandInteraction;
 }
 
 export default class BasicTimerUI extends SlashCommand {
-  constructor(client: Client) {
+  constructor(client: GBFClient) {
     super(client, {
       name: "timer",
       description: "Track your daily activites using GBF timers",
       category: "Timer",
-      userPermission: [],
-      botPermission: [],
-      cooldown: 0,
-      development: false,
       subcommands: {
         stats: {
           description: "Get the stats of the current tracking semester",
@@ -58,7 +54,7 @@ export default class BasicTimerUI extends SlashCommand {
               userID: interaction.user.id
             });
 
-            const userData = await userSchema.findOne({
+            const userData = await GBFUserProfileModel.findOne({
               userID: interaction.user.id
             });
 
@@ -288,7 +284,15 @@ export default class BasicTimerUI extends SlashCommand {
 
             // The main message that stores all of the information and the third quadrant | Longest session
 
-            const messageDescription: string = `• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
+            const messageDescription: string = `• Lifetime Time: ${msToTime(
+              timerData.totalTime
+                ? (timerData.totalTime + timerData.timeSpent) * 1000
+                : timerData.timeSpent * 1000
+            )} [${
+              timerData.totalTime
+                ? (timerData.totalTime / 3600).toLocaleString()
+                : "0"
+            } Hours]\n• Total Semester Time: ${HRTotalTime} [${hrTotalTime} ${
               hrTotalTime == 1 ? "Hour" : "Hours"
             }]\n• Average Session Time: ${avgTotalTime} [${Math.round(
               rawTotalTime
@@ -329,7 +333,7 @@ export default class BasicTimerUI extends SlashCommand {
             ).toLocaleString()} Minutes]\n\n• Account Level: ${
               userData.Rank
             }\n• XP to reach level ${
-              userData.RP + 1
+              userData.Rank + 1
             }: ${userData.RP.toLocaleString()} / ${accountXPrequired.toLocaleString()}\n${accountProgressBar} [${percentageAccountComplete.toFixed(
               2
             )}%]\n• Estimated time till next account level up: ${Number(
@@ -548,12 +552,12 @@ export default class BasicTimerUI extends SlashCommand {
               userID: interaction.user.id
             });
 
-            const UserData = await userSchema.findOne({
+            const UserData = await GBFUserProfileModel.findOne({
               userID: interaction.user.id
             });
 
             if (!UserData) {
-              const NewProfile = new userSchema({
+              const NewProfile = new GBFUserProfileModel({
                 userID: interaction.user.id
               });
 
@@ -653,7 +657,7 @@ export default class BasicTimerUI extends SlashCommand {
               userID: interaction.user.id
             });
 
-            const UserData = await userSchema.findOne({
+            const UserData = await GBFUserProfileModel.findOne({
               userID: interaction.user.id
             });
 
@@ -669,7 +673,21 @@ export default class BasicTimerUI extends SlashCommand {
                 text: `If you have a timer account, run an economy command and this message should no longer appear`
               });
 
-            if (!timerData || (timerData && !timerData.seasonName) || !UserData)
+            const UnableToRun = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setColor(colours.ERRORRED as ColorResolvable);
+
+            if (!UserData) {
+              UnableToRun.setDescription(
+                `You don't have a SueLuz account, create one using: ${CommandLinks.SueLuzRegister}`
+              );
+              return interaction.reply({
+                embeds: [UnableToRun],
+                ephemeral: true
+              });
+            }
+
+            if (!timerData || (timerData && !timerData.seasonName))
               return interaction.reply({
                 embeds: [noAccount],
                 ephemeral: true
@@ -825,6 +843,12 @@ export default class BasicTimerUI extends SlashCommand {
                     embeds: [newLongestSemester]
                   });
                 }
+
+                await timerData.updateOne({
+                  totalTime: timerData.totalTime
+                    ? timerData.totalTime + timerData.timeSpent
+                    : timerData.timeSpent
+                });
 
                 await timerData.updateOne({
                   messageID: null,
