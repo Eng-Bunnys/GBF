@@ -6,7 +6,7 @@ import {
   ApplicationCommandOptionType,
   EmbedBuilder,
   ColorResolvable,
-  CommandInteractionOptionResolver,
+  CommandInteractionOptionResolver
 } from "discord.js";
 
 import GBFClient from "../../handler/clienthandler";
@@ -131,6 +131,119 @@ export default class Tests extends SlashCommand {
 
             return interaction.reply({
               embeds: [PollEmbed]
+            });
+          }
+        },
+        embed: {
+          description: "Create an embed",
+          args: [
+            {
+              name: "author",
+              description: "The author of the embed",
+              type: ApplicationCommandOptionType.String
+            },
+            {
+              name: "title",
+              description: "The title of the embed",
+              type: ApplicationCommandOptionType.String
+            },
+            {
+              name: "description",
+              description: "The description of the embed",
+              type: ApplicationCommandOptionType.String
+            },
+            {
+              name: "color",
+              description: "The color of the embed [Default for default color]",
+              type: ApplicationCommandOptionType.String
+            },
+            {
+              name: "footer",
+              description: "The footer of the embed",
+              type: ApplicationCommandOptionType.String
+            },
+            {
+              name: "timestamp",
+              description: "Add a timestamp to the embed",
+              type: ApplicationCommandOptionType.Boolean
+            }
+          ],
+          execute: async ({ client, interaction }) => {
+            const EmbedAuthor = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("author");
+            const EmbedTitle = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("title");
+            const EmbedDescription = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("description");
+            let EmbedColor = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("color");
+            const EmbedFooter = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("footer");
+            const EmbedTimestamp = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getBoolean("timestamp");
+
+            const IncompleteEmbed = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `You need to have atleast one of these values set: \`Title\`, \`Description\`, \`Footer\` or \`Author\``
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            const colorCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+
+            const InvalidColor = new EmbedBuilder()
+              .setTitle(`${emojis.ERROR} You can't do that`)
+              .setDescription(
+                `You can only enter colors in hexadecimal format\nEG.\`#00FF00\` (# must be included) || [Click me](${`https://htmlcolorcodes.com/`}) to check out color codes`
+              )
+              .setColor(colors.ERRORRED as ColorResolvable);
+
+            if (EmbedColor.toLocaleLowerCase().includes("default"))
+              EmbedColor = colors.DEFAULT;
+
+            if (EmbedColor && !EmbedColor.includes("#")) EmbedColor += `#`;
+
+            if (EmbedColor && !colorCodeRegex.test(EmbedColor)) {
+              return interaction.reply({
+                embeds: [InvalidColor],
+                ephemeral: true
+              });
+            }
+
+            if (
+              !EmbedTitle &&
+              !EmbedDescription &&
+              !EmbedFooter &&
+              !EmbedAuthor
+            )
+              return interaction.reply({
+                embeds: [IncompleteEmbed],
+                ephemeral: true
+              });
+
+            const CustomEmbed = new EmbedBuilder();
+
+            if (EmbedAuthor)
+              CustomEmbed.setAuthor({
+                name: EmbedAuthor
+              });
+            if (EmbedTitle) CustomEmbed.setTitle(EmbedTitle);
+            if (EmbedDescription) CustomEmbed.setDescription(EmbedDescription);
+            if (EmbedColor) CustomEmbed.setColor(EmbedColor as ColorResolvable);
+            if (EmbedFooter)
+              CustomEmbed.setFooter({
+                text: EmbedFooter
+              });
+            if (EmbedTimestamp === true) CustomEmbed.setTimestamp();
+
+            return interaction.reply({
+              embeds: [CustomEmbed]
             });
           }
         }
