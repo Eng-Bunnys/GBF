@@ -15,11 +15,9 @@ import {
   GuildPremiumTier,
   GuildVerificationLevel,
   ImageURLOptions,
-  User,
   UserFlags,
   hyperlink
 } from "discord.js";
-import duration from "humanize-duration";
 
 import colors from "../../GBF/GBFColor.json";
 
@@ -485,10 +483,7 @@ export default class UserInfoCommands extends SlashCommand {
                     ? SongEndTimestamp - Date.now()
                     : null;
                   const SongEndedTimeStamp = RemainingTime
-                    ? duration(RemainingTime, {
-                        units: ["y", "mo", "w", "d", "h", "m", "s"],
-                        round: true
-                      })
+                    ? msToTime(Math.abs(RemainingTime))
                     : "Just Ended";
 
                   const SpotfiyEmoji = `<:Spotify:962905037649096815>`;
@@ -529,10 +524,9 @@ export default class UserInfoCommands extends SlashCommand {
                         const StartTime =
                           UserActivity.timestamps.start?.getTime();
                         const CurrentTime = Date.now();
-                        StartedPlaying = duration(StartTime - CurrentTime, {
-                          units: ["y", "mo", "w", "d", "h", "m", "s"],
-                          round: true
-                        });
+                        StartedPlaying = msToTime(
+                          Math.abs(StartTime - CurrentTime)
+                        );
                       } else {
                         StartedPlaying = "Just Started";
                       }
@@ -552,10 +546,7 @@ export default class UserInfoCommands extends SlashCommand {
                       } else if (UserActivity.timestamps?.end) {
                         const EndTime = UserActivity.timestamps.end?.getTime();
                         const CurrentTime = Date.now();
-                        EndsIn = duration(EndTime - CurrentTime, {
-                          units: ["y", "mo", "w", "d", "h", "m", "s"],
-                          round: true
-                        });
+                        EndsIn = msToTime(Math.abs(EndTime - CurrentTime));
                         EndsInText = `Video Ends In:`;
                       } else {
                         EndsIn = "Just Ended";
@@ -577,12 +568,8 @@ export default class UserInfoCommands extends SlashCommand {
                           timestamps.start
                         ).getTime();
                         const CurrentTime = Date.now();
-                        StartedPlaying = duration(
-                          StartedPlayingTimeStamp - CurrentTime,
-                          {
-                            units: ["y", "mo", "w", "d", "h", "m", "s"],
-                            round: true
-                          }
+                        StartedPlaying = msToTime(
+                          Math.abs(StartedPlayingTimeStamp - CurrentTime)
                         );
                         PlayTimeText = `Current Session:`;
                         break;
