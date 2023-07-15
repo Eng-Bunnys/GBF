@@ -198,12 +198,15 @@ export function MessageSplit(
   }
 
   if (message.length > codeLength) {
-    for (const substring of message.match(
+    for (let substring of message.match(
       new RegExp(`(.|\\n){1,${codeLength}}`, "g")
     ) || []) {
       const position = substring.lastIndexOf(separator);
-      arrayNeeded.push(substring.substring(0, position));
-      message = substring.substring(position + separator.length);
+      substring = substring.substring(0, position);
+      if (substring.length > 0) {
+        arrayNeeded.push(substring);
+      }
+      message = message.substring(position + separator.length);
     }
   }
 
