@@ -2,7 +2,7 @@ import { redBright, whiteBright, underline } from "chalk";
 
 import { textSync } from "figlet";
 
-import { capitalize } from "../../utils/Engine";
+import { capitalize, removeSpacesInUrls } from "../../utils/Engine";
 
 import { ActivityType, Events } from "discord.js";
 import GBFClient from "../../handler/clienthandler";
@@ -16,6 +16,8 @@ export default function botReady(client: GBFClient) {
   client.on(Events.ClientReady, async () => {
     const totalUsers =
       client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
+
+    removeSpacesInUrls(`C:\\GBF\\GBF Live\\GBF\\Freebies\\Game Settings`);
 
     let FreebiePresence: string;
     let PresenceType:
