@@ -76,6 +76,15 @@ import {
   UbisoftThreeGamesInfoEmbed,
   UbisoftTwoGamesInfoEmbed
 } from "../../GBF/Freebies/Ubisoft/Ubisoft UI";
+import { NumberOfFreebies } from "../../GBF/Freebies/Game Settings/Epic Games Settings.json";
+import {
+  OneGameEpicGamesButton,
+  OneGameEpicGamesEmbed,
+  ThreeGamesEpicGamesButton,
+  ThreeGamesEpicGamesEmbed,
+  TwoGamesEpicGamesButton,
+  TwoGamesEpicGamesEmbed
+} from "../../GBF/Freebies/Epic Games/Epic Games Messages";
 
 interface IExecute {
   client: GBFClient;
@@ -1616,6 +1625,50 @@ export default class FreebieRegistry extends SlashCommand {
                 });
               }
             });
+          }
+        },
+        current: {
+          description: "Check out the current Epic Games freebies",
+          args: [
+            {
+              name: "private",
+              description:
+                "Set whether only you can see the message | True by default",
+              type: ApplicationCommandOptionType.Boolean
+            }
+          ],
+          execute: async ({ client, interaction }) => {
+            const PrivateBoolean =
+              (
+                interaction.options as CommandInteractionOptionResolver
+              ).getBoolean("private") || true;
+
+            OneGameEpicGamesEmbed.setColor(colors.DEFAULT as ColorResolvable);
+            TwoGamesEpicGamesEmbed.setColor(colors.DEFAULT as ColorResolvable);
+            ThreeGamesEpicGamesEmbed.setColor(
+              colors.DEFAULT as ColorResolvable
+            );
+
+            if (NumberOfFreebies === 1)
+              return interaction.reply({
+                embeds: [OneGameEpicGamesEmbed],
+                components: [OneGameEpicGamesButton],
+                ephemeral: PrivateBoolean
+              });
+
+            if (NumberOfFreebies === 2)
+              return interaction.reply({
+                embeds: [TwoGamesEpicGamesEmbed],
+                components: [TwoGamesEpicGamesButton],
+                ephemeral: PrivateBoolean
+              });
+
+            if (NumberOfFreebies === 3)
+              return interaction.reply({
+                embeds: [ThreeGamesEpicGamesEmbed],
+                components: [ThreeGamesEpicGamesButton],
+                ephemeral: PrivateBoolean
+              });
           }
         }
       }
