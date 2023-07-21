@@ -12,9 +12,13 @@ import {
   TextChannel
 } from "discord.js";
 
+import fs from "fs";
+import path from "path";
+
 import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
 import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
-import { CommandOptions } from "../handler/commandhandler";
+import { CommandOptions, GBFCmd } from "../handler/commandhandler";
+import { client } from "..";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
@@ -198,15 +202,12 @@ export function MessageSplit(
   }
 
   if (message.length > codeLength) {
-    for (let substring of message.match(
+    for (const substring of message.match(
       new RegExp(`(.|\\n){1,${codeLength}}`, "g")
     ) || []) {
       const position = substring.lastIndexOf(separator);
-      substring = substring.substring(0, position);
-      if (substring.length > 0) {
-        arrayNeeded.push(substring);
-      }
-      message = message.substring(position + separator.length);
+      arrayNeeded.push(substring.substring(0, position));
+      message = substring.substring(position + separator.length);
     }
   }
 
@@ -752,8 +753,63 @@ export function levelUpReward(level: number): number {
   return rewardArray[rewardPosition - 1];
 }
 
+export function removeSpaces(str: string): string {
+  return str.replace(/\s/g, "");
+}
+
 export function toLowerCaseArray(arr: string[]): string[] {
   return arr.map((elem) => elem.toLowerCase());
+}
+
+export function removeSpacesInUrls(folderPath: string): void {
+  const files = fs.readdirSync(folderPath);
+
+  files.forEach((fileName) => {
+    const filePath = path.join(folderPath, fileName);
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    const jsonObject = JSON.parse(fileContent);
+
+    if (hasSpacesInUrls(jsonObject)) {
+      traverseAndRemoveSpaces(jsonObject);
+
+      const modifiedContent = JSON.stringify(jsonObject, null, 2);
+      fs.writeFileSync(filePath, modifiedContent, "utf-8");
+      console.log(`Modified: ${fileName}`);
+    } else {
+      console.log(`No modifications needed: ${fileName}`);
+    }
+  });
+}
+
+function hasSpacesInUrls(data: any): boolean {
+  if (typeof data === "object") {
+    for (const key in data) {
+      if (
+        typeof data[key] === "string" &&
+        data[key].includes("http") &&
+        data[key].includes(" ")
+      ) {
+        return true;
+      } else if (typeof data[key] === "object") {
+        if (hasSpacesInUrls(data[key])) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function traverseAndRemoveSpaces(data: any): void {
+  if (typeof data === "object") {
+    for (const key in data) {
+      if (typeof data[key] === "string" && data[key].includes("http")) {
+        data[key] = data[key].replace(/\s/g, "");
+      } else if (typeof data[key] === "object") {
+        traverseAndRemoveSpaces(data[key]);
+      }
+    }
+  }
 }
 
 export function generateHelpMenuFields(
@@ -775,31 +831,30 @@ export function generateHelpMenuFields(
       categoryIndex === -1
         ? cmd.category
         : `${categories[categoryIndex].emoji} ${categories[categoryIndex].name}`;
-    let category: {
-      name: string;
-      value: string;
-      inline?: boolean;
-    } = {
-      name: `• ${capitalize(categoryName)}`,
-      value: `**/${cmd.name}**`,
-      inline: true
-    };
-    const existingCategoryField = fieldAccumulator.find(
-      (field) => field.name === category.name
+    let category: APIEmbedField | undefined = fieldAccumulator.find(
+      (field) => field.name === `• ${capitalize(categoryName)}`
     );
-    if (existingCategoryField) {
-      category = existingCategoryField;
+
+    if (category) {
+      category.value += `\n- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${
+        cmd.name
+      }`;
     } else {
+      category = {
+        name: `• ${capitalize(categoryName)}`,
+        value: `- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${cmd.name}`,
+        inline: true
+      };
       fieldAccumulator.push(category);
     }
-    if (cmd instanceof GBFSlash) {
-      if (cmd.subcommands) {
-        const subcommands = Object.keys(cmd.subcommands)
-          .map((key) => `${key}`)
-          .join(", ");
-        category.value += ` - ${subcommands}`;
-      }
+
+    if (cmd instanceof GBFSlash && cmd.subcommands) {
+      const subcommands = Object.keys(cmd.subcommands)
+        .map((key) => `${key}`)
+        .join(", ");
+      category.value += ` - ${subcommands}`;
     }
+
     return fieldAccumulator;
   }, []);
 
