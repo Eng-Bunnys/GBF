@@ -17,7 +17,8 @@ import path from "path";
 
 import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
 import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
-import { CommandOptions } from "../handler/commandhandler";
+import { CommandOptions, GBFCmd } from "../handler/commandhandler";
+import { client } from "..";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
@@ -830,31 +831,30 @@ export function generateHelpMenuFields(
       categoryIndex === -1
         ? cmd.category
         : `${categories[categoryIndex].emoji} ${categories[categoryIndex].name}`;
-    let category: {
-      name: string;
-      value: string;
-      inline?: boolean;
-    } = {
-      name: `• ${capitalize(categoryName)}`,
-      value: `**/${cmd.name}**`,
-      inline: true
-    };
-    const existingCategoryField = fieldAccumulator.find(
-      (field) => field.name === category.name
+    let category: APIEmbedField | undefined = fieldAccumulator.find(
+      (field) => field.name === `• ${capitalize(categoryName)}`
     );
-    if (existingCategoryField) {
-      category = existingCategoryField;
+
+    if (category) {
+      category.value += `\n- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${
+        cmd.name
+      }`;
     } else {
+      category = {
+        name: `• ${capitalize(categoryName)}`,
+        value: `- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${cmd.name}`,
+        inline: true
+      };
       fieldAccumulator.push(category);
     }
-    if (cmd instanceof GBFSlash) {
-      if (cmd.subcommands) {
-        const subcommands = Object.keys(cmd.subcommands)
-          .map((key) => `${key}`)
-          .join(", ");
-        category.value += ` - ${subcommands}`;
-      }
+
+    if (cmd instanceof GBFSlash && cmd.subcommands) {
+      const subcommands = Object.keys(cmd.subcommands)
+        .map((key) => `${key}`)
+        .join(", ");
+      category.value += ` - ${subcommands}`;
     }
+
     return fieldAccumulator;
   }, []);
 
