@@ -1,13 +1,13 @@
 import {
-  APIEmbedField,
   BaseMessageOptions,
-  Collection,
+  CommandInteraction,
   DMChannel,
   Guild,
+  GuildChannel,
   Interaction,
   Message,
+  PermissionResolvable,
   Snowflake,
-  StringSelectMenuBuilder,
   TextBasedChannel,
   TextChannel
 } from "discord.js";
@@ -16,9 +16,6 @@ import fs from "fs";
 import path from "path";
 
 import { PermissionFlagsBits, ChannelType, GuildMember } from "discord.js";
-import { GBFSlash, GBFSlashOptions } from "../handler/handlerforSlash";
-import { CommandOptions, GBFCmd } from "../handler/commandhandler";
-import { client } from "..";
 
 /**
  * Generates a random integer between the given minimum and maximum values (inclusive).
@@ -812,116 +809,6 @@ function traverseAndRemoveSpaces(data: any): void {
   }
 }
 
-export function generateHelpMenuFields(
-  commands: Collection<string, CommandOptions | GBFSlashOptions>,
-  categories: { name: string; emoji: string }[],
-  excludedCategories: string[] = []
-): APIEmbedField[][] {
-  const fields = commands.reduce<APIEmbedField[]>((fieldAccumulator, cmd) => {
-    if (
-      toLowerCaseArray(excludedCategories).includes(
-        cmd.category.toLocaleLowerCase()
-      ) ||
-      cmd.category === ""
-    ) {
-      return fieldAccumulator;
-    }
-    const categoryIndex = categories.findIndex((c) => c.name === cmd.category);
-    const categoryName =
-      categoryIndex === -1
-        ? cmd.category
-        : `${categories[categoryIndex].emoji} ${categories[categoryIndex].name}`;
-    let category: APIEmbedField | undefined = fieldAccumulator.find(
-      (field) => field.name === `• ${capitalize(categoryName)}`
-    );
-
-    if (category) {
-      category.value += `\n- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${
-        cmd.name
-      }`;
-    } else {
-      category = {
-        name: `• ${capitalize(categoryName)}`,
-        value: `- ${cmd instanceof GBFCmd ? client.Prefix : "/"}${cmd.name}`,
-        inline: true
-      };
-      fieldAccumulator.push(category);
-    }
-
-    if (cmd instanceof GBFSlash && cmd.subcommands) {
-      const subcommands = Object.keys(cmd.subcommands)
-        .map((key) => `${key}`)
-        .join(", ");
-      category.value += ` - ${subcommands}`;
-    }
-
-    return fieldAccumulator;
-  }, []);
-
-  const groupedFields: APIEmbedField[][] = [];
-
-  for (let i = 0; i < fields.length; i += 25) {
-    groupedFields.push(fields.slice(i, i + 25));
-  }
-
-  return groupedFields;
-}
-
-export function generateCategorySelectMenu(
-  categories: { name: string; emoji: string }[],
-  excludedCategories: string[] = []
-): StringSelectMenuBuilder {
-  const filteredCategories = categories.filter(
-    (cat) =>
-      cat.name !== "" &&
-      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
-  );
-
-  const selectOptions = filteredCategories.map((c) => {
-    return {
-      label: c.emoji + " " + c.name,
-      value: c.name.toLowerCase()
-    };
-  });
-
-  const HelpMenuSelect = new StringSelectMenuBuilder()
-    .setCustomId("HelpMenuSelect")
-    .setPlaceholder("Select a category")
-    .addOptions(selectOptions);
-
-  return HelpMenuSelect;
-}
-
-export function generateCategorySelectMenuWithReturn(
-  categories: { name: string; emoji: string }[],
-  excludedCategories: string[] = []
-): StringSelectMenuBuilder {
-  const filteredCategories = categories.filter(
-    (cat) =>
-      cat.name !== "" &&
-      !toLowerCaseArray(excludedCategories).includes(cat.name.toLowerCase())
-  );
-
-  const selectOptions = filteredCategories.map((c) => {
-    return {
-      label: c.emoji + " " + c.name,
-      value: c.name.toLowerCase()
-    };
-  });
-
-  const HelpMenuSelect = new StringSelectMenuBuilder()
-    .setCustomId("HelpMenuSelect")
-    .setPlaceholder("Select a category")
-    .addOptions(selectOptions);
-
-  HelpMenuSelect.addOptions({
-    label: "Main Menu",
-    value: "HelpMenu"
-  });
-
-  return HelpMenuSelect;
-}
-
 export async function SendAndDelete(
   Channel: TextBasedChannel,
   MessageOptions: BaseMessageOptions,
@@ -960,6 +847,21 @@ export function trimArray<T>(arr: T[], maxLen = 10, type = `role(s)`): T[] {
     arr.push(` and ${len} more ${type}...` as unknown as T);
   }
   return arr;
+}
+
+export function checkPermissions(
+  interaction: CommandInteraction | Interaction,
+  interactionChannel: TextBasedChannel,
+  permissions: PermissionResolvable[]
+): boolean {
+  if (!(interactionChannel instanceof GuildChannel)) {
+    throw new Error(
+      "Interaction channel is not a guild channel [checkPermissions function error]"
+    );
+  }
+  return interactionChannel
+    .permissionsFor(interaction.guild.members.me)
+    .has(permissions as PermissionResolvable, true);
 }
 
 interface TimeUnits {
