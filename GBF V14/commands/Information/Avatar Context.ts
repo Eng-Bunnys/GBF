@@ -1,91 +1,57 @@
 import GBFClient from "../../handler/clienthandler";
+import { ImageModel } from "../../schemas/Beastars Schemas/Images Schema";
+import SlashCommand from "../../utils/slashCommands";
 
 import {
-  ActionRowBuilder,
   ApplicationCommandType,
-  ButtonBuilder,
-  ButtonStyle,
-  ColorResolvable,
-  EmbedBuilder,
-  GuildMember,
-  ImageURLOptions,
-  UserContextMenuCommandInteraction,
-  hyperlink
+  MessageContextMenuCommandInteraction
 } from "discord.js";
-
-import { capitalize } from "../../utils/Engine";
-import colors from "../../GBF/GBFColor.json";
-import SlashCommand from "../../utils/slashCommands";
 
 interface IExecute {
   client: GBFClient;
-  interaction: UserContextMenuCommandInteraction;
+  interaction: MessageContextMenuCommandInteraction;
 }
 
-export default class ContextAvatar extends SlashCommand {
+export default class AddImageContext extends SlashCommand {
   constructor(client: GBFClient) {
     super(client, {
-      name: "Show Avatar",
-      type: ApplicationCommandType.User
+      name: "get image",
+      category: "General",
+      type: ApplicationCommandType.Message,
+
+      development: true,
+      dmEnabled: false
     });
   }
 
   async execute({ client, interaction }: IExecute) {
-    const TargetUser = interaction.targetUser || interaction.user;
+    let ImageData = await ImageModel.findOne({
+      guildID: interaction.guildId
+    });
 
-    let TargetMember: GuildMember | undefined;
+    if (!ImageData) {
+      ImageData = new ImageModel({
+        guildID: interaction.guildId
+      });
 
-    if (interaction.inGuild())
-      TargetMember = interaction.guild.members.cache.get(TargetUser.id);
-    else TargetMember = undefined;
-
-    const ImageSettings: ImageURLOptions = {
-      extension: "png",
-      size: 1024
-    };
-
-    let AvatarURLs: string = `${hyperlink(
-      "Global Avatar",
-      TargetUser.displayAvatarURL(ImageSettings)
-    )}`;
-
-    const AvatarEmbed = new EmbedBuilder()
-      .setTitle(`${capitalize(TargetUser.username)}'s Avatar`)
-      .setColor(colors.DEFAULT as ColorResolvable)
-      .setImage(TargetUser.displayAvatarURL(ImageSettings));
-
-    const AvatarButtons: ActionRowBuilder<any> =
-      new ActionRowBuilder().addComponents([
-        new ButtonBuilder()
-          .setLabel("Global Avatar")
-          .setStyle(ButtonStyle.Link)
-          .setURL(TargetUser.displayAvatarURL(ImageSettings))
-      ]);
-
-    if (
-      TargetMember &&
-      TargetMember.displayAvatarURL() !== TargetUser.displayAvatarURL()
-    ) {
-      AvatarEmbed.setThumbnail(TargetMember.displayAvatarURL(ImageSettings));
-
-      AvatarURLs += ` | ${hyperlink(
-        "Server Avatar",
-        TargetMember.displayAvatarURL(ImageSettings)
-      )}`;
-
-      AvatarButtons.addComponents([
-        new ButtonBuilder()
-          .setLabel("Server Avatar URL")
-          .setStyle(ButtonStyle.Link)
-          .setURL(TargetMember.displayAvatarURL(ImageSettings))
-      ]);
+      await ImageData.save();
     }
 
-    AvatarEmbed.setDescription(AvatarURLs);
+    const TargetImage = ImageData.image?.find((image) =>
+      interaction.targetMessage.content
+        .toLowerCase()
+        .split(" ")
+        .includes(image.name.toLocaleLowerCase())
+    );
+
+    if (!TargetImage)
+      return interaction.reply({
+        content: `I couldn't find ${interaction.targetMessage.content}, use b! add [name] [url] to add it!`,
+        ephemeral: true
+      });
 
     return interaction.reply({
-      embeds: [AvatarEmbed],
-      components: [AvatarButtons]
+      content: `${TargetImage.URL}`
     });
   }
 }
