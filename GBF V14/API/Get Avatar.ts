@@ -6,7 +6,7 @@ import {
   ButtonBuilder,
   EmbedBuilder,
   ColorResolvable,
-  ButtonStyle
+  ButtonStyle,
 } from "discord.js";
 import { capitalize } from "../utils/Engine";
 import colors from "../GBF/GBFColor.json";
@@ -29,7 +29,7 @@ class AvatarBuilder {
   private getAvatarURLs(): string {
     const imageSettings: ImageURLOptions = {
       extension: "png",
-      size: 1024
+      size: 1024,
     };
 
     let avatarURLs = `[Global Avatar](${this.targetUser.displayAvatarURL(
@@ -58,7 +58,11 @@ class AvatarBuilder {
       )
       .setDescription(this.getAvatarURLs());
 
-    if (this.targetMember) {
+    if (
+      this.targetMember &&
+      this.targetMember.displayAvatarURL() !==
+        this.targetUser.displayAvatarURL()
+    ) {
       avatarEmbed.setThumbnail(
         this.targetMember.displayAvatarURL({ extension: "png", size: 1024 })
       );
