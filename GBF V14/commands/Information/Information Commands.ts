@@ -15,8 +15,9 @@ import {
   GuildPremiumTier,
   GuildVerificationLevel,
   ImageURLOptions,
+  User,
   UserFlags,
-  hyperlink
+  hyperlink,
 } from "discord.js";
 
 import colors from "../../GBF/GBFColor.json";
@@ -26,8 +27,9 @@ import {
   capitalize,
   chooseRandomFromArray,
   msToTime,
-  trimArray
+  trimArray,
 } from "../../utils/Engine";
+import AvatarBuilder from "../../API/Get Avatar";
 
 export default class UserInfoCommands extends SlashCommand {
   constructor(client: GBFClient) {
@@ -43,7 +45,7 @@ export default class UserInfoCommands extends SlashCommand {
             {
               name: "user",
               description: "View this user's avatar",
-              type: ApplicationCommandOptionType.User
+              type: ApplicationCommandOptionType.User,
             },
             {
               name: "prioritize",
@@ -52,14 +54,14 @@ export default class UserInfoCommands extends SlashCommand {
               choices: [
                 {
                   name: "Global Avatar",
-                  value: `global`
+                  value: `global`,
                 },
                 {
                   name: "Server Avatar",
-                  value: `server`
-                }
-              ]
-            }
+                  value: `server`,
+                },
+              ],
+            },
           ],
           execute: async ({ client, interaction }) => {
             const TargetUser =
@@ -70,72 +72,29 @@ export default class UserInfoCommands extends SlashCommand {
                 interaction.options as CommandInteractionOptionResolver
               ).getString("prioritize") || "global";
 
-            const ImageSettings: ImageURLOptions = {
-              extension: "png",
-              size: 1024
-            };
+            const Priority = AvatarPriority === "global" ? false : true;
 
             const TargetMember = interaction.guild.members.cache.get(
               TargetUser.id
             );
 
-            let AvatarURLs = `${hyperlink(
-              "Avatar URL",
-              TargetUser.displayAvatarURL(ImageSettings)
-            )}`;
+            const GetAvatar = new AvatarBuilder(
+              TargetUser,
+              TargetMember,
+              colors.DEFAULT as ColorResolvable,
+              Priority
+            );
 
-            const AvatarEmbed = new EmbedBuilder()
-              .setTitle(`${capitalize(TargetUser.username)}'s Avatar`)
-              .setColor(colors.DEFAULT as ColorResolvable);
-
-            if (AvatarPriority === "global")
-              AvatarEmbed.setImage(TargetUser.displayAvatarURL(ImageSettings));
+            const AvatarEmbed: EmbedBuilder = GetAvatar.getEmbed();
 
             const AvatarButtons: ActionRowBuilder<any> =
-              new ActionRowBuilder().addComponents([
-                new ButtonBuilder()
-                  .setLabel("Global Avatar")
-                  .setStyle(ButtonStyle.Link)
-                  .setURL(TargetUser.displayAvatarURL(ImageSettings))
-              ]);
-
-            if (
-              TargetMember &&
-              TargetMember.displayAvatarURL() !== TargetUser.displayAvatarURL()
-            ) {
-              if (AvatarPriority === "server") {
-                AvatarEmbed.setImage(
-                  TargetMember.displayAvatarURL(ImageSettings)
-                ).setThumbnail(TargetUser.displayAvatarURL(ImageSettings));
-              }
-
-              if (AvatarPriority === "global") {
-                AvatarEmbed.setImage(
-                  TargetUser.displayAvatarURL(ImageSettings)
-                ).setThumbnail(TargetMember.displayAvatarURL(ImageSettings));
-              }
-
-              AvatarURLs += ` | ${hyperlink(
-                "Server Avatar",
-                TargetMember.displayAvatarURL(ImageSettings)
-              )}`;
-
-              AvatarButtons.addComponents([
-                new ButtonBuilder()
-                  .setLabel("Server Avatar")
-                  .setStyle(ButtonStyle.Link)
-                  .setURL(TargetMember.displayAvatarURL(ImageSettings))
-              ]);
-            } else
-              AvatarEmbed.setImage(TargetUser.displayAvatarURL(ImageSettings));
-
-            AvatarEmbed.setDescription(AvatarURLs);
+              GetAvatar.getButtonRow();
 
             return interaction.reply({
               embeds: [AvatarEmbed],
-              components: [AvatarButtons]
+              components: [AvatarButtons],
             });
-          }
+          },
         },
         userinfo: {
           description: "Get information about a Discord user",
@@ -143,8 +102,8 @@ export default class UserInfoCommands extends SlashCommand {
             {
               name: "user",
               description: "View this user's information",
-              type: ApplicationCommandOptionType.User
-            }
+              type: ApplicationCommandOptionType.User,
+            },
           ],
           execute: async ({ client, interaction }) => {
             const TargetUser =
@@ -160,41 +119,41 @@ export default class UserInfoCommands extends SlashCommand {
 
             const ImageSettings: ImageURLOptions = {
               extension: "png",
-              size: 1024
+              size: 1024,
             };
 
             if (!TargetMember) {
               const DiscordUser = new EmbedBuilder()
                 .setAuthor({
                   name: `${TargetUser.username}`,
-                  iconURL: TargetUser.displayAvatarURL(ImageSettings)
+                  iconURL: TargetUser.displayAvatarURL(ImageSettings),
                 })
                 .setThumbnail(TargetUser.displayAvatarURL(ImageSettings))
                 .addFields(
                   {
                     name: "Joined Discord:",
                     value: `<t:${UserCreatedTimestamp}:F>, <t:${UserCreatedTimestamp}:R>`,
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: "Username:",
                     value: `${TargetUser.username}`,
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: "Account Type:",
                     value: `${TargetUser.bot ? "Bot" : "Human"}`,
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: "ID:",
                     value: `${TargetUser.id}`,
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: "\u200b",
                     value: "\u200b",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: "Profile URL:",
@@ -202,17 +161,17 @@ export default class UserInfoCommands extends SlashCommand {
                       TargetUser.username,
                       `https://discord.com/users/${TargetUser.id}`
                     )}`,
-                    inline: true
+                    inline: true,
                   }
                 )
                 .setColor(colors.DEFAULT as ColorResolvable)
                 .setFooter({
                   text: `TIP: This command shows more information about server members`,
-                  iconURL: `https://emoji.gg/assets/emoji/2487-badge-serverbooster9.png`
+                  iconURL: `https://emoji.gg/assets/emoji/2487-badge-serverbooster9.png`,
                 });
 
               return interaction.reply({
-                embeds: [DiscordUser]
+                embeds: [DiscordUser],
               });
             }
 
@@ -227,7 +186,7 @@ export default class UserInfoCommands extends SlashCommand {
               `The joined server and Discord timestamps are in UNIX which means they will update forever`,
               `We use a "smart" system, that means *some* fields will not show if empty to avoid clutter`,
               `If the user doesn't have any roles that field will not show`,
-              `If you click the user ID it will take you to their profile`
+              `If you click the user ID it will take you to their profile`,
             ];
             const DisplayTipMessage = chooseRandomFromArray(TipMessages);
 
@@ -258,23 +217,23 @@ export default class UserInfoCommands extends SlashCommand {
               [UserFlags[UserFlags.BugHunterLevel2]]:
                 "<:bugHunter2:973146470494662677>",
               [UserFlags[UserFlags.CertifiedModerator]]:
-                "<:certifiedMod:973146823814418492>"
+                "<:certifiedMod:973146823814418492>",
             };
 
             const StatusesMap = {
               "": "None",
-              "online": "<:online:934570010901377025> Online",
-              "idle": "<:idle:934569895474114611> Idle",
-              "dnd": "<:dnd:934569539776155718> Do Not Disturb",
-              "streaming": "<:streaming:934569539054731324> Streaming",
-              "offline": "<:invs:934569539197341717> Offline"
+              online: "<:online:934570010901377025> Online",
+              idle: "<:idle:934569895474114611> Idle",
+              dnd: "<:dnd:934569539776155718> Do Not Disturb",
+              streaming: "<:streaming:934569539054731324> Streaming",
+              offline: "<:invs:934569539197341717> Offline",
             };
 
             const DevicesMap = {
               "": "None",
               web: "🌐",
               desktop: "💻",
-              mobile: "📱"
+              mobile: "📱",
             };
 
             const StatusText = TargetMember.presence
@@ -314,7 +273,7 @@ export default class UserInfoCommands extends SlashCommand {
             const UserInfoEmbed = new EmbedBuilder()
               .setAuthor({
                 name: `${TargetUser.username} ${UserDevice}`,
-                iconURL: TargetUser.displayAvatarURL(ImageSettings)
+                iconURL: TargetUser.displayAvatarURL(ImageSettings),
               })
               .setColor(
                 TargetMember.displayHexColor ??
@@ -323,23 +282,23 @@ export default class UserInfoCommands extends SlashCommand {
               .setThumbnail(TargetUser.displayAvatarURL(ImageSettings))
               .setFooter({
                 text: `TIP: ${DisplayTipMessage}`,
-                iconURL: `https://emoji.gg/assets/emoji/2487-badge-serverbooster9.png`
+                iconURL: `https://emoji.gg/assets/emoji/2487-badge-serverbooster9.png`,
               })
               .addFields(
                 {
                   name: "User Badges:",
                   value: `${UserBadges}`,
-                  inline: false
+                  inline: false,
                 },
                 {
                   name: "Joined Discord:",
                   value: `<t:${UserCreatedTimestamp}:F>, <t:${UserCreatedTimestamp}:R>`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Joined Server:",
                   value: `<t:${UserJoinedServerTimestamp}:F>, <t:${UserJoinedServerTimestamp}:R>`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Nickname:",
@@ -348,12 +307,12 @@ export default class UserInfoCommands extends SlashCommand {
                       ? TargetMember.nickname
                       : TargetUser.username
                   }`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Account Type:",
                   value: `${TargetUser.bot ? "Bot" : "Human"}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Color:",
@@ -362,24 +321,24 @@ export default class UserInfoCommands extends SlashCommand {
                   }](${`https://www.color-hex.com/color/${TargetMember.displayHexColor.slice(
                     1
                   )}`})`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "ID:",
                   value: `[${
                     TargetUser.id
                   }](${`https://discord.com/users/${TargetUser.id}`})`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Highest Role:",
                   value: `${HighestRoleDisplay}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Status:",
                   value: `${StatusText}`,
-                  inline: true
+                  inline: true,
                 }
               );
 
@@ -387,7 +346,7 @@ export default class UserInfoCommands extends SlashCommand {
               UserInfoEmbed.addFields({
                 name: `Roles [${UserRoles.length}]:`,
                 value: `${UserRoles}`,
-                inline: false
+                inline: false,
               });
 
             const PublicAvatar = `[Public Avatar](${TargetUser.displayAvatarURL(
@@ -411,14 +370,14 @@ export default class UserInfoCommands extends SlashCommand {
                   TargetMember.premiumSinceTimestamp / 1000
                 )}:F>, <t:${Math.round(
                   TargetMember.premiumSinceTimestamp / 1000
-                )}:R>`
+                )}:R>`,
               });
 
             if ((KeyPerms(TargetMember)[1] as number) > 0) {
               UserInfoEmbed.addFields({
                 name: `Key Permissions [${KeyPerms(TargetMember)[1]}]:`,
                 value: `${KeyPerms(TargetMember)[0]}`,
-                inline: false
+                inline: false,
               });
             }
 
@@ -426,7 +385,7 @@ export default class UserInfoCommands extends SlashCommand {
               1: "Playing",
               2: "Listening",
               3: "Watching",
-              4: "Competing"
+              4: "Competing",
             };
 
             if (TargetMember.presence !== null && TargetUser.bot) {
@@ -436,7 +395,7 @@ export default class UserInfoCommands extends SlashCommand {
                     ActivitiesMessage[TargetMember.presence.activities[0].type]
                   }:`,
                   value: `${TargetMember.presence.activities[0].name}`,
-                  inline: true
+                  inline: true,
                 });
               }
               if (TargetMember.presence.activities.length > 1) {
@@ -445,7 +404,7 @@ export default class UserInfoCommands extends SlashCommand {
                     ActivitiesMessage[TargetMember.presence.activities[1].type]
                   }:`,
                   value: `${TargetMember.presence.activities[1].name}`,
-                  inline: true
+                  inline: true,
                 });
               }
             }
@@ -468,7 +427,7 @@ export default class UserInfoCommands extends SlashCommand {
                   UserInfoEmbed.addFields({
                     name: `${StatusName}:`,
                     value: `${StatusEmoji} ${StatusState}`,
-                    inline: true
+                    inline: true,
                   });
                 } else if (UserActivity.type === ActivityType.Listening) {
                   StatusName = UserActivity?.name ?? "Listening";
@@ -503,7 +462,7 @@ export default class UserInfoCommands extends SlashCommand {
                     )}`})**\nby ${StatusState}\non [${AlbumName}](${`https://open.spotify.com/search/${AlbumName.split(
                       " "
                     ).join("%20")}`})\nTrack ends in: ${SongEndedTimeStamp}`,
-                    inline: true
+                    inline: true,
                   });
                 } else if (UserActivity.type === ActivityType.Playing) {
                   let GameName: string; //League of legends etc
@@ -533,7 +492,7 @@ export default class UserInfoCommands extends SlashCommand {
 
                       UserInfoEmbed.addFields({
                         name: `Watching YouTube :YouTube::`,
-                        value: `${GameDetails} for: ${StartedPlaying}`
+                        value: `${GameDetails} for: ${StartedPlaying}`,
                       });
                     } else {
                       let EndsInText: string;
@@ -556,7 +515,7 @@ export default class UserInfoCommands extends SlashCommand {
                       const VideoState = UserActivity.assets?.smallText;
                       UserInfoEmbed.addFields({
                         name: `Watching YouTube :YouTube::`,
-                        value: `**Video:** ${GameDetails}\n**Channel:** ${GameState}\n**Video Status:** ${VideoState}\n**${EndsInText}** ${EndsIn}`
+                        value: `**Video:** ${GameDetails}\n**Channel:** ${GameState}\n**Video Status:** ${VideoState}\n**${EndsInText}** ${EndsIn}`,
                       });
                     }
                   } else {
@@ -592,7 +551,7 @@ export default class UserInfoCommands extends SlashCommand {
                     UserInfoEmbed.addFields({
                       name: `Playing ${GameName}:`,
                       value: `${DetailsValue}`,
-                      inline: true
+                      inline: true,
                     });
                   }
                 }
@@ -600,9 +559,9 @@ export default class UserInfoCommands extends SlashCommand {
             }
 
             return interaction.reply({
-              embeds: [UserInfoEmbed]
+              embeds: [UserInfoEmbed],
             });
-          }
+          },
         },
         serverinfo: {
           description: "Show's information about this server",
@@ -611,14 +570,14 @@ export default class UserInfoCommands extends SlashCommand {
               [GuildPremiumTier.None]: "Tier 0",
               [GuildPremiumTier.Tier1]: "Tier 1",
               [GuildPremiumTier.Tier2]: "Tier 2",
-              [GuildPremiumTier.Tier3]: "Tier 3"
+              [GuildPremiumTier.Tier3]: "Tier 3",
             };
 
             const NSFWMap = {
               [GuildNSFWLevel.Default]: "Default",
               [GuildNSFWLevel.Safe]: "Safe",
               [GuildNSFWLevel.Explicit]: "Explicit",
-              [GuildNSFWLevel.AgeRestricted]: "Age Restricted"
+              [GuildNSFWLevel.AgeRestricted]: "Age Restricted",
             };
 
             const VerificationMap = {
@@ -630,7 +589,7 @@ export default class UserInfoCommands extends SlashCommand {
               [GuildVerificationLevel.High]:
                 "Must be a member of the server for longer than 10 minutes",
               [GuildVerificationLevel.VeryHigh]:
-                "Must have a verified phone number"
+                "Must have a verified phone number",
             };
 
             const ServerInformationEmbed = new EmbedBuilder()
@@ -648,21 +607,21 @@ export default class UserInfoCommands extends SlashCommand {
                 {
                   name: "Total Members",
                   value: `${interaction.guild.memberCount.toLocaleString()}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Total Humans",
                   value: `${interaction.guild.members.cache
                     .filter((member) => !member.user.bot)
                     .size.toLocaleString()}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Total Bots",
                   value: `${interaction.guild.members.cache
                     .filter((member) => member.user.bot)
                     .size.toLocaleString()}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Categories",
@@ -671,7 +630,7 @@ export default class UserInfoCommands extends SlashCommand {
                       (c) => c.type == ChannelType.GuildCategory
                     ).size
                   }`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Text Channels",
@@ -680,7 +639,7 @@ export default class UserInfoCommands extends SlashCommand {
                       (c) => c.type === ChannelType.GuildText
                     ).size
                   }`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Voice Channels",
@@ -689,75 +648,75 @@ export default class UserInfoCommands extends SlashCommand {
                       (c) => c.type === ChannelType.GuildVoice
                     ).size
                   }`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Role Count",
                   value: `${interaction.guild.roles.cache.size.toLocaleString()}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Boosts",
                   value: `${interaction.guild.premiumSubscriptionCount}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Boost Tier",
                   value: `${TierMap[interaction.guild.premiumTier]}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Explicit Content Filter",
                   value: `${NSFWMap[interaction.guild.nsfwLevel]}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Verification Level",
                   value: `${
                     VerificationMap[interaction.guild.verificationLevel]
                   }`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "AFK Channel",
                   value: `${interaction.guild.afkChannel ?? "None"}`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "AFK Timeout",
                   value: interaction.guild.afkChannel
                     ? `${msToTime(interaction.guild.afkTimeout * 1000)}`
                     : "None",
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Owner",
                   value: `<@${interaction.guild.ownerId}>`,
-                  inline: true
+                  inline: true,
                 },
                 {
                   name: "Region",
                   value: `${interaction.guild.preferredLocale}`,
-                  inline: true
+                  inline: true,
                 }
               )
               .setFooter({
                 text: `Server ID: ${interaction.guild.id}`,
-                iconURL: interaction.guild.iconURL()
+                iconURL: interaction.guild.iconURL(),
               });
 
             if (interaction.guild.description)
               ServerInformationEmbed.addFields({
                 name: "Server Description",
                 value: `${interaction.guild.description ?? "No description"}`,
-                inline: true
+                inline: true,
               });
 
             if (interaction.guild.bannerURL())
               ServerInformationEmbed.addFields({
                 name: "Server Banner",
                 value: `[Banner URL](${interaction.guild.bannerURL()})`,
-                inline: true
+                inline: true,
               });
 
             function formatFeatures(arr: string[]): string {
@@ -778,15 +737,15 @@ export default class UserInfoCommands extends SlashCommand {
               const GuildFeatures = formatFeatures(interaction.guild.features);
               ServerInformationEmbed.addFields({
                 name: "Features",
-                value: `${GuildFeatures}`
+                value: `${GuildFeatures}`,
               });
             }
             return interaction.reply({
-              embeds: [ServerInformationEmbed]
+              embeds: [ServerInformationEmbed],
             });
-          }
-        }
-      }
+          },
+        },
+      },
     });
   }
 }
