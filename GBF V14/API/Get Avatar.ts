@@ -55,7 +55,12 @@ class AvatarBuilder {
       .setColor(this.color)
       .setDescription(this.getAvatarURLs());
 
-    if (this.priority && this.targetMember) {
+    if (
+      this.priority &&
+      this.targetMember &&
+      this.targetMember.displayAvatarURL() !==
+        this.targetUser.displayAvatarURL()
+    ) {
       AvatarEmbed.setImage(
         this.targetMember.displayAvatarURL(ImageData)
       ).setThumbnail(this.targetUser.displayAvatarURL(ImageData));
