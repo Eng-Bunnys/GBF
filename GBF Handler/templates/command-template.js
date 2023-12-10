@@ -1,4 +1,4 @@
-const Command = require("../handler/commandhandler");
+const Command = require("../../utils/command");
 
 module.exports = class LegacyCommand extends Command {
   constructor(client) {
