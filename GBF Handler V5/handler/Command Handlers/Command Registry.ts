@@ -1,22 +1,41 @@
-import { readdir, lstat } from "fs/promises";
+import { readdir } from "fs/promises";
 import { join, resolve } from "path";
 import { MessageCommand } from "./Message Handler";
-import GBF from "../GBF";
+import { GBF } from "../GBF";
 
+/**
+ * Load a command module and register it with the client.
+ *
+ * @param {GBF} client - The Discord client instance.
+ * @param {string} filePath - The path to the command module.
+ * @returns {Promise<void>} - A promise resolving when the command is loaded.
+ */
 async function LoadCommand(client: GBF, filePath: string): Promise<void> {
   try {
-    const CommandModule = new (await import(filePath)).default(
-      client
-    ) as MessageCommand;
+    const CommandModule = await import(filePath);
+    const CommandClass = CommandModule.default || CommandModule;
 
-    const { name, aliases } = CommandModule.options;
+    if (
+      typeof CommandClass !== "function" ||
+      !(CommandClass.prototype instanceof MessageCommand)
+    ) {
+      throw new Error(
+        `${filePath} does not export a constructable class extending MessageCommand.`
+      );
+    }
 
-    if (!name) throw new Error(`${filePath} does not have a name option.`);
+    const CommandInstance = new CommandClass(client);
+    const { name, aliases } = CommandInstance.options;
 
-    if (client.MessageCommands.has(name))
+    if (!name) {
+      throw new Error(`${filePath} does not have a name option.`);
+    }
+
+    if (client.MessageCommands.has(name)) {
       throw new Error(`The Message Command "${name}" exists twice.`);
+    }
 
-    client.MessageCommands.set(name, CommandModule);
+    client.MessageCommands.set(name, CommandInstance);
 
     if (aliases) {
       aliases.forEach((alias) => {
@@ -30,32 +49,35 @@ async function LoadCommand(client: GBF, filePath: string): Promise<void> {
   }
 }
 
+/**
+ * Register all command modules in specified directories.
+ *
+ * @param {GBF} client - The Discord client instance.
+ * @param {...string} dirs - The directories to scan for command modules.
+ * @returns {Promise<void>} - A promise resolving when all commands are registered.
+ */
 export async function RegisterCommands(
   client: GBF,
   ...dirs: string[]
 ): Promise<void> {
-  for (const dir of dirs) {
-    try {
-      const DirPath = resolve(__dirname, dir);
+  await Promise.all(
+    dirs.map(async (dir) => {
+      try {
+        const DirPath = resolve(__dirname, dir);
+        const AvailableFiles = await readdir(DirPath, { withFileTypes: true });
 
-      const AvailableFiles = await readdir(DirPath);
+        for (const file of AvailableFiles) {
+          const filePath = join(DirPath, file.name);
 
-      await Promise.all(
-        AvailableFiles.map(async (file) => {
-          const FilePath = join(DirPath, file);
-          const Stat = await lstat(FilePath);
-
-          if (file.includes("-ignore")) return;
-
-          if (Stat.isDirectory()) {
-            await RegisterCommands(client, FilePath);
-          } else if (file.endsWith(".ts") || file.endsWith(".js")) {
-            await LoadCommand(client, FilePath);
+          if (file.name.includes("-ignore") || file.isDirectory()) {
+            await RegisterCommands(client, filePath);
+          } else if (file.name.endsWith(".ts") || file.name.endsWith(".js")) {
+            await LoadCommand(client, filePath);
           }
-        })
-      );
-    } catch (err) {
-      console.error(`Error when reading directory ${dir}: ${err.message}`);
-    }
-  }
+        }
+      } catch (err) {
+        console.error(`Error when reading directory ${dir}: ${err.message}`);
+      }
+    })
+  );
 }
