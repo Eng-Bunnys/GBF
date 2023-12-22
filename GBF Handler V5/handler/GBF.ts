@@ -10,36 +10,190 @@ import { IGBFClient } from "./types";
 import { connect } from "mongoose";
 import { MessageCommand } from "./Command Handlers/Message Handler";
 import { RegisterCommands } from "./Command Handlers/Command Registry";
-import { redBright, greenBright } from "chalk";
+import { redBright, greenBright, blueBright } from "chalk";
 import path from "path";
 
-export default class GBF extends Client implements IGBFClient {
+/**
+ * GBF Handler
+ * @class
+ * @extends {Client}
+ * @implements {IGBFClient}
+ */
+export class GBF extends Client implements IGBFClient {
+  /**
+   * The version of the command and event handler.
+   * @readonly
+   * @type {?string}
+   */
   public readonly HandlerVersion?: string;
+
+  /**
+   * The folder where commands are located.
+   * @readonly
+   * @type {?string}
+   */
   public readonly CommandsFolder?: string;
+
+  /**
+   * The folder where events are located.
+   * @readonly
+   * @type {?string}
+   */
   public readonly EventsFolder?: string;
+
+  /**
+   * The default command prefix.
+   * @readonly
+   * @type {?string}
+   */
   public readonly Prefix?: string;
+
+  /**
+   * An array of possible prefixes.
+   * @readonly
+   * @type {?string[]}
+   */
   public readonly Prefixes?: string[];
+
+  /**
+   * Collection of message commands.
+   * @readonly
+   * @type {Collection<string, MessageCommand>}
+   */
   public readonly MessageCommands: Collection<string, MessageCommand> =
     new Collection();
+
+  /**
+   * Collection of slash commands.
+   * @readonly
+   * @type {Collection<string, any>}
+   */
   public readonly SlashCommands: Collection<string, any> = new Collection();
+
+  /**
+   * Collection of command aliases.
+   * @readonly
+   * @type {Collection<string, string>}
+   */
   public readonly aliases: Collection<string, string> = new Collection();
+
+  /**
+   * Collection of events.
+   * @readonly
+   * @type {Collection<string, unknown>}
+   */
   public readonly events: Collection<string, unknown> = new Collection();
+
+  /**
+   * Configuration object.
+   * @readonly
+   * @type {any}
+   */
   public readonly config: any;
+
+  /**
+   * Intent bits for the client.
+   * @readonly
+   * @type {BitFieldResolvable<string, number>}
+   */
   public readonly intents: BitFieldResolvable<string, number>;
+
+  /**
+   * Array of test servers.
+   * @readonly
+   * @type {string[]}
+   */
   public readonly TestServers: string[];
+
+  /**
+   * Array of developer IDs.
+   * @readonly
+   * @type {string[]}
+   */
   public readonly Developers: string[];
+
+  /**
+   * The channel for logs.
+   * @readonly
+   * @type {?string}
+   */
   public readonly LogsChannel?: string;
+
+  /**
+   * Array of partner IDs.
+   * @readonly
+   * @type {string[]}
+   */
   public readonly Partners?: string[];
+
+  /**
+   * The support server ID.
+   * @readonly
+   * @type {?string}
+   */
   public readonly SupportServer?: string;
+
+  /**
+   * Array of help categories to be ignored.
+   * @readonly
+   * @type {string[]}
+   */
   public readonly IgnoredHelpCategories?: string[];
+
+  /**
+   * The version of the bot.
+   * @readonly
+   * @type {string}
+   */
   public readonly Version: string;
+
+  /**
+   * Array of disabled command names.
+   * @readonly
+   * @type {string[]}
+   */
   public readonly DisabledCommands?: string[];
+
+  /**
+   * Flag indicating whether to log actions.
+   * @readonly
+   * @type {?boolean}
+   */
   public readonly LogActions?: boolean;
+
+  /**
+   * Flag indicating whether to disable default commands.
+   * @readonly
+   * @type {?boolean}
+   */
   public readonly DisableDefaultCommands?: boolean;
+
+  /**
+   * Flag indicating whether to allow DM commands.
+   * @readonly
+   * @type {?boolean}
+   */
   public readonly DMCommands?: boolean;
+
+  /**
+   * Flag indicating whether to automatically login.
+   * @readonly
+   * @type {?boolean}
+   */
   public readonly AutoLogin?: boolean;
+
+  /**
+   * Flag indicating whether to enable database interactions.
+   * @readonly
+   * @type {?boolean}
+   */
   public readonly DatabaseInteractions?: boolean;
 
+  /**
+   * Constructs a new instance of the GBF class.
+   * @constructor
+   * @param {IGBFClient & ClientOptions} options - Options for the GBF client.
+   */
   constructor(options: IGBFClient & ClientOptions) {
     super(options);
 
@@ -71,35 +225,67 @@ export default class GBF extends Client implements IGBFClient {
     this.LoadEvents(path.join(__dirname, "./Handler Events"));
   }
 
-  private LoadEvents(folder: string): void {
-    const EventFiles = GBFUtils.readFilesRecursively(folder, [".ts", ".js"]);
+  /**
+   * Loads commands from the specified folder.
+   * @private
+   * @async
+   * @param {string} folder - The folder path where commands are located.
+   * @returns {Promise<void>}
+   */
+  private async LoadCommands(folder: string): Promise<void> {
+    try {
+      await RegisterCommands(this, folder);
 
-    EventFiles.forEach(async (file) => {
-      try {
-        const EventModule = await import(file);
-        const EventFunction =
-          typeof EventModule === "function" ? EventModule : EventModule.default;
-
-        if (typeof EventFunction != "function")
-          throw Error(`"${file}" does not have a callable default export`);
-
-        this.events.set(
-          EventFunction.name,
-          EventFunction as GlobalEventHandlers
+      if (this.LogActions) {
+        console.log(
+          blueBright(
+            `• Registered ${this.MessageCommands.size.toLocaleString(
+              "en-US"
+            )} Message Commands.`
+          )
         );
-
-        EventFunction(this, this.config);
-      } catch (EventError) {
-        console.log(redBright(`Error loading "${file}":`, EventError));
       }
-    });
+    } catch (error) {
+      console.log(redBright(`Error loading commands: ${error}`));
+    }
   }
 
   /**
-   * Logs in the bot using a Discord token.
-   * @param token - Optional token to override the configured token
-   * @returns A promise that resolves to a success message
-   * @throws If there is an error during login
+   * Loads events from the specified folder.
+   * @private
+   * @async
+   * @param {string} folder - The folder path where events are located.
+   * @returns {Promise<void>}
+   */
+  private async LoadEvents(folder: string): Promise<void> {
+    const EventFiles = GBFUtils.readFilesRecursively(folder, [".ts", ".js"]);
+
+    for (const file of EventFiles) {
+      try {
+        const EventModule = await import(file);
+        const EventFunction = EventModule.default || EventModule;
+
+        if (typeof EventFunction !== "function") {
+          throw new Error(`"${file}" does not have a callable export.`);
+        }
+
+        this.events.set(
+          EventFunction.name,
+          EventFunction as unknown as GlobalEventHandlers
+        );
+
+        await EventFunction(this, this.config);
+      } catch (error) {
+        console.log(redBright(`Error loading "${file}": ${error}`));
+      }
+    }
+  }
+
+  /**
+   * Logs in the client with the provided token or the one from the configuration.
+   * @async
+   * @param {string} [token] - The bot token to use for login.
+   * @returns {Promise<string>} - A promise resolving to a success message.
    */
   async login(token?: string): Promise<string> {
     return new Promise(async (resolve, reject) => {
@@ -117,23 +303,27 @@ export default class GBF extends Client implements IGBFClient {
 
         if (this.EventsFolder) {
           try {
-            this.LoadEvents(this.EventsFolder);
+            await this.LoadEvents(this.EventsFolder);
           } catch (error) {
-            console.log(redBright(`Error loading events:${error}`));
+            console.log(redBright(`Error loading events: ${error}`));
           }
         }
 
         if (this.CommandsFolder) {
-          await RegisterCommands(this, this.CommandsFolder);
+          try {
+            await this.LoadCommands(this.CommandsFolder);
+          } catch (err) {
+            console.log(redBright(`Error loading commands: ${err}`));
+          }
         }
 
         try {
           await super.login(BotToken);
-        } catch (DiscrodError) {
+        } catch (DiscordError) {
           console.error(
-            redBright("Error during Discord login:", DiscrodError.message)
+            redBright("Error during Discord login:", DiscordError.message)
           );
-          reject(DiscrodError);
+          reject(DiscordError);
           return;
         }
 
@@ -144,8 +334,9 @@ export default class GBF extends Client implements IGBFClient {
               useUnifiedTopology: true,
               useFindAndModify: false,
             });
-            if (this.LogActions)
-              console.log(greenBright("Connected to MongoDB successfully."));
+            if (this.LogActions) {
+              console.log(greenBright("• Connected to MongoDB successfully."));
+            }
           } catch (MongoError) {
             console.error("Error connecting to MongoDB:", MongoError.message);
             reject(MongoError);
