@@ -16,7 +16,7 @@ abstract class MessageCommand<T extends string[] | undefined = string[]> {
    * @param {CommandOptions<T>} options - Options for the command.
    */
   constructor(
-    protected readonly client: GBF, // JS users: Replace with your actual client type.
+    protected readonly client: GBF, //Replace with your actual client type.
     public readonly options: CommandOptions<T>
   ) {}
 
@@ -30,7 +30,7 @@ abstract class MessageCommand<T extends string[] | undefined = string[]> {
    * @abstract
    */
   abstract execute(
-    client: GBF, // JS users: Replace with your actual client type.
+    client: GBF, //Replace with your actual client type.
     message: Message,
     args?: T
   ): Promise<Message | any>;

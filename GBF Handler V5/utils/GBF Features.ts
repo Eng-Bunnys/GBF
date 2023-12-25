@@ -1,5 +1,20 @@
-import { EmbedBuilder } from "discord.js";
+import {
+  ChannelType,
+  Collection,
+  EmbedBuilder,
+  GuildMember,
+  Message,
+  PermissionResolvable,
+  TextChannel,
+  User,
+} from "discord.js";
+import { IBotBan } from "../models/GBF/Bot Ban Schema";
+import { Document } from "mongoose";
+import { IGuildData } from "../models/GBF/Bot Settings Schema";
+import { MessageCommand } from "../handler/Command Handlers/Message Handler";
+import { GBF } from "../handler/GBF";
 import { client } from "..";
+import { missingPermissions } from "./Engine";
 
 export type ErrorTypes = "BotUserBan";
 
@@ -76,5 +91,232 @@ export class GBFEmbeds {
       );
 
     return ErrorEmbed;
+  }
+}
+/** Represents a collection to store command cooldowns. */
+const CommandCooldowns = new Collection();
+
+/**
+ * Class that handles various checks before executing a command.
+ */
+export class HandlerChecks {
+  /** The Discord client instance. */
+  private client: GBF;
+
+  /** The user invoking the command. */
+  private CommandUser: User;
+
+  /** The guild member invoking the command. */
+  private CommandMember: GuildMember;
+
+  /** Data related to user blacklist. */
+  private UserBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null;
+
+  /** Guild settings data. */
+  private GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null;
+
+  /** The command being executed. */
+  private Command: MessageCommand | null;
+
+  /** The message object representing the action type. */
+  private ActionType: Message;
+
+  /**
+   * Constructs an instance of HandlerChecks.
+   * @param {GBF} client - The Discord client instance.
+   * @param {User} commandUser - The user invoking the command.
+   * @param {GuildMember} commandMember - The guild member invoking the command.
+   * @param {(IBotBan & Document<any, any, IBotBan>) | null} userBlacklistData - Data related to user blacklist.
+   * @param {(IGuildData & Document<any, any, IGuildData>) | null} guildSettings - Guild settings data.
+   * @param {MessageCommand | null} command - The command being executed.
+   * @param {Message} actionType - The message object representing the action type.
+   */
+  constructor(
+    client: GBF,
+    commandUser: User,
+    commandMember: GuildMember,
+    userBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null,
+    guildSettings: (IGuildData & Document<any, any, IGuildData>) | null,
+    command: MessageCommand | null,
+    actionType: Message
+  ) {
+    this.client = client;
+    this.CommandUser = commandUser;
+    this.CommandMember = commandMember;
+    this.UserBlacklistData = userBlacklistData;
+    this.GuildSettings = guildSettings;
+    this.Command = command;
+    this.ActionType = actionType;
+  }
+
+  /**
+   * Runs various checks before executing a command.
+   * @returns {[EmbedBuilder, boolean]} - An array containing an EmbedBuilder and a boolean.
+   */
+  public async RunChecks(): Promise<[EmbedBuilder, boolean]> {
+    const ErrorEmbed = new EmbedBuilder()
+      .setColor(ColorCodes.ErrorRed)
+      .setTimestamp();
+
+    if (
+      this.GuildSettings &&
+      this.GuildSettings.DisabledCommands.includes(this.Command.options.name)
+    ) {
+      ErrorEmbed.setTitle(
+        `${Emojis.Error} You can't use that here`
+      ).setDescription(
+        `${this.Command.options.name} is disabled in ${this.ActionType.guild.name}.`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (this.UserBlacklistData && this.UserBlacklistData) {
+      ErrorEmbed.setTitle(`${Emojis.Error} Account Ban Notice`).setDescription(
+        `Your account has been banned from ${this.client.user.username} due to a violation of ${this.client.user.username}'s terms of service`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (
+      this.Command.options.development &&
+      !this.client.TestServers.includes(this.ActionType.guildId)
+    ) {
+      ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
+        `${this.Command.options.name} is disabled globally.`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (
+      this.Command.options.dmEnabled &&
+      this.ActionType.channel.type === ChannelType.DM
+    ) {
+      ErrorEmbed.setTitle(
+        `${Emojis.Error} You can't use that here`
+      ).setDescription(`${this.Command.options.name} is disabled in DMs.`);
+      return [ErrorEmbed, false];
+    }
+
+    if (
+      this.Command.options.devOnly &&
+      !this.client.Developers.includes(this.CommandUser.id)
+    ) {
+      ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
+        `${this.Command.options.name} is a developer only command.`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (
+      this.Command.options.partner &&
+      !this.client.Partners.includes(this.CommandUser.id)
+    ) {
+      ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
+        `${this.Command.options.name} is a partner only command.`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (
+      this.Command.options.NSFW &&
+      this.ActionType.channel.type !== ChannelType.DM &&
+      !(this.ActionType.channel as TextChannel).nsfw
+    ) {
+      ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
+        `You cannot use NSFW commands in non-NSFW channels.`
+      );
+      return [ErrorEmbed, false];
+    }
+
+    if (this.ActionType.channel.type !== ChannelType.DM) {
+      if (
+        this.Command.options.userPermission &&
+        !this.CommandMember.permissions.has(
+          this.Command.options.userPermission as PermissionResolvable,
+          true
+        )
+      ) {
+        ErrorEmbed.setTitle(
+          `${Emojis.Error} You can't use that`
+        ).setDescription(
+          `${
+            this.CommandUser.username
+          }, You are missing the following permissions: ${missingPermissions(
+            this.CommandMember,
+            this.Command.options.userPermission
+          )}`
+        );
+
+        return [ErrorEmbed, false];
+      }
+
+      if (
+        this.Command.options.botPermission &&
+        !this.ActionType.channel
+          .permissionsFor(this.ActionType.guild.members.me)
+          .has(this.Command.options.botPermission as PermissionResolvable, true)
+      ) {
+        ErrorEmbed.setTitle(`${Emojis.Error} You can't do that`).setDescription(
+          `${
+            this.CommandUser.username
+          }, I am missing the following permissions: ${missingPermissions(
+            this.ActionType.guild.members.me,
+            this.Command.options.botPermission
+          )}`
+        );
+
+        return [ErrorEmbed, false];
+      }
+    }
+
+    if (
+      !this.Command.options.devBypass ||
+      (this.Command.options.devBypass &&
+        !this.client.Developers.includes(this.CommandUser.id))
+    ) {
+      /**@unit Seconds */
+      const ProvidedCooldownTime: number = this.Command.options.cooldown;
+
+      if (ProvidedCooldownTime) {
+        if (!CommandCooldowns.has(this.Command.options.name))
+          CommandCooldowns.set(
+            this.Command.options.name,
+            new Map<string, number>()
+          );
+
+        const CurrentTime = Date.now();
+        const Timestamps: Map<string, number> = CommandCooldowns.get(
+          this.Command.options.name
+        ) as Map<string, number>;
+        /**@unit Miliseconds */
+        const CooldownTime = ProvidedCooldownTime * 1000;
+
+        if (Timestamps.has(this.CommandUser.id)) {
+          const ExpirationTime =
+            Timestamps.get(this.CommandUser.id)! + CooldownTime;
+
+          if (CurrentTime < ExpirationTime) {
+            const RemainingTime = Number(
+              (ExpirationTime - CurrentTime).toFixed(1)
+            );
+            const UnixFormat = Math.round(
+              Date.now() / 1000 + RemainingTime / 1000
+            );
+
+            ErrorEmbed.setTitle(
+              `${Emojis.Error} You can't use that yet`
+            ).setDescription(
+              `${this.CommandUser}, You can use "${this.Command.options.name}" <t:${UnixFormat}:R>`
+            );
+          }
+        }
+        Timestamps.set(this.CommandUser.id, CurrentTime);
+        setTimeout(
+          () => Timestamps.delete(this.CommandUser.id),
+          CooldownTime
+        ).unref();
+      }
+    }
+    return [ErrorEmbed, true];
   }
 }
