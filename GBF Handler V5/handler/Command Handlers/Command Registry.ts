@@ -24,13 +24,14 @@ async function LoadCommand(client: GBF, filePath: string): Promise<void> {
       );
     }
 
-    const CommandInstance = new CommandClass(client);
+    const CommandInstance: MessageCommand = new CommandClass(client);
     const { name, aliases } = CommandInstance.options;
 
     if (!name) {
       throw new Error(`${filePath} does not have a name option.`);
     }
 
+    if (CommandInstance.options.IgnoreCommand) return;
     if (client.MessageCommands.has(name)) {
       throw new Error(`The Message Command "${name}" exists twice.`);
     }
