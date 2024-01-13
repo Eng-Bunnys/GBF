@@ -23,7 +23,7 @@ export class GBFUtils {
       ErrorEmbed.setTitle(`${Emojis.Error}`);
     }
   }
-  
+
   static readFilesRecursively(
     dir: string,
     fileExtensions: string[] = []
@@ -61,7 +61,7 @@ export class GBFUtils {
       const jsonConfig = require(ConfigPath);
       return {
         ...jsonConfig,
-        MongoURI: jsonConfig.MONGO_URI,
+        MongoURI: jsonConfig.MongoURI,
         TOKEN: jsonConfig.TOKEN,
       };
     } catch (error) {
@@ -73,7 +73,7 @@ export class GBFUtils {
       }
 
       return {
-        MongoURI: process.env.MONGO_URI,
+        MongoURI: process.env.MongoURI,
         TOKEN: process.env.TOKEN,
       };
     }

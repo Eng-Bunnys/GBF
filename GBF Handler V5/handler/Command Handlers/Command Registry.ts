@@ -2,6 +2,7 @@ import { readdir } from "fs/promises";
 import { join, resolve } from "path";
 import { MessageCommand } from "./Message Handler";
 import { GBF } from "../GBF";
+import { SlashCommand } from "./Slash Handler";
 
 /**
  * Load a command module and register it with the client.
@@ -17,31 +18,48 @@ async function LoadCommand(client: GBF, filePath: string): Promise<void> {
 
     if (
       typeof CommandClass !== "function" ||
-      !(CommandClass.prototype instanceof MessageCommand)
+      (!(CommandClass.prototype instanceof MessageCommand) &&
+        !(CommandClass.prototype instanceof SlashCommand))
     ) {
       throw new Error(
-        `${filePath} does not export a constructable class extending MessageCommand.`
+        `${filePath} does not export a constructable class extending MessageCommand or SlashCommand.`
       );
     }
 
-    const CommandInstance: MessageCommand = new CommandClass(client);
-    const { name, aliases } = CommandInstance.options;
+    const CommandInstance: MessageCommand | SlashCommand = new CommandClass(
+      client
+    );
 
-    if (!name) {
-      throw new Error(`${filePath} does not have a name option.`);
-    }
+    if (CommandClass.prototype instanceof MessageCommand) {
+      const { name, aliases } = (CommandInstance as MessageCommand).options;
 
-    if (CommandInstance.options.IgnoreCommand) return;
-    if (client.MessageCommands.has(name)) {
-      throw new Error(`The Message Command "${name}" exists twice.`);
-    }
+      if (!name) {
+        throw new Error(`${filePath} does not have a name option.`);
+      }
 
-    client.MessageCommands.set(name, CommandInstance);
+      if ((CommandInstance as MessageCommand).options.IgnoreCommand) return;
+      if (client.MessageCommands.has(name)) {
+        throw new Error(`The Message Command "${name}" exists twice.`);
+      }
 
-    if (aliases) {
-      aliases.forEach((alias) => {
-        client.aliases!.set(alias, name);
-      });
+      client.MessageCommands.set(name, CommandInstance as MessageCommand);
+
+      if (aliases) {
+        aliases.forEach((alias) => {
+          client.aliases!.set(alias, name);
+        });
+      }
+    } else {
+      const { name } = (CommandInstance as SlashCommand).options;
+
+      if (!name) throw new Error(`${filePath} does not have a name option.`);
+
+      if (client.SlashCommands.has(name))
+        throw new Error(
+          `The Slash Command "${name}", found in ${filePath}, exists twice.`
+        );
+
+      client.SlashCommands.set(name, CommandInstance as SlashCommand);
     }
   } catch (err) {
     console.error(

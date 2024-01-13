@@ -1,4 +1,3 @@
-// Import necessary types from Discord.js and your custom types
 import { Message } from "discord.js";
 import { GBF } from "../GBF";
 import { CommandOptions } from "../types";
@@ -16,7 +15,7 @@ abstract class MessageCommand<T extends string[] | undefined = string[]> {
    * @param {CommandOptions<T>} options - Options for the command.
    */
   constructor(
-    protected readonly client: GBF, //Replace with your actual client type.
+    protected readonly client: GBF,
     public readonly options: CommandOptions<T>
   ) {}
 
@@ -29,11 +28,15 @@ abstract class MessageCommand<T extends string[] | undefined = string[]> {
    * @returns {Promise<Message | any>} - A Promise resolving to a Discord message or any other result.
    * @abstract
    */
-  abstract execute(
-    client: GBF, //Replace with your actual client type.
-    message: Message,
-    args?: T
-  ): Promise<Message | any>;
+  abstract execute({
+    client,
+    message,
+    args,
+  }: {
+    client: GBF;
+    message: Message;
+    args?: T;
+  }): Promise<Message | any>;
 }
 
 export { MessageCommand };

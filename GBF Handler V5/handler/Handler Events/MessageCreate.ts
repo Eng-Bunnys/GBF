@@ -34,24 +34,22 @@ export default async function GBFMessageCreate(client: GBF) {
       ...client.Prefixes,
     ].filter((prefix) => prefix !== null);
 
-    let FoundPrefix = null;
-    for (const prefix of BotPrefixes) {
-      if (message.content.startsWith(prefix)) {
-        FoundPrefix = prefix;
-        break;
-      }
-    }
+    const FoundPrefix = BotPrefixes.find((prefix) =>
+      message.content.startsWith(prefix)
+    );
 
     if (!FoundPrefix) return;
 
-    const [cmd, ...args] = message.content
+    const [CommandName, ...args] = message.content
       .slice(FoundPrefix.length)
       .trim()
       .split(/ +/);
 
+    const LowerCommandName = CommandName.toLocaleLowerCase();
+
     const command: MessageCommand<string[]> | CommandOptions =
-      client.MessageCommands.get(cmd.toLowerCase()) ||
-      client.MessageCommands.get(client.aliases.get(cmd.toLowerCase()));
+      client.MessageCommands.get(LowerCommandName) ||
+      client.MessageCommands.get(client.aliases.get(LowerCommandName));
 
     if (!command) return;
 
@@ -70,10 +68,11 @@ export default async function GBFMessageCreate(client: GBF) {
         content: `<@${message.author.id}>`,
         embeds: [HandlerCheck[0]],
       });
+      return;
     }
 
     try {
-      await command.execute(client, message, args);
+      await command.execute({ client, message, args });
     } catch (err) {
       return console.log(
         `I ran into an error running "${command.options.name}\n${err}`

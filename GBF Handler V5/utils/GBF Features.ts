@@ -1,8 +1,10 @@
 import {
   ChannelType,
   Collection,
+  DMChannel,
   EmbedBuilder,
   GuildMember,
+  Interaction,
   Message,
   PermissionResolvable,
   TextChannel,
@@ -15,6 +17,7 @@ import { MessageCommand } from "../handler/Command Handlers/Message Handler";
 import { GBF } from "../handler/GBF";
 import { client } from "..";
 import { missingPermissions } from "./Engine";
+import { SlashCommand } from "../handler/Command Handlers/Slash Handler";
 
 export type ErrorTypes = "BotUserBan";
 
@@ -100,45 +103,22 @@ const CommandCooldowns = new Collection();
  * Class that handles various checks before executing a command.
  */
 export class HandlerChecks {
-  /** The Discord client instance. */
   private client: GBF;
-
-  /** The user invoking the command. */
   private CommandUser: User;
-
-  /** The guild member invoking the command. */
   private CommandMember: GuildMember;
-
-  /** Data related to user blacklist. */
   private UserBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null;
-
-  /** Guild settings data. */
   private GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null;
+  private Command: SlashCommand | MessageCommand;
+  private ActionType: Message | Interaction;
 
-  /** The command being executed. */
-  private Command: MessageCommand | null;
-
-  /** The message object representing the action type. */
-  private ActionType: Message;
-
-  /**
-   * Constructs an instance of HandlerChecks.
-   * @param {GBF} client - The Discord client instance.
-   * @param {User} commandUser - The user invoking the command.
-   * @param {GuildMember} commandMember - The guild member invoking the command.
-   * @param {(IBotBan & Document<any, any, IBotBan>) | null} userBlacklistData - Data related to user blacklist.
-   * @param {(IGuildData & Document<any, any, IGuildData>) | null} guildSettings - Guild settings data.
-   * @param {MessageCommand | null} command - The command being executed.
-   * @param {Message} actionType - The message object representing the action type.
-   */
   constructor(
     client: GBF,
     commandUser: User,
     commandMember: GuildMember,
     userBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null,
     guildSettings: (IGuildData & Document<any, any, IGuildData>) | null,
-    command: MessageCommand | null,
-    actionType: Message
+    command: SlashCommand | MessageCommand,
+    actionType: Interaction | Message
   ) {
     this.client = client;
     this.CommandUser = commandUser;
@@ -149,14 +129,12 @@ export class HandlerChecks {
     this.ActionType = actionType;
   }
 
-  /**
-   * Runs various checks before executing a command.
-   * @returns {[EmbedBuilder, boolean]} - An array containing an EmbedBuilder and a boolean.
-   */
   public async RunChecks(): Promise<[EmbedBuilder, boolean]> {
     const ErrorEmbed = new EmbedBuilder()
       .setColor(ColorCodes.ErrorRed)
       .setTimestamp();
+
+    const InGuild = !(this.ActionType.channel instanceof DMChannel);
 
     if (
       this.GuildSettings &&
@@ -187,10 +165,7 @@ export class HandlerChecks {
       return [ErrorEmbed, false];
     }
 
-    if (
-      this.Command.options.dmEnabled &&
-      this.ActionType.channel.type === ChannelType.DM
-    ) {
+    if (!this.Command.options.DMEnabled && !InGuild) {
       ErrorEmbed.setTitle(
         `${Emojis.Error} You can't use that here`
       ).setDescription(`${this.Command.options.name} is disabled in DMs.`);
@@ -198,7 +173,7 @@ export class HandlerChecks {
     }
 
     if (
-      this.Command.options.devOnly &&
+      this.Command.options.DeveloperOnly &&
       !this.client.Developers.includes(this.CommandUser.id)
     ) {
       ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
@@ -219,7 +194,7 @@ export class HandlerChecks {
 
     if (
       this.Command.options.NSFW &&
-      this.ActionType.channel.type !== ChannelType.DM &&
+      InGuild &&
       !(this.ActionType.channel as TextChannel).nsfw
     ) {
       ErrorEmbed.setTitle(`${Emojis.Error} You can't use that`).setDescription(
@@ -228,11 +203,11 @@ export class HandlerChecks {
       return [ErrorEmbed, false];
     }
 
-    if (this.ActionType.channel.type !== ChannelType.DM) {
+    if (InGuild) {
       if (
-        this.Command.options.userPermission &&
+        this.Command.options.UserPermissions &&
         !this.CommandMember.permissions.has(
-          this.Command.options.userPermission as PermissionResolvable,
+          this.Command.options.UserPermissions as PermissionResolvable,
           true
         )
       ) {
@@ -243,7 +218,7 @@ export class HandlerChecks {
             this.CommandUser.username
           }, You are missing the following permissions: ${missingPermissions(
             this.CommandMember,
-            this.Command.options.userPermission
+            this.Command.options.UserPermissions
           )}`
         );
 
@@ -251,17 +226,20 @@ export class HandlerChecks {
       }
 
       if (
-        this.Command.options.botPermission &&
-        !this.ActionType.channel
+        this.Command.options.BotPermissions &&
+        !(this.ActionType.channel as TextChannel)
           .permissionsFor(this.ActionType.guild.members.me)
-          .has(this.Command.options.botPermission as PermissionResolvable, true)
+          .has(
+            this.Command.options.BotPermissions as PermissionResolvable,
+            true
+          )
       ) {
         ErrorEmbed.setTitle(`${Emojis.Error} You can't do that`).setDescription(
           `${
             this.CommandUser.username
           }, I am missing the following permissions: ${missingPermissions(
             this.ActionType.guild.members.me,
-            this.Command.options.botPermission
+            this.Command.options.BotPermissions
           )}`
         );
 
@@ -270,8 +248,8 @@ export class HandlerChecks {
     }
 
     if (
-      !this.Command.options.devBypass ||
-      (this.Command.options.devBypass &&
+      !this.Command.options.DeveloperBypass ||
+      (this.Command.options.DeveloperBypass &&
         !this.client.Developers.includes(this.CommandUser.id))
     ) {
       /**@unit Seconds */

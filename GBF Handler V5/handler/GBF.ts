@@ -4,14 +4,18 @@ import {
   GatewayIntentBits,
   BitFieldResolvable,
   Collection,
+  ApplicationCommandData,
+  ApplicationCommandType,
+  Guild,
 } from "discord.js";
 import { GBFUtils } from "../utils/GBF Utils";
-import { IGBFClient } from "./types";
+import { AppConfig, IGBFClient } from "./types";
 import { connect } from "mongoose";
 import { MessageCommand } from "./Command Handlers/Message Handler";
 import { RegisterCommands } from "./Command Handlers/Command Registry";
 import { redBright, greenBright, blueBright } from "chalk";
 import path from "path";
+import { SlashCommand } from "./Command Handlers/Slash Handler";
 
 /**
  * GBF Handler
@@ -66,9 +70,10 @@ export class GBF extends Client implements IGBFClient {
   /**
    * Collection of slash commands.
    * @readonly
-   * @type {Collection<string, any>}
+   * @type {Collection<string, SlashCommand>}
    */
-  public readonly SlashCommands: Collection<string, any> = new Collection();
+  public readonly SlashCommands: Collection<string, SlashCommand> =
+    new Collection();
 
   /**
    * Collection of command aliases.
@@ -87,9 +92,9 @@ export class GBF extends Client implements IGBFClient {
   /**
    * Configuration object.
    * @readonly
-   * @type {any}
+   * @type {AppConfig}
    */
-  public readonly config: any;
+  public readonly config: AppConfig;
 
   /**
    * Intent bits for the client.
@@ -198,7 +203,7 @@ export class GBF extends Client implements IGBFClient {
     super(options);
 
     const ConfigPath = options.config;
-    const config = GBFUtils.loadConfig(ConfigPath);
+    const config = GBFUtils.loadConfig(ConfigPath as string);
 
     this.HandlerVersion = "5.0.0";
     this.CommandsFolder = options.CommandsFolder;
@@ -234,17 +239,55 @@ export class GBF extends Client implements IGBFClient {
    */
   private async LoadCommands(folder: string): Promise<void> {
     try {
+      if (!this.application?.owner) await this.application?.fetch();
+
       await RegisterCommands(this, folder);
 
-      if (this.LogActions) {
-        console.log(
-          blueBright(
-            `• Registered ${this.MessageCommands.size.toLocaleString(
-              "en-US"
-            )} Message Commands.`
-          )
+      const DevelopmentCommands: ApplicationCommandData[] =
+        this.ToApplicationCommand(
+          this.SlashCommands.filter((command: SlashCommand) => {
+            command.options.development &&
+              !this.DisabledCommands?.includes(command.options.name);
+          })
+        );
+
+      const GlobalCommands: ApplicationCommandData[] =
+        this.ToApplicationCommand(
+          this.SlashCommands.filter((command: SlashCommand) => {
+            !command.options.development &&
+              !this.DisabledCommands?.includes(command.options.name);
+          })
+        );
+
+      let ActionLogMessage: string = "";
+
+      if (this.LogActions)
+        for (let i = 0; i < this.DisabledCommands.length; i++)
+          ActionLogMessage += `• Skipping "${this.DisabledCommands[i]}" registration.\n`;
+
+      ActionLogMessage += `• Registered ${this.MessageCommands.size.toLocaleString(
+        "en-US"
+      )} Message Commands.\n`;
+
+      if (DevelopmentCommands.length && this.TestServers.length > 0) {
+        await Promise.all(
+          this.TestServers.map(async (ServerID) => {
+            const TestServer = await this.guilds.fetch(ServerID);
+            if (TestServer instanceof Guild) {
+              await TestServer.commands.set(DevelopmentCommands).then(() => {
+                ActionLogMessage += `• Registering Guild Only Commands in: ${TestServer.name}\n`;
+              });
+            }
+          })
         );
       }
+
+      if (GlobalCommands.length) {
+        await this.application.commands.set(GlobalCommands);
+        ActionLogMessage += `• Registered ${GlobalCommands.length} Global Commands.\n`;
+      }
+
+      if (this.LogActions) console.log(blueBright(ActionLogMessage));
     } catch (error) {
       console.log(redBright(`Error loading commands: ${error}`));
     }
@@ -300,20 +343,19 @@ export class GBF extends Client implements IGBFClient {
           );
           return;
         }
+        if (this.CommandsFolder) {
+          try {
+            await this.LoadCommands(this.CommandsFolder);
+          } catch (err) {
+            console.log(redBright(`Error loading commands: ${err}`));
+          }
+        }
 
         if (this.EventsFolder) {
           try {
             await this.LoadEvents(this.EventsFolder);
           } catch (error) {
             console.log(redBright(`Error loading events: ${error}`));
-          }
-        }
-
-        if (this.CommandsFolder) {
-          try {
-            await this.LoadCommands(this.CommandsFolder);
-          } catch (err) {
-            console.log(redBright(`Error loading commands: ${err}`));
           }
         }
 
@@ -352,6 +394,26 @@ export class GBF extends Client implements IGBFClient {
       } catch (error) {
         reject(error);
       }
+    });
+  }
+
+  private ToApplicationCommand(
+    SlashCommands: Collection<string, SlashCommand>
+  ) {
+    return SlashCommands.map((command) => {
+      const CommandData = {
+        name: command.options.name,
+        description: command.options.description,
+        options: command.options.options,
+        defaultMemberPermissions: command.options.UserPermission,
+        dmPermission: command.options.DMEnabled,
+        nsfw: command.options.NSFW,
+        type: !command.options.ContextType
+          ? ApplicationCommandType.ChatInput
+          : command.options.ContextType,
+      };
+
+      return CommandData;
     });
   }
 }
