@@ -8,7 +8,7 @@ import {
   ApplicationCommandType,
   Guild,
 } from "discord.js";
-import { GBFUtils } from "../utils/GBF Utils";
+import { Engine } from "../utils/Engine";
 import { AppConfig, IGBFClient } from "./types";
 import { connect } from "mongoose";
 import { MessageCommand } from "./Command Handlers/Message Handler";
@@ -85,9 +85,10 @@ export class GBF extends Client implements IGBFClient {
   /**
    * Collection of events.
    * @readonly
-   * @type {Collection<string, unknown>}
+   * @type {Collection<string, Function>}
    */
-  public readonly events: Collection<string, unknown> = new Collection();
+  public readonly HandlerEvents: Collection<string, Function> =
+    new Collection();
 
   /**
    * Configuration object.
@@ -188,13 +189,6 @@ export class GBF extends Client implements IGBFClient {
   public readonly AutoLogin?: boolean;
 
   /**
-   * Flag indicating whether to enable database interactions.
-   * @readonly
-   * @type {?boolean}
-   */
-  public readonly DatabaseInteractions?: boolean;
-
-  /**
    * Constructs a new instance of the GBF class.
    * @constructor
    * @param {IGBFClient & ClientOptions} options - Options for the GBF client.
@@ -203,7 +197,7 @@ export class GBF extends Client implements IGBFClient {
     super(options);
 
     const ConfigPath = options.config;
-    const config = GBFUtils.loadConfig(ConfigPath as string);
+    const config = Engine.LoadConfig(ConfigPath as string);
 
     this.HandlerVersion = "5.0.0";
     this.CommandsFolder = options.CommandsFolder;
@@ -221,10 +215,7 @@ export class GBF extends Client implements IGBFClient {
     this.LogActions = options.LogActions || false;
     this.DMCommands = options.DMCommands || false;
     this.AutoLogin = options.AutoLogin || false;
-    this.DatabaseInteractions =
-      options.DatabaseInteractions !== undefined || options !== null
-        ? options.DatabaseInteractions
-        : true;
+    this.DisabledCommands = options.DisabledCommands || [];
 
     if (this.AutoLogin) this.login();
     this.LoadEvents(path.join(__dirname, "./Handler Events"));
@@ -246,16 +237,20 @@ export class GBF extends Client implements IGBFClient {
       const DevelopmentCommands: ApplicationCommandData[] =
         this.ToApplicationCommand(
           this.SlashCommands.filter((command: SlashCommand) => {
-            command.options.development &&
-              !this.DisabledCommands?.includes(command.options.name);
+            return (
+              command.options.development &&
+              !this.DisabledCommands?.includes(command.options.name)
+            );
           })
         );
 
       const GlobalCommands: ApplicationCommandData[] =
         this.ToApplicationCommand(
           this.SlashCommands.filter((command: SlashCommand) => {
-            !command.options.development &&
-              !this.DisabledCommands?.includes(command.options.name);
+            return (
+              !command.options.development &&
+              !this.DisabledCommands?.includes(command.options.name)
+            );
           })
         );
 
@@ -269,7 +264,11 @@ export class GBF extends Client implements IGBFClient {
         "en-US"
       )} Message Commands.\n`;
 
-      if (DevelopmentCommands.length && this.TestServers.length > 0) {
+      if (
+        DevelopmentCommands &&
+        DevelopmentCommands.length &&
+        this.TestServers.length > 0
+      ) {
         await Promise.all(
           this.TestServers.map(async (ServerID) => {
             const TestServer = await this.guilds.fetch(ServerID);
@@ -282,8 +281,11 @@ export class GBF extends Client implements IGBFClient {
         );
       }
 
-      if (GlobalCommands.length) {
-        await this.application.commands.set(GlobalCommands);
+      if (GlobalCommands && GlobalCommands.length) {
+        console.log(Engine.CheckInteractionCommands(GlobalCommands));
+
+        // await this.application?.commands.set(GlobalCommands);
+
         ActionLogMessage += `• Registered ${GlobalCommands.length} Global Commands.\n`;
       }
 
@@ -301,21 +303,18 @@ export class GBF extends Client implements IGBFClient {
    * @returns {Promise<void>}
    */
   private async LoadEvents(folder: string): Promise<void> {
-    const EventFiles = GBFUtils.readFilesRecursively(folder, [".ts", ".js"]);
+    const EventFiles = Engine.ReadFiles(folder, [".ts", ".js"]);
 
     for (const file of EventFiles) {
       try {
         const EventModule = await import(file);
-        const EventFunction = EventModule.default || EventModule;
+        const EventFunction: Function = EventModule.default || EventModule;
 
         if (typeof EventFunction !== "function") {
           throw new Error(`"${file}" does not have a callable export.`);
         }
 
-        this.events.set(
-          EventFunction.name,
-          EventFunction as unknown as GlobalEventHandlers
-        );
+        this.HandlerEvents.set(EventFunction.name, EventFunction);
 
         await EventFunction(this, this.config);
       } catch (error) {
@@ -343,21 +342,6 @@ export class GBF extends Client implements IGBFClient {
           );
           return;
         }
-        if (this.CommandsFolder) {
-          try {
-            await this.LoadCommands(this.CommandsFolder);
-          } catch (err) {
-            console.log(redBright(`Error loading commands: ${err}`));
-          }
-        }
-
-        if (this.EventsFolder) {
-          try {
-            await this.LoadEvents(this.EventsFolder);
-          } catch (error) {
-            console.log(redBright(`Error loading events: ${error}`));
-          }
-        }
 
         try {
           await super.login(BotToken);
@@ -369,7 +353,23 @@ export class GBF extends Client implements IGBFClient {
           return;
         }
 
-        if (this.config.MongoURI && this.DatabaseInteractions) {
+        if (this.CommandsFolder) {
+          try {
+            await this.LoadCommands(this.CommandsFolder);
+          } catch (err) {
+            console.log(redBright(`Test: Error loading commands: ${err}`));
+          }
+        }
+
+        if (this.EventsFolder) {
+          try {
+            await this.LoadEvents(this.EventsFolder);
+          } catch (error) {
+            console.log(redBright(`Error loading events: ${error}`));
+          }
+        }
+
+        if (this.config.MongoURI) {
           try {
             await connect(this.config.MongoURI, {
               useNewUrlParser: true,
@@ -386,7 +386,7 @@ export class GBF extends Client implements IGBFClient {
           }
         } else {
           console.warn(
-            "MongoDB URI is not provided. No database interactions will occur.\nMake sure that the variable is named as MONGO_URI."
+            "MongoDB URI is not provided. No database interactions will occur.\nMake sure that the variable is named as MongoURI."
           );
         }
 
@@ -404,8 +404,9 @@ export class GBF extends Client implements IGBFClient {
       const CommandData = {
         name: command.options.name,
         description: command.options.description,
-        options: command.options.options,
-        defaultMemberPermissions: command.options.UserPermission,
+        options: command.options.options || [],
+        defaultMemberPermissions: command.options.UserPermissions,
+        defaultPermission: command.options.development,
         dmPermission: command.options.DMEnabled,
         nsfw: command.options.NSFW,
         type: !command.options.ContextType

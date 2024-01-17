@@ -1,4 +1,3 @@
-import { Message } from "discord.js";
 import { GBF } from "../GBF";
 import { CommandOptions } from "../types";
 
@@ -16,27 +15,26 @@ abstract class MessageCommand<T extends string[] | undefined = string[]> {
    */
   constructor(
     protected readonly client: GBF,
-    public readonly options: CommandOptions<T>
+    public readonly options: CommandOptions<T> = {
+      name: undefined,
+      description: undefined,
+      category: "",
+      aliases: [],
+      NSFW: false,
+      usage: `${client.Prefix}${options.name}`,
+      examples: `${client.Prefix}${options.name}`,
+      cooldown: 0,
+      UserPermissions: [],
+      BotPermissions: [],
+      DeveloperOnly: false,
+      DeveloperBypass: false,
+      development: false,
+      DMEnabled: client.DMCommands,
+      partner: false,
+      IgnoreCommand: false,
+      async execute({ client, message, args }) {},
+    }
   ) {}
-
-  /**
-   * Execute the command.
-   *
-   * @param {GBF} client - Your client instance.
-   * @param {Message} message - The Discord message.
-   * @param {T} args - The user input split into an array.
-   * @returns {Promise<Message | any>} - A Promise resolving to a Discord message or any other result.
-   * @abstract
-   */
-  abstract execute({
-    client,
-    message,
-    args,
-  }: {
-    client: GBF;
-    message: Message;
-    args?: T;
-  }): Promise<Message | any>;
 }
 
 export { MessageCommand };

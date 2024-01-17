@@ -16,7 +16,7 @@ import { IGuildData } from "../models/GBF/Bot Settings Schema";
 import { MessageCommand } from "../handler/Command Handlers/Message Handler";
 import { GBF } from "../handler/GBF";
 import { client } from "..";
-import { missingPermissions } from "./Engine";
+import { missingPermissions } from "./Utils";
 import { SlashCommand } from "../handler/Command Handlers/Slash Handler";
 
 export type ErrorTypes = "BotUserBan";

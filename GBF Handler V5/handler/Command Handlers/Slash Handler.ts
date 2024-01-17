@@ -1,7 +1,9 @@
 import {
+  ApplicationCommandOptionData,
   ApplicationCommandOptionType,
   ApplicationCommandSubCommand,
   ApplicationCommandSubGroup,
+  ApplicationCommandType,
   CommandInteraction,
 } from "discord.js";
 import { GBF } from "../GBF";
@@ -11,16 +13,55 @@ import { SlashOptions } from "../types";
  * @classdesc Abstract class representing a slash command.
  */
 abstract class SlashCommand {
+  protected readonly client: GBF;
+  protected readonly name: string;
+  protected readonly description: string;
+  protected readonly category?: string;
+  protected readonly ContextType?:
+    | ApplicationCommandType.ChatInput
+    | ApplicationCommandType.Message
+    | ApplicationCommandType.User;
+  protected readonly NSFW?: boolean;
+  protected readonly usage?: string;
+  protected readonly examples?: string;
+  protected readonly CommandOptions?: ApplicationCommandOptionData[];
+  protected readonly UserPermissions?: bigint[];
+  protected readonly BotPermissions?: bigint[];
+  protected readonly cooldown?: number;
+  protected readonly development?: boolean;
+  protected readonly DMEnabled?: boolean;
+  protected readonly DeveloperOnly?: boolean;
+  protected readonly DeveloperBypass?: boolean;
+  protected readonly partner?: boolean;
+  protected readonly groups?: ApplicationCommandSubGroup;
+  protected readonly subcommands?: ApplicationCommandSubCommand;
   /**
    * Creates a new instance of SlashCommand.
    *
    * @param {GBF} client - Your client instance.
    * @param {SlashOptions} options - Handler options for the slash command.
    */
-  constructor(
-    protected readonly client: GBF,
-    public readonly options: SlashOptions
-  ) {
+  constructor(client: GBF, public readonly options: SlashOptions) {
+    this.client = client;
+    this.name = options.name;
+    this.description = options.description;
+    this.category = options.category || "";
+    this.ContextType = options.ContextType || ApplicationCommandType.ChatInput;
+    this.NSFW = options.NSFW || false;
+    this.usage = options.usage || "";
+    this.examples = options.examples || "";
+    this.CommandOptions = options.options || [];
+    this.UserPermissions = options.UserPermissions || [];
+    this.BotPermissions = options.BotPermissions || [];
+    this.cooldown = options.cooldown || 0;
+    this.development = options.development || false;
+    this.DMEnabled = options.DMEnabled || false;
+    this.DeveloperOnly = options.DeveloperOnly || false;
+    this.DeveloperBypass = options.DeveloperBypass || false;
+    this.partner = options.partner || false;
+    this.groups = options.groups ?? null;
+    this.subcommands = options.subcommands ?? null;
+
     if (!this.options?.options.length) {
       if (this.options?.groups != null)
         this.options.options = this.GetSubCommandGroupOptions(
@@ -32,23 +73,6 @@ abstract class SlashCommand {
         );
     }
   }
-
-  /**
-   * Execute the slash command.
-   *
-   * @param {Object} params - Parameters for executing the slash command.
-   * @param {GBF} params.client - The client object.
-   * @param {CommandInteraction} params.interaction - The interaction object.
-   * @returns {Promise<void>} - A promise resolving when the command is executed.
-   * @abstract
-   */
-  abstract execute({
-    client,
-    interaction,
-  }: {
-    client: GBF;
-    interaction: CommandInteraction;
-  }): Promise<void>;
 
   /**
    * Generates options for subcommands.

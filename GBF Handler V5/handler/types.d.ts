@@ -9,6 +9,8 @@ import {
   CommandInteraction,
 } from "discord.js";
 import { GBF } from "./GBF";
+import { MessageCommand } from "./Command Handlers/Message Handler";
+import { SlashCommand } from "./Command Handlers/Slash Handler";
 
 /**
  * Represents the JSON configuration for the bot.
@@ -37,10 +39,10 @@ export type AppConfig = JSONConfig | ENVConfig;
  */
 export interface MessageCommandExecute {
   /**
-   * The client instance implementing the IGBFClient interface.
+   * The client instance implementing the GBF interface.
    * It represents the client.
    */
-  client: IGBFClient;
+  client: GBF;
 
   /**
    * The Discord.js Message object associated with the command.
@@ -54,6 +56,11 @@ export interface MessageCommandExecute {
    * The type is set to unknown[] as the specific argument types are determined by the individual commands.
    */
   args?: unknown[];
+}
+
+export interface SlashCommandExecute {
+  client: GBF;
+  interaction: CommandInteraction;
 }
 
 export interface IGBFClient {
@@ -75,8 +82,6 @@ export interface IGBFClient {
   config?: string | AppConfig;
   /**Automatically login without having to call the login function */
   AutoLogin?: boolean;
-  /**Log into your database allowing for database interactions */
-  DatabaseInteractions?: boolean;
   /**The bot's intents */
   intents: GatewayIntentBits[] | BitFieldResolvable<string, number>;
   /**An array that contains all of the test servers that get the development commands */
@@ -91,6 +96,8 @@ export interface IGBFClient {
   Version?: string;
   /**A boolean that sets whether the bot's commands can be ran in DMs or not | Default: false */
   DMCommands?: boolean;
+  /**An array of strings that contains the name's of commands that won't register [Case Sensitive] */
+  DisabledCommands?: string[];
 }
 
 /**
@@ -99,13 +106,13 @@ export interface IGBFClient {
  */
 export interface CommandOptions<T extends string[] | undefined = string[]> {
   /** The unique name of the command. */
-  name?: string;
+  name: string;
   /** Alternative names or aliases for the command. */
   aliases?: string[];
   /** Category or group to which the command belongs. */
   category?: string;
   /** Brief description of what the command does. */
-  description?: string;
+  description: string;
   /** Indicates whether the command is Not Safe For Work. */
   NSFW?: boolean;
   /** Usage information for the command. */
@@ -132,20 +139,24 @@ export interface CommandOptions<T extends string[] | undefined = string[]> {
   args?: T;
   /** The command will not register if set to true */
   IgnoreCommand?: boolean;
-  execute?: ({ client, message, args }: MessageCommandExecute) => unknown;
+  execute: ({
+    client,
+    message,
+    args,
+  }: MessageCommandExecute) => Promise<Message | any> | Message | any;
 }
 
 export interface SubCommandOptions {
   name: string;
   description: string;
   SubCommandOptions: ApplicationCommandOptionData[];
-  execute?: ({
+  execute: ({
     client,
     interaction,
-  }: {
-    client: GBF;
-    interaction: CommandInteraction;
-  }) => unknown;
+  }: SlashCommandExecute) =>
+    | Promise<CommandInteraction | any>
+    | CommandInteraction
+    | any;
 }
 
 /**
@@ -159,7 +170,10 @@ export interface SlashOptions {
   /** Category or group to which the slash command belongs. */
   category?: string;
   /** Type of context in which the slash command can be used. */
-  ContextType?: ApplicationCommandType.Message | ApplicationCommandType.User;
+  ContextType?:
+    | ApplicationCommandType.Message
+    | ApplicationCommandType.User
+    | ApplicationCommandType.ChatInput;
   /** Indicates whether the slash command is Not Safe For Work. */
   NSFW?: boolean;
   /** Usage information for the slash command. */
@@ -168,7 +182,7 @@ export interface SlashOptions {
   examples?: string;
   /** Options for the slash command. */
   options?: ApplicationCommandOptionData[];
-  /** Default permission status for the slash command. */
+  /** Default permission status for the slash command. [Do Not Add]*/
   DefaultPermission?: boolean;
   /** Required user permissions for executing the slash command. */
   UserPermissions?: bigint[];
@@ -190,11 +204,11 @@ export interface SlashOptions {
   groups?: ApplicationCommandSubGroup;
   /** Subcommands associated with the slash command. */
   subcommands?: ApplicationCommandSubCommand;
-  execute?: ({
+  execute: ({
     client,
     interaction,
-  }: {
-    client: GBF;
-    interaction: CommandInteraction;
-  }) => unknown;
+  }: SlashCommandExecute) =>
+    | Promise<CommandInteraction | any>
+    | CommandInteraction
+    | any;
 }

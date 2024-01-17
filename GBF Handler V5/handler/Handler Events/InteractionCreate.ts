@@ -19,17 +19,13 @@ export default async function GBFInteractionCreate(client: GBF) {
     if (interaction.user.bot) return;
 
     let BanData: (IBotBan & Document<any, any, IBotBan>) | null =
-      client.DatabaseInteractions
-        ? await BotBanModel.findOne({ userId: interaction.user.id })
-        : null;
+      await BotBanModel.findOne({ userId: interaction.user.id });
 
     let GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null =
       !interaction.inGuild()
         ? null
-        : client.DatabaseInteractions
-        ? (await BotGuildModel.findOne({ guildID: interaction.guildId })) ||
-          (await new BotGuildModel({ guildID: interaction.guildId }).save())
-        : null;
+        : (await BotGuildModel.findOne({ guildID: interaction.guildId })) ||
+          (await new BotGuildModel({ guildID: interaction.guildId }).save());
 
     if (interaction.isCommand()) {
       const command = client.SlashCommands.get(interaction.commandName);

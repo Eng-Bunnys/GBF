@@ -6,7 +6,7 @@ import {
 } from "../../models/GBF/Bot Settings Schema";
 import { Document } from "mongoose";
 import { HandlerChecks } from "../../utils/GBF Features";
-import { SendAndDelete } from "../../utils/Engine";
+import { SendAndDelete } from "../../utils/Utils";
 import { GBF } from "../GBF";
 import { MessageCommand } from "../Command Handlers/Message Handler";
 import { CommandOptions } from "../types";
@@ -16,17 +16,13 @@ export default async function GBFMessageCreate(client: GBF) {
     if (message.author.bot) return;
 
     let BanData: (IBotBan & Document<any, any, IBotBan>) | null =
-      client.DatabaseInteractions
-        ? await BotBanModel.findOne({ userId: message.author.id })
-        : null;
+      await BotBanModel.findOne({ userId: message.author.id });
 
     let GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null =
       message.channel.type === ChannelType.DM
         ? null
-        : client.DatabaseInteractions
-        ? (await BotGuildModel.findOne({ guildID: message.guildId })) ||
-          (await new BotGuildModel({ guildID: message.guildId }).save())
-        : null;
+        : (await BotGuildModel.findOne({ guildID: message.guildId })) ||
+          (await new BotGuildModel({ guildID: message.guildId }).save());
 
     const BotPrefixes = [
       GuildSettings ? GuildSettings.Prefix : client.Prefix,
@@ -72,7 +68,7 @@ export default async function GBFMessageCreate(client: GBF) {
     }
 
     try {
-      await command.execute({ client, message, args });
+      await command.options.execute({ client, message, args });
     } catch (err) {
       return console.log(
         `I ran into an error running "${command.options.name}\n${err}`
