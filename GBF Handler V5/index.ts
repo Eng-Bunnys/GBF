@@ -12,5 +12,5 @@ export const client = new GBF({
   ],
   AutoLogin: true,
   LogActions: true,
-  IgnoredEvents: "All",
+  TestServers: ["1187559385359200316"],
 });
