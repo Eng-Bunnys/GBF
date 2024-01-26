@@ -1,20 +1,21 @@
-import { BaseMessageOptions, DMChannel, GuildMember, Interaction, Message, PermissionResolvable, TextBasedChannel } from "discord.js";
+import {
+  BaseMessageOptions,
+  DMChannel,
+  GuildMember,
+  Interaction,
+  Message,
+  PermissionResolvable,
+  TextBasedChannel,
+} from "discord.js";
 
-/**
-Returns a string indicating the missing permissions of a target member, compared to the required permissions.
-@param {GuildMember} TargetMember - The target member to check the permissions of.
-@param {PermissionResolvable | PermissionResolvable[]} RequiredPermissions - The required permissions to check against.
-@returns {string} - A string indicating the missing permissions, formatted with backticks for each missing permission.
-If there is more than one missing permission, it will include "and n more" at the end of the list, where n is the number of additional missing permissions.
-@throws {TypeError} - If the targetMember parameter is not a GuildMember or if the requiredPermissions parameter is not a PermissionResolvable.
-@throws {RangeError} - If the requiredPermissions parameter is an empty array.
-@example
-// Returns "Manage Roles and Ban Members"
-const targetMember = interaction.guild.members.cache.get('365647018393206785'); // Ace ID
-const requiredPermissions = ['MANAGE_ROLES', 'BAN_MEMBERS'];
-const missingPerms = missingPermissions(targetMember, requiredPermissions);
-console.log(missingPerms);
-*/
+export function IsValidURL(string: string): boolean {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
 export function MissingPermissions(
   TargetMember: GuildMember,

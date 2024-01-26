@@ -28,12 +28,17 @@ async function LoadCommand(client: GBF, FilePath: string) {
     );
 
     if (CommandClass.prototype instanceof MessageCommand) {
-      const { name, aliases } = (CommandInstance as MessageCommand)
+      const { name, aliases, description } = (CommandInstance as MessageCommand)
         .CommandOptions;
 
       if (!name)
         throw new Error(
           redBright(`"${FilePath}" does not have a name option.`)
+        );
+
+      if (!description)
+        throw new Error(
+          redBright(`"${FilePath}" does not have a description option.`)
         );
 
       if (client.MessageCommands.has(name))

@@ -1,4 +1,10 @@
-import { Events, GuildMember, Interaction } from "discord.js";
+import {
+  AutocompleteInteraction,
+  CommandInteractionOptionResolver,
+  Events,
+  GuildMember,
+  Interaction,
+} from "discord.js";
 import { Document } from "mongoose";
 import { GBF } from "../GBF";
 import { IBotBan, BotBanModel } from "../Handler Models/Bot Ban Schema";
@@ -11,7 +17,7 @@ import { SlashCommand } from "../Command Handlers/Slash Handler";
 
 export async function GBFInteractionCreate(client: GBF) {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-    if (interaction.user.bot) return;
+    if (!interaction.isCommand() || interaction.user.bot) return;
 
     const BanData: (IBotBan & Document<any, any, IBotBan>) | null =
       await BotBanModel.findOne({ userId: interaction.user.id });
@@ -25,9 +31,8 @@ export async function GBFInteractionCreate(client: GBF) {
     let SlashCommand: SlashCommand;
 
     if (
-      interaction.isCommand() &&
-      (interaction.isUserContextMenuCommand() ||
-        interaction.isMessageContextMenuCommand())
+      interaction.isUserContextMenuCommand() ||
+      interaction.isMessageContextMenuCommand()
     ) {
       SlashCommand = client.SlashCommands.get(interaction.commandName);
 

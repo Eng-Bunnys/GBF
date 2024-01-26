@@ -7,7 +7,7 @@
     "allowJs": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    
+    "skipLibCheck": false
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]

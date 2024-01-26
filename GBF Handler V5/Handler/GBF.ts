@@ -7,15 +7,31 @@ import {
   Collection,
   GatewayIntentBits,
   Guild,
+  REST,
+  Routes,
+  Snowflake,
 } from "discord.js";
-import { redBright, greenBright, blueBright, magentaBright } from "chalk";
-import { AppConfig, IGBF, IgnoreEvents } from "./types";
+import {
+  redBright,
+  greenBright,
+  blueBright,
+  magentaBright,
+  yellowBright,
+} from "chalk";
+import {
+  AppConfig,
+  BuiltInCommands,
+  BuiltInEvents,
+  IGBF,
+  IgnoreEvents,
+} from "./types";
 import { Engine } from "../Utils/Engine";
 import { MessageCommand } from "./Command Handlers/Message Handler";
 import { RegisterCommands } from "./Command Handlers/Command Registry";
 import path from "path";
 import { connect } from "mongoose";
 import { SlashCommand } from "./Command Handlers/Slash Handler";
+import { IsValidURL } from "../Utils/Utils";
 
 export class GBF extends Client implements IGBF {
   private HandlerVersion: string;
@@ -44,7 +60,11 @@ export class GBF extends Client implements IGBF {
   public readonly Developers?: string[];
   public readonly TestServers?: string[];
   public readonly SupportServer?: string;
+  public readonly AppealURL?: string;
   public readonly Version?: string;
+  public readonly LogsChannel?: Snowflake[];
+  public readonly DisabledHandlerEvents?: BuiltInEvents[];
+  public readonly DisabledHandlerCommands?: BuiltInCommands[];
   constructor(HandlerOptions: ClientOptions & IGBF) {
     super(HandlerOptions);
 
@@ -69,39 +89,64 @@ export class GBF extends Client implements IGBF {
     this.TestServers = HandlerOptions.TestServers ?? [];
     this.Developers = HandlerOptions.Developers ?? [];
     this.SupportServer = HandlerOptions.SupportServer ?? "No Support Server.";
+    this.AppealURL = HandlerOptions.AppealURL ?? undefined;
     this.Version = HandlerOptions.Version ?? "1.0.0";
+    this.LogsChannel = HandlerOptions.LogsChannel ?? [];
+    this.DisabledHandlerEvents = HandlerOptions.DisabledHandlerEvents ?? [];
+    this.DisabledHandlerCommands = HandlerOptions.DisabledHandlerCommands ?? [];
+
+    if (this.AppealURL && !IsValidURL(this.AppealURL)) {
+      console.warn(
+        yellowBright(`• Warning: The Appeal URL provided is not a valid URL.`)
+      );
+      this.AppealURL = undefined;
+    }
 
     this.LogActionsMessage += greenBright(
       `• GBF Handler v${this.HandlerVersion} is now online!`
     );
-
-    this.LoadEvents(path.join(__dirname, "./Handler Events"), true);
   }
 
-  private async LoadCommands(CommandsFolder: string): Promise<void> {
+  private async LoadCommands(
+    CommandsFolder: string,
+    HandlerCommands: boolean = false
+  ): Promise<void> {
     try {
       if (!this.application?.owner) await this.application.fetch();
 
       await RegisterCommands(this, CommandsFolder);
 
-      this.LogActionsMessage += blueBright(
-        `\n• Registered ${this.MessageCommands.size.toLocaleString(
-          "en-US"
-        )} Message Command${this.MessageCommands.size > 1 ? "s." : "."}`
-      );
+      if (this.MessageCommands.size >= 1 && !HandlerCommands)
+        this.LogActionsMessage += blueBright(
+          `\n• Registered ${this.MessageCommands.size.toLocaleString(
+            "en-US"
+          )} Message Command${this.MessageCommands.size > 1 ? "s." : "."}`
+        );
 
       const GuildCommands: ApplicationCommandData[] = this.ToApplicationCommand(
         this.SlashCommands.filter((Command: SlashCommand) => {
-          return Command.CommandOptions.development;
+          return (
+            Command.CommandOptions.development &&
+            !this.DisabledHandlerCommands.includes(
+              Command.CommandOptions.name as BuiltInCommands
+            )
+          );
         })
       );
 
       const GlobalCommands: ApplicationCommandData[] =
         this.ToApplicationCommand(
           this.SlashCommands.filter((Command: SlashCommand) => {
-            return !Command.CommandOptions.development;
+            return (
+              !Command.CommandOptions.development &&
+              !this.DisabledHandlerCommands.includes(
+                Command.CommandOptions.name as BuiltInCommands
+              )
+            );
           })
         );
+
+      const rest = new REST().setToken(this.BotConfig.TOKEN);
 
       if (
         GuildCommands &&
@@ -111,24 +156,33 @@ export class GBF extends Client implements IGBF {
         await Promise.all(
           this.TestServers.map(async (ServerID) => {
             const TestServer = await this.guilds.fetch(ServerID);
-            if (TestServer && TestServer instanceof Guild)
-              await TestServer.commands.set(GuildCommands).then(() => {
-                this.LogActionsMessage += magentaBright(
-                  `\n• Registering Guild Only Commands in: ${TestServer.name}`
-                );
-              });
+            if (TestServer && TestServer instanceof Guild) {
+              const GuildID: Snowflake = TestServer.id;
+              await rest
+                .put(Routes.applicationGuildCommands(this.user.id, GuildID), {
+                  body: GuildCommands,
+                })
+                .then(() => {
+                  if (!HandlerCommands)
+                    this.LogActionsMessage += magentaBright(
+                      `\n• Registering Guild Only Commands in: ${TestServer.name}`
+                    );
+                });
+            }
           })
         );
       }
 
       if (GlobalCommands && GlobalCommands.length) {
-        await this.application.commands.set(GlobalCommands);
-
-        this.LogActionsMessage += magentaBright(
-          `\n• Registered ${GlobalCommands.length} Global Command${
-            GlobalCommands.length > 1 ? "s." : "."
-          }`
-        );
+        await rest.put(Routes.applicationCommands(this.user.id), {
+          body: GlobalCommands,
+        });
+        if (!HandlerCommands)
+          this.LogActionsMessage += magentaBright(
+            `\n• Registered ${GlobalCommands.length} Global Command${
+              GlobalCommands.length > 1 ? "s." : "."
+            }`
+          );
       }
     } catch (CommandSetError) {
       console.log(redBright(`Error Setting Commands\n${CommandSetError}`));
@@ -137,9 +191,15 @@ export class GBF extends Client implements IGBF {
 
   private async LoadEvents(
     EventsFolder: string,
-    SkipChecks: boolean
+    SkippedEvents: string[] | "All" = this.IgnoredEvents
   ): Promise<void> {
     const EventFiles = Engine.ReadFiles(EventsFolder, [".ts", ".js"]);
+
+    const IgnoredNamesLower =
+      Array.isArray(SkippedEvents) &&
+      SkippedEvents.map((EventName) => EventName.toLowerCase());
+
+    const EventNames: Set<string> = new Set();
 
     for (const File of EventFiles) {
       try {
@@ -159,28 +219,37 @@ export class GBF extends Client implements IGBF {
             redBright(`• "${File}" does not have a callable export.`)
           );
 
-        if (!SkipChecks) {
-          if (this.IgnoredEvents === "All") {
-            this.LogActionsMessage += blueBright(
-              "\n• Will not register events."
-            );
-            return;
-          }
+        const LowerFunctionName = EventFunction.name.toLowerCase();
 
-          const LowerFunctionName = EventFunction.name.toLowerCase();
-          const IgnoredNamesLower =
-            Array.isArray(this.IgnoredEvents) &&
-            this.IgnoredEvents.map((EventName) => EventName.toLowerCase());
+        if (EventNames.has(LowerFunctionName))
+          console.warn(
+            yellowBright(
+              `• Warning: Event Function name "${EventFunction.name}" exists more than once. This could lead to unexpected behavior, Please ensure each function has a unique name to avoid conflicts.`
+            )
+          );
 
+        EventNames.add(LowerFunctionName);
+
+        if (SkippedEvents === "All") {
+          this.LogActionsMessage += blueBright("\n• Will not register events.");
+          return;
+        }
+
+        if (
+          Array.isArray(IgnoredNamesLower) &&
+          IgnoredNamesLower.includes(LowerFunctionName)
+        ) {
           if (
-            Array.isArray(IgnoredNamesLower) &&
-            IgnoredNamesLower.includes(LowerFunctionName)
+            !Object.values(BuiltInEvents)
+              .map((Event) => Event.toLowerCase())
+              .some((Event) => IgnoredNamesLower.includes(Event))
           ) {
             this.LogActionsMessage += blueBright(
               `\n• Ignoring event: ${EventFunction.name}`
             );
-            continue;
           }
+
+          continue;
         }
 
         this.HandlerEvents.set(EventFunction.name, EventFunction);
@@ -205,6 +274,39 @@ export class GBF extends Client implements IGBF {
           console.log(redBright(`• Could not login.\n${LoginError}`));
           reject(LoginError);
           return;
+        }
+
+        if (this.EventsFolder) {
+          try {
+            await this.LoadEvents(this.EventsFolder);
+          } catch (EventsError) {
+            console.log(redBright(`• Erroring Loading Events\n${EventsError}`));
+            reject(EventsError);
+          }
+        }
+
+        try {
+          await this.LoadEvents(
+            path.join(__dirname, "./Handler Events"),
+            this.DisabledHandlerEvents
+          );
+        } catch (HandlerEventsError) {
+          console.log(
+            redBright(`• Handler Events Error\n${HandlerEventsError}`)
+          );
+          reject(HandlerEventsError);
+        }
+
+        try {
+          await this.LoadCommands(
+            path.join(__dirname, "./Handler Commands"),
+            true
+          );
+        } catch (HandlerCommandsError) {
+          console.log(
+            redBright(`• Handler Commands Error\n${HandlerCommandsError}`)
+          );
+          reject(HandlerCommandsError);
         }
 
         if (this.BotConfig.MongoURI) {
@@ -236,14 +338,7 @@ export class GBF extends Client implements IGBF {
             console.log(
               redBright(`• Error Loading Commands\n${CommandsError}`)
             );
-          }
-        }
-
-        if (this.EventsFolder) {
-          try {
-            await this.LoadEvents(this.EventsFolder, false);
-          } catch (EventsError) {
-            console.log(redBright(`• Erroring Loading Events\n${EventsError}`));
+            reject(CommandsError);
           }
         }
 

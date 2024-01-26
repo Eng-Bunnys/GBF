@@ -2,7 +2,7 @@ import { ChannelType, Events, Message } from "discord.js";
 import { Document } from "mongoose";
 import { GBF } from "../GBF";
 import { MessageCommand } from "../Command Handlers/Message Handler";
-import { CommandOptions } from "../types";
+import { MessageCommandOptions } from "../types";
 import { IBotBan, BotBanModel } from "../Handler Models/Bot Ban Schema";
 import {
   IGuildData,
@@ -43,7 +43,7 @@ export function GBFMessageCreate(client: GBF) {
 
     const LowerCommandName = CommandName.toLocaleLowerCase();
 
-    const Command: MessageCommand<string[]> | CommandOptions =
+    const Command: MessageCommand<string[]> | MessageCommandOptions =
       client.MessageCommands.get(LowerCommandName) ||
       client.MessageCommands.get(client.Aliases.get(LowerCommandName));
 
