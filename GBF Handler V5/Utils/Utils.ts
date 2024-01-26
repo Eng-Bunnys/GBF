@@ -17,6 +17,50 @@ export function IsValidURL(string: string): boolean {
   }
 }
 
+const DEFAULT_FORMAT_OPTIONS: TimeFormatOptions = {
+  format: "long",
+  includeSpaces: false,
+  joinDelimiter: " ",
+  maxUnitCount: 100,
+};
+
+export function msToTime(
+  duration: number,
+  options: TimeFormatOptions = {}
+): string | undefined {
+  const { format, includeSpaces, joinDelimiter, maxUnitCount } = {
+    ...DEFAULT_FORMAT_OPTIONS,
+    ...options,
+  };
+
+  if (typeof duration !== "number" || duration < 0) return undefined;
+
+  let formattedTime = "";
+  let unitCount = 0;
+
+  for (let i = Object.keys(TimeUnitValues).length - 1; i >= 0; i--) {
+    const unitKey = Object.keys(TimeUnitValues)[i];
+    if (unitKey === "year") continue;
+
+    const unitValue = TimeUnitValues[unitKey];
+    let unitDuration = duration / unitValue;
+    if (unitDuration >= 1) {
+      if ((maxUnitCount || 100) < ++unitCount) break;
+
+      unitDuration = Math.floor(unitDuration);
+      const unitName = FullTimeUnitNames[unitKey][format!];
+      const pluralSuffix = unitDuration !== 1 && format !== "short" ? "s" : "";
+      formattedTime += `${unitDuration} ${unitName}${pluralSuffix}${
+        includeSpaces ? " " : joinDelimiter
+      }`;
+      duration -= unitDuration * unitValue;
+    }
+  }
+
+  formattedTime = formattedTime.trim();
+  return formattedTime || undefined;
+}
+
 export function MissingPermissions(
   TargetMember: GuildMember,
   RequiredPermissions: PermissionResolvable | PermissionResolvable[]
@@ -46,3 +90,26 @@ export async function SendAndDelete(
     await message.delete();
   }, TimeInSeconds * 1000);
 }
+
+interface TimeFormatOptions {
+  format?: "long" | "short";
+  includeSpaces?: boolean;
+  joinDelimiter?: string;
+  maxUnitCount?: number;
+}
+
+const TimeUnitValues: Record<string, number> = {
+  year: 31557600000,
+  day: 86400000,
+  hour: 3600000,
+  minute: 60000,
+  second: 1000,
+};
+
+const FullTimeUnitNames: Record<string, Record<string, string>> = {
+  year: { long: "year", short: "yr" },
+  day: { long: "day", short: "day" },
+  hour: { long: "hour", short: "hr" },
+  minute: { long: "minute", short: "min" },
+  second: { long: "second", short: "sec" },
+};

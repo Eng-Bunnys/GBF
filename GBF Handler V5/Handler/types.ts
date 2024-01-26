@@ -8,8 +8,8 @@ import {
   Snowflake,
 } from "discord.js";
 import { GBF } from "./GBF";
-import { CommandCategories } from "./Help Menu/types";
 
+export type CommandCategories = string;
 export type AppConfig = {
   TOKEN: string;
   MongoURI?: string;
@@ -24,6 +24,8 @@ export enum BuiltInEvents {
 export enum BuiltInCommands {
   "Set Presence" = "set_presence",
   "Bot Ban" = "bot_ban",
+  "Uptime" = "uptime",
+  "Ping" = "ping",
 }
 
 export interface IGBF {
@@ -41,8 +43,10 @@ export interface IGBF {
   BotConfig?: AppConfig | string;
   SupportServer?: string;
   Version?: string;
+  Categories?: string[];
   DisabledHandlerEvents?: BuiltInEvents[];
   DisabledHandlerCommands?: BuiltInCommands[];
+  DisabledCommands?: string[];
   LogsChannel?: Snowflake[];
   intents: GatewayIntentBits[] | BitFieldResolvable<string, number>;
 }

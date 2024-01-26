@@ -7,6 +7,7 @@ import {
 import { SlashCommand } from "../Command Handlers/Slash Handler";
 import { GBF } from "../GBF";
 import { Emojis } from "../../Utils/GBF Features";
+import { CommandCategories } from "../types";
 
 export class SetPresence extends SlashCommand {
   constructor(client: GBF) {

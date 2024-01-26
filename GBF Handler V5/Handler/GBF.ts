@@ -65,6 +65,7 @@ export class GBF extends Client implements IGBF {
   public readonly LogsChannel?: Snowflake[];
   public readonly DisabledHandlerEvents?: BuiltInEvents[];
   public readonly DisabledHandlerCommands?: BuiltInCommands[];
+  public readonly DisabledCommands?: string[];
   constructor(HandlerOptions: ClientOptions & IGBF) {
     super(HandlerOptions);
 
@@ -94,6 +95,12 @@ export class GBF extends Client implements IGBF {
     this.LogsChannel = HandlerOptions.LogsChannel ?? [];
     this.DisabledHandlerEvents = HandlerOptions.DisabledHandlerEvents ?? [];
     this.DisabledHandlerCommands = HandlerOptions.DisabledHandlerCommands ?? [];
+    this.DisabledCommands = HandlerOptions.DisabledCommands ?? [];
+
+    if (this.DisabledCommands.length)
+      this.DisabledCommands = this.DisabledCommands.map((Command) =>
+        Command.toLowerCase()
+      );
 
     if (this.AppealURL && !IsValidURL(this.AppealURL)) {
       console.warn(
@@ -129,6 +136,9 @@ export class GBF extends Client implements IGBF {
             Command.CommandOptions.development &&
             !this.DisabledHandlerCommands.includes(
               Command.CommandOptions.name as BuiltInCommands
+            ) &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
             )
           );
         })
@@ -141,6 +151,9 @@ export class GBF extends Client implements IGBF {
               !Command.CommandOptions.development &&
               !this.DisabledHandlerCommands.includes(
                 Command.CommandOptions.name as BuiltInCommands
+              ) &&
+              !this.DisabledCommands.includes(
+                Command.CommandOptions.name.toLowerCase()
               )
             );
           })
@@ -185,7 +198,7 @@ export class GBF extends Client implements IGBF {
           );
       }
     } catch (CommandSetError) {
-      console.log(redBright(`Error Setting Commands\n${CommandSetError}`));
+      console.log(redBright(`• Error Setting Commands\n${CommandSetError}`));
     }
   }
 

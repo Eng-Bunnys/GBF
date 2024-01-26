@@ -64,7 +64,9 @@ async function LoadCommand(client: GBF, FilePath: string) {
       client.SlashCommands.set(name, CommandInstance as SlashCommand);
     }
   } catch (LoadError) {
-    console.log(redBright(`Command Load Error\n${LoadError}`));
+    console.log(
+      redBright(`• Command Load Error in "${FilePath}"\n${LoadError}`)
+    );
   }
 }
 export async function RegisterCommands(

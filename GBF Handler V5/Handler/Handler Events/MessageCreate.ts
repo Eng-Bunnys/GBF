@@ -72,7 +72,7 @@ export function GBFMessageCreate(client: GBF) {
     } catch (ExecuteError) {
       console.log(
         redBright(
-          `Error running "${Command.CommandOptions.name}"\n${ExecuteError}`
+          `• Error running "${Command.CommandOptions.name}"\n${ExecuteError}`
         )
       );
     }

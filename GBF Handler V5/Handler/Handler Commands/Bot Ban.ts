@@ -15,7 +15,7 @@ export class BotBan extends SlashCommand {
     super(client, {
       name: "bot_ban",
       description: `Ban / Un-ban a user from using ${client.user.username}`,
-      category: "Developer",
+      category: "",
       DMEnabled: false,
       DeveloperOnly: true,
       subcommands: {

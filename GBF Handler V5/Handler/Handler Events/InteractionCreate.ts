@@ -1,11 +1,6 @@
-import {
-  AutocompleteInteraction,
-  CommandInteractionOptionResolver,
-  Events,
-  GuildMember,
-  Interaction,
-} from "discord.js";
+import { Events, GuildMember, Interaction } from "discord.js";
 import { Document } from "mongoose";
+import { redBright } from "chalk";
 import { GBF } from "../GBF";
 import { IBotBan, BotBanModel } from "../Handler Models/Bot Ban Schema";
 import {
@@ -60,7 +55,9 @@ export async function GBFInteractionCreate(client: GBF) {
         await SlashCommand.CommandOptions.execute({ client, interaction });
       } catch (ExecuteError) {
         console.log(
-          `Error in "${SlashCommand.CommandOptions.name}"\n${ExecuteError}`
+          redBright(
+            `• Error in "${SlashCommand.CommandOptions.name}"\n${ExecuteError}`
+          )
         );
       }
     }
@@ -120,7 +117,9 @@ export async function GBFInteractionCreate(client: GBF) {
         });
       } catch (ExecuteError) {
         console.log(
-          `Error in "${SlashCommand.CommandOptions.name}"\n${ExecuteError}`
+          redBright(
+            `• Error in "${SlashCommand.CommandOptions.name}"\n${ExecuteError}`
+          )
         );
       }
     }
