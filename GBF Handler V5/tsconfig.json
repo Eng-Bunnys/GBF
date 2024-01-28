@@ -1,14 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "ES2017",
     "module": "CommonJS",
     "outDir": "./dist",
     "esModuleInterop": true,
-    "allowJs": true,
-    "sourceMap": true,
     "resolveJsonModule": true,
-    "skipLibCheck": false,
-    "declaration": true
+    "skipLibCheck": true,
+    "declaration": false
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]

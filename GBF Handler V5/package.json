@@ -1,10 +1,10 @@
 {
   "name": "gbfcommands",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "description": "A feature rich and easy to setup Discord Bot Command Handler",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GBF-Nexus/Discord-Bot-Commands-and-Handler"
+    "url": "git+https://github.com/GBF-Nexus/Discord-Bot-Commands-and-Handler.git"
   },
   "main": "dist/Handler/index.js",
   "types": "dist/Handler/index.d.ts",
@@ -20,7 +20,7 @@
   "keywords": [
     "typescript",
     "nodejs",
-    "discordjs",
+    "discord.js",
     "command-handler",
     "discord-bot"
   ],

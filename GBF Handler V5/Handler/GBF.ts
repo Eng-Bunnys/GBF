@@ -180,6 +180,10 @@ export class GBF extends Client implements IGBF {
                     this.LogActionsMessage += magentaBright(
                       `\n• Registering Guild Only Commands in: ${TestServer.name}`
                     );
+                  else
+                    this.LogActionsMessage += magentaBright(
+                      `\n• Registering Guild Only Handler Commands in: ${TestServer.name}`
+                    );
                 });
             }
           })
@@ -193,6 +197,12 @@ export class GBF extends Client implements IGBF {
         if (!HandlerCommands)
           this.LogActionsMessage += magentaBright(
             `\n• Registered ${GlobalCommands.length} Global Command${
+              GlobalCommands.length > 1 ? "s." : "."
+            }`
+          );
+        else
+          this.LogActionsMessage += magentaBright(
+            `\n• Registered ${GlobalCommands.length} Global Handler Command${
               GlobalCommands.length > 1 ? "s." : "."
             }`
           );
@@ -211,8 +221,6 @@ export class GBF extends Client implements IGBF {
     const IgnoredNamesLower =
       Array.isArray(SkippedEvents) &&
       SkippedEvents.map((EventName) => EventName.toLowerCase());
-
-    const EventNames: Set<string> = new Set();
 
     for (const File of EventFiles) {
       try {
@@ -233,15 +241,6 @@ export class GBF extends Client implements IGBF {
           );
 
         const LowerFunctionName = EventFunction.name.toLowerCase();
-
-        if (EventNames.has(LowerFunctionName))
-          console.warn(
-            yellowBright(
-              `• Warning: Event Function name "${EventFunction.name}" exists more than once. This could lead to unexpected behavior, Please ensure each function has a unique name to avoid conflicts.`
-            )
-          );
-
-        EventNames.add(LowerFunctionName);
 
         if (SkippedEvents === "All") {
           this.LogActionsMessage += blueBright("\n• Will not register events.");
@@ -276,92 +275,75 @@ export class GBF extends Client implements IGBF {
     }
   }
 
-  async login(ProvidedToken?: string): Promise<string> {
-    return new Promise(async (resolve, reject) => {
+  async login(
+    ProvidedToken?: string,
+    ProvidedMongoURI?: string
+  ): Promise<string> {
+    const BotToken = ProvidedToken ?? this.BotConfig.TOKEN;
+    const MongoURI = ProvidedMongoURI ?? this.BotConfig.MongoURI;
+    try {
+      await super.login(BotToken);
+    } catch (LoginError) {
+      console.log(redBright(`• Login Error\n${LoginError}`));
+    }
+
+    if (this.EventsFolder)
       try {
-        const BotToken = ProvidedToken ?? this.BotConfig.TOKEN;
-
-        try {
-          await super.login(BotToken);
-        } catch (LoginError) {
-          console.log(redBright(`• Could not login.\n${LoginError}`));
-          reject(LoginError);
-          return;
-        }
-
-        if (this.EventsFolder) {
-          try {
-            await this.LoadEvents(this.EventsFolder);
-          } catch (EventsError) {
-            console.log(redBright(`• Erroring Loading Events\n${EventsError}`));
-            reject(EventsError);
-          }
-        }
-
-        try {
-          await this.LoadEvents(
-            path.join(__dirname, "./Handler Events"),
-            this.DisabledHandlerEvents
-          );
-        } catch (HandlerEventsError) {
-          console.log(
-            redBright(`• Handler Events Error\n${HandlerEventsError}`)
-          );
-          reject(HandlerEventsError);
-        }
-
-        try {
-          await this.LoadCommands(
-            path.join(__dirname, "./Handler Commands"),
-            true
-          );
-        } catch (HandlerCommandsError) {
-          console.log(
-            redBright(`• Handler Commands Error\n${HandlerCommandsError}`)
-          );
-          reject(HandlerCommandsError);
-        }
-
-        if (this.BotConfig.MongoURI) {
-          try {
-            await connect(this.BotConfig.MongoURI, {
-              useNewUrlParser: true,
-              useUnifiedTopology: true,
-              useFindAndModify: false,
-            });
-
-            this.LogActionsMessage += greenBright(
-              "\n• Connected to MongoDB successfully."
-            );
-          } catch (MongoError) {
-            console.error("Error connecting to MongoDB:", MongoError.message);
-            reject(MongoError);
-            return;
-          }
-        } else {
-          console.warn(
-            "MongoDB URI is not provided. No database interactions will occur.\nMake sure that the variable is named as MongoURI."
-          );
-        }
-
-        if (this.CommandsFolder) {
-          try {
-            await this.LoadCommands(this.CommandsFolder);
-          } catch (CommandsError) {
-            console.log(
-              redBright(`• Error Loading Commands\n${CommandsError}`)
-            );
-            reject(CommandsError);
-          }
-        }
-
-        if (this.LogActions) console.log(this.LogActionsMessage);
-
-        resolve("Login Successful!");
-      } catch (LoginError) {
-        reject(LoginError);
+        await this.LoadEvents(this.EventsFolder);
+      } catch (EventsError) {
+        console.log(`• Event Set Error\n${EventsError}`);
       }
-    });
+
+    try {
+      await this.LoadEvents(
+        path.join(__dirname, "./Handler Events"),
+        this.DisabledHandlerEvents
+      );
+    } catch (BuiltInEventsError) {
+      console.log(redBright(`• Built In Events Error\n${BuiltInEventsError}`));
+    }
+
+    if (this.BotConfig.MongoURI) {
+      try {
+        await connect(this.BotConfig.MongoURI, {
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+          useFindAndModify: false,
+        });
+
+        this.LogActionsMessage += greenBright(
+          "\n• Connected to MongoDB successfully."
+        );
+      } catch (MongoError) {
+        console.error("Error connecting to MongoDB:", MongoError.message);
+        return;
+      }
+    } else {
+      throw new Error(
+        redBright(
+          `• No MongoURI provided in the config, ensure it's named MongoURI.`
+        )
+      );
+    }
+
+    try {
+      await this.LoadCommands(path.join(__dirname, "./Handler Commands"), true);
+    } catch (BuiltInCommandsError) {
+      console.log(
+        redBright(`• Built In Commands Error\n${BuiltInCommandsError}`)
+      );
+    }
+
+    if (this.CommandsFolder)
+      try {
+        await this.LoadCommands(this.CommandsFolder);
+      } catch (CommandsError) {
+        console.log(redBright(`• Commands Set Error\n${CommandsError}`));
+      }
+
+    if (this.LogActions) console.log(this.LogActionsMessage);
+
+    return "Logged In";
   }
 
   private ToApplicationCommand(

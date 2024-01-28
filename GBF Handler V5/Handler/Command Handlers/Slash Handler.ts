@@ -1,5 +1,4 @@
 import {
-  ApplicationCommandSubCommand,
   ApplicationCommandOptionType,
   ApplicationCommandSubGroup,
   ApplicationCommandType,

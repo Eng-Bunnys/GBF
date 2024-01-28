@@ -11,21 +11,18 @@ export class Engine {
     const Files: string[] = [];
 
     function ReadDir(CurrentDir: string) {
-      const Entries = fs.readdirSync(CurrentDir, { withFileTypes: true });
+      const Entries = fs.readdirSync(CurrentDir, {
+        withFileTypes: true,
+      });
 
       Entries.forEach((Entry) => {
         const FilePath = path.join(CurrentDir, Entry.name);
 
-        if (Entry.isDirectory()) {
-          ReadDir(FilePath);
-        } else {
+        if (Entry.isDirectory()) ReadDir(FilePath);
+        else {
           const FileExtension = path.extname(FilePath).toLowerCase();
 
-          if (
-            !FileExtensions.includes(FileExtension) &&
-            (!FileExtension.endsWith(".d.ts") ||
-              !FileExtension.endsWith(".js.map"))
-          )
+          if (!FileExtensions || FileExtensions.includes(FileExtension))
             Files.push(FilePath);
         }
       });

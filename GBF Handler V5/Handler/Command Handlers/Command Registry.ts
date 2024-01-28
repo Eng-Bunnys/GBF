@@ -90,7 +90,7 @@ export async function RegisterCommands(
         }
       } catch (RegisterError) {
         console.error(
-          redBright(`Error when reading directory ${dir}\n${RegisterError}`)
+          redBright(`• Error when reading directory ${dir}\n${RegisterError}`)
         );
       }
     })
