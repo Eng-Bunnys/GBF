@@ -303,7 +303,7 @@ export class GBF extends Client implements IGBF {
       console.log(redBright(`• Built In Events Error\n${BuiltInEventsError}`));
     }
 
-    if (this.BotConfig.MongoURI) {
+    if (MongoURI) {
       try {
         await connect(this.BotConfig.MongoURI, {
           useNewUrlParser: true,
