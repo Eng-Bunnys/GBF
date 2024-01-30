@@ -18,13 +18,7 @@ import {
   magentaBright,
   yellowBright,
 } from "chalk";
-import {
-  AppConfig,
-  BuiltInCommands,
-  BuiltInEvents,
-  IGBF,
-  IgnoreEvents,
-} from "./types";
+import { AppConfig, IGBF, IgnoreEvents } from "./types";
 import { Engine } from "../Utils/Engine";
 import { MessageCommand } from "./Command Handlers/Message Handler";
 import { RegisterCommands } from "./Command Handlers/Command Registry";
@@ -32,6 +26,19 @@ import path from "path";
 import { connect } from "mongoose";
 import { SlashCommand } from "./Command Handlers/Slash Handler";
 import { IsValidURL } from "../Utils/Utils";
+import { ContextCommand } from "./Command Handlers/Context Handler";
+
+export enum BuiltInEvents {
+  "Ready" = "GBFReady",
+}
+
+export enum BuiltInCommands {
+  "All" = "AllCommands",
+  "Set Presence" = "set_presence",
+  "Bot Ban" = "bot_ban",
+  "Uptime" = "uptime",
+  "Ping" = "ping",
+}
 
 export class GBF extends Client implements IGBF {
   private HandlerVersion: string;
@@ -48,6 +55,8 @@ export class GBF extends Client implements IGBF {
   public readonly MessageCommands: Collection<string, MessageCommand> =
     new Collection();
   public readonly SlashCommands: Collection<string, SlashCommand> =
+    new Collection();
+  public readonly ContextCommands: Collection<string, ContextCommand> =
     new Collection();
 
   public readonly BotConfig?: AppConfig;
@@ -66,6 +75,9 @@ export class GBF extends Client implements IGBF {
   public readonly DisabledHandlerEvents?: BuiltInEvents[];
   public readonly DisabledHandlerCommands?: BuiltInCommands[];
   public readonly DisabledCommands?: string[];
+  public DatabaseInteractions?: boolean;
+  private BuiltInHandlerCommands: string[];
+
   constructor(HandlerOptions: ClientOptions & IGBF) {
     super(HandlerOptions);
 
@@ -96,6 +108,13 @@ export class GBF extends Client implements IGBF {
     this.DisabledHandlerEvents = HandlerOptions.DisabledHandlerEvents ?? [];
     this.DisabledHandlerCommands = HandlerOptions.DisabledHandlerCommands ?? [];
     this.DisabledCommands = HandlerOptions.DisabledCommands ?? [];
+    this.DatabaseInteractions = HandlerOptions.DatabaseInteractions ?? true;
+    this.BuiltInHandlerCommands = [
+      BuiltInCommands["Bot Ban"],
+      BuiltInCommands.Ping,
+      BuiltInCommands["Set Presence"],
+      BuiltInCommands.Uptime,
+    ];
 
     if (this.DisabledCommands.length)
       this.DisabledCommands = this.DisabledCommands.map((Command) =>
@@ -130,34 +149,71 @@ export class GBF extends Client implements IGBF {
           )} Message Command${this.MessageCommands.size > 1 ? "s." : "."}`
         );
 
-      const GuildCommands: ApplicationCommandData[] = this.ToApplicationCommand(
-        this.SlashCommands.filter((Command: SlashCommand) => {
-          return (
-            Command.CommandOptions.development &&
-            !this.DisabledHandlerCommands.includes(
-              Command.CommandOptions.name as BuiltInCommands
-            ) &&
-            !this.DisabledCommands.includes(
-              Command.CommandOptions.name.toLowerCase()
-            )
-          );
-        })
-      );
-
-      const GlobalCommands: ApplicationCommandData[] =
-        this.ToApplicationCommand(
+      const GuildCommands: ApplicationCommandData[] = [
+        ...this.ToApplicationCommand(
           this.SlashCommands.filter((Command: SlashCommand) => {
-            return (
-              !Command.CommandOptions.development &&
-              !this.DisabledHandlerCommands.includes(
-                Command.CommandOptions.name as BuiltInCommands
-              ) &&
-              !this.DisabledCommands.includes(
-                Command.CommandOptions.name.toLowerCase()
-              )
-            );
+            return Command.CommandOptions.development &&
+              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                ) &&
+                  !this.DisabledCommands.includes(
+                    Command.CommandOptions.name.toLowerCase()
+                  );
           })
-        );
+        ),
+        ...this.ToApplicationCommand(
+          this.ContextCommands.filter((Command: ContextCommand) => {
+            return Command.CommandOptions.development &&
+              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                ) &&
+                  !this.DisabledCommands.includes(
+                    Command.CommandOptions.name.toLowerCase()
+                  );
+          })
+        ),
+      ];
+
+      const GlobalCommands: ApplicationCommandData[] = [
+        ...this.ToApplicationCommand(
+          this.SlashCommands.filter((Command: SlashCommand) => {
+            return !Command.CommandOptions.development &&
+              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                ) &&
+                  !this.DisabledCommands.includes(
+                    Command.CommandOptions.name.toLowerCase()
+                  );
+          })
+        ),
+        ...this.ToApplicationCommand(
+          this.ContextCommands.filter((Command: ContextCommand) => {
+            return !Command.CommandOptions.development &&
+              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                ) &&
+                  !this.DisabledCommands.includes(
+                    Command.CommandOptions.name.toLowerCase()
+                  );
+          })
+        ),
+      ];
 
       const rest = new REST().setToken(this.BotConfig.TOKEN);
 
@@ -191,6 +247,7 @@ export class GBF extends Client implements IGBF {
       }
 
       if (GlobalCommands && GlobalCommands.length) {
+        await this.application.commands.set([]);
         await rest.put(Routes.applicationCommands(this.user.id), {
           body: GlobalCommands,
         });
@@ -303,7 +360,9 @@ export class GBF extends Client implements IGBF {
       console.log(redBright(`• Built In Events Error\n${BuiltInEventsError}`));
     }
 
-    if (MongoURI) {
+    if (!MongoURI) this.DatabaseInteractions = false;
+
+    if (MongoURI && this.DatabaseInteractions) {
       try {
         await connect(this.BotConfig.MongoURI, {
           useNewUrlParser: true,
@@ -315,13 +374,14 @@ export class GBF extends Client implements IGBF {
           "\n• Connected to MongoDB successfully."
         );
       } catch (MongoError) {
+        if (this.DatabaseInteractions) this.DatabaseInteractions = false;
         console.error("Error connecting to MongoDB:", MongoError.message);
         return;
       }
     } else {
-      throw new Error(
-        redBright(
-          `• No MongoURI provided in the config, ensure it's named MongoURI.`
+      console.warn(
+        yellowBright(
+          `• Warning: No MongoURI provided, ensure MongoURI exists in your config, no database interactions will occur.`
         )
       );
     }
@@ -347,20 +407,28 @@ export class GBF extends Client implements IGBF {
   }
 
   private ToApplicationCommand(
-    SlashCommands: Collection<string, SlashCommand>
+    SlashCommands: Collection<string, SlashCommand | ContextCommand>
   ) {
     return SlashCommands.map((command) => {
       const CommandData = {
         name: command.CommandOptions.name,
-        description: command.CommandOptions.description,
-        options: command.CommandOptions.options || [],
+        description:
+          (command instanceof SlashCommand
+            ? command.CommandOptions.description
+            : null) ?? null,
+        options:
+          (command instanceof SlashCommand
+            ? command.CommandOptions.options
+            : null) ?? [],
         defaultMemberPermissions: command.CommandOptions.UserPermissions || [],
         defaultPermission: command.CommandOptions.development || false,
         dmPermission: command.CommandOptions.DMEnabled || this.DMEnabled,
         nsfw: command.CommandOptions.NSFW || false,
-        type: !command.CommandOptions.ContextType
-          ? ApplicationCommandType.ChatInput
-          : command.CommandOptions.ContextType,
+        type:
+          (command instanceof ContextCommand
+            ? command.CommandOptions.ContextType
+            : ApplicationCommandType.ChatInput) ??
+          ApplicationCommandType.ChatInput,
       };
 
       return CommandData;

@@ -17,6 +17,7 @@ import { IGuildData } from "../Handler Models/Bot Settings Schema";
 import { ColorCodes, Emojis } from "../../Utils/GBF Features";
 import { MissingPermissions } from "../../Utils/Utils";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
+import { ContextCommand } from "../Command Handlers/Context Handler";
 
 /** Represents a collection to store command cooldowns. */
 const CommandCooldowns = new Collection();
@@ -27,7 +28,7 @@ export class HandlerChecks {
   private CommandMember: GuildMember;
   private UserBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null;
   private GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null;
-  private Command: SlashCommand | MessageCommand;
+  private Command: SlashCommand | MessageCommand | ContextCommand;
   private ActionType: Message | Interaction;
 
   constructor(
@@ -36,7 +37,7 @@ export class HandlerChecks {
     commandMember: GuildMember,
     userBlacklistData: (IBotBan & Document<any, any, IBotBan>) | null,
     guildSettings: (IGuildData & Document<any, any, IGuildData>) | null,
-    command: SlashCommand | MessageCommand,
+    command: SlashCommand | MessageCommand | ContextCommand,
     actionType: Interaction | Message
   ) {
     this.client = client;
@@ -72,14 +73,15 @@ export class HandlerChecks {
       return [ErrorEmbed, false];
     }
 
-    if (!this.Command.CommandOptions.DMEnabled && !InGuild) {
-      ErrorEmbed.setTitle(
-        `${Emojis.Error} You can't use that here`
-      ).setDescription(
-        `${this.Command.CommandOptions.name} is disabled in DMs.`
-      );
-      return [ErrorEmbed, false];
-    }
+    if (!(this.Command instanceof ContextCommand))
+      if (!this.Command.CommandOptions.DMEnabled && !InGuild) {
+        ErrorEmbed.setTitle(
+          `${Emojis.Error} You can't use that here`
+        ).setDescription(
+          `${this.Command.CommandOptions.name} is disabled in DMs.`
+        );
+        return [ErrorEmbed, false];
+      }
 
     if (
       this.Command.CommandOptions.DeveloperOnly &&

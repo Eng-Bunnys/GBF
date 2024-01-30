@@ -4,6 +4,7 @@ import { join, resolve } from "path";
 import { redBright } from "chalk";
 import { MessageCommand } from "./Message Handler";
 import { SlashCommand } from "./Slash Handler";
+import { ContextCommand } from "./Context Handler";
 
 async function LoadCommand(client: GBF, FilePath: string) {
   try {
@@ -15,17 +16,17 @@ async function LoadCommand(client: GBF, FilePath: string) {
     if (
       typeof CommandClass !== "function" ||
       (!(CommandClass.prototype instanceof MessageCommand) &&
-        !(CommandClass.prototype instanceof SlashCommand))
+        !(CommandClass.prototype instanceof SlashCommand) &&
+        !(CommandClass.prototype instanceof ContextCommand))
     )
       throw new Error(
         redBright(
-          `"${FilePath}" does not export a constructable class extending MessageCommand or SlashCommand.`
+          `"${FilePath}" does not export a constructable class extending MessageCommand, SlashCommand or ContextCommand.`
         )
       );
 
-    const CommandInstance: MessageCommand | SlashCommand = new CommandClass(
-      client
-    );
+    const CommandInstance: MessageCommand | SlashCommand | ContextCommand =
+      new CommandClass(client);
 
     if (CommandClass.prototype instanceof MessageCommand) {
       const { name, aliases, description } = (CommandInstance as MessageCommand)
@@ -53,7 +54,7 @@ async function LoadCommand(client: GBF, FilePath: string) {
       }
 
       client.MessageCommands.set(name, CommandInstance as MessageCommand);
-    } else {
+    } else if (CommandClass.prototype instanceof SlashCommand) {
       const { name } = (CommandInstance as SlashCommand).CommandOptions;
 
       if (!name) throw new Error(`"${FilePath}" does not have a name option.`);
@@ -62,6 +63,17 @@ async function LoadCommand(client: GBF, FilePath: string) {
         throw new Error(redBright(`The Slash Command "${name}" exists twice.`));
 
       client.SlashCommands.set(name, CommandInstance as SlashCommand);
+    } else {
+      const { name } = (CommandInstance as ContextCommand).CommandOptions;
+
+      if (!name) throw new Error(`"${FilePath}" does not have a name option.`);
+
+      if (client.ContextCommands.has(name))
+        throw new Error(
+          redBright(`The Context Command "${name}" exists twice.`)
+        );
+
+      client.ContextCommands.set(name, CommandInstance as ContextCommand);
     }
   } catch (LoadError) {
     console.log(
@@ -84,7 +96,10 @@ export async function RegisterCommands(
 
           if (File.name.includes("-ignore") || File.isDirectory()) {
             await RegisterCommands(client, FilePath);
-          } else if (File.name.endsWith(".ts") || File.name.endsWith(".js")) {
+          } else if (
+            (File.name.endsWith(".ts") && !File.name.endsWith(".d.ts")) ||
+            (File.name.endsWith(".js") && !File.name.endsWith(".js.map"))
+          ) {
             await LoadCommand(client, FilePath);
           }
         }

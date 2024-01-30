@@ -9,27 +9,30 @@ import {
 } from "../Handler Models/Bot Settings Schema";
 import { HandlerChecks } from "../Utils/Handler Features";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
+import { ContextCommand } from "../Command Handlers/Context Handler";
 
 export async function GBFInteractionCreate(client: GBF) {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (!interaction.isCommand() || interaction.user.bot) return;
 
     const BanData: (IBotBan & Document<any, any, IBotBan>) | null =
-      await BotBanModel.findOne({ userId: interaction.user.id });
+      client.DatabaseInteractions
+        ? await BotBanModel.findOne({ userId: interaction.user.id })
+        : null;
 
     const GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null =
-      !interaction.inGuild()
+      !interaction.inGuild() || !client.DatabaseInteractions
         ? null
         : (await BotGuildModel.findOne({ guildID: interaction.guildId })) ||
           (await new BotGuildModel({ guildID: interaction.guildId }).save());
 
-    let SlashCommand: SlashCommand;
+    let SlashCommand: SlashCommand | ContextCommand;
 
     if (
       interaction.isUserContextMenuCommand() ||
       interaction.isMessageContextMenuCommand()
     ) {
-      SlashCommand = client.SlashCommands.get(interaction.commandName);
+      SlashCommand = client.ContextCommands.get(interaction.commandName);
 
       if (!SlashCommand) return;
 

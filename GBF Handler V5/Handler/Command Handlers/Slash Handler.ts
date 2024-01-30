@@ -13,7 +13,6 @@ export abstract class SlashCommand {
       name: undefined,
       description: undefined,
       options: [],
-      ContextType: ApplicationCommandType.ChatInput,
       category: "",
       NSFW: false,
       usage: `/${CommandOptions.name}`,
@@ -24,6 +23,7 @@ export abstract class SlashCommand {
       DeveloperBypass: false,
       development: false,
       DMEnabled: client.DMEnabled ?? false,
+      IgnoreCommand: false,
       groups: null,
       subcommands: null,
       async execute({ client, interaction }) {},
@@ -33,8 +33,6 @@ export abstract class SlashCommand {
     this.CommandOptions.description =
       this.CommandOptions.description ?? undefined;
     this.CommandOptions.options = this.CommandOptions.options ?? [];
-    this.CommandOptions.ContextType =
-      this.CommandOptions.ContextType ?? ApplicationCommandType.ChatInput;
     this.CommandOptions.category = this.CommandOptions.category ?? "";
     this.CommandOptions.NSFW = this.CommandOptions.NSFW ?? false;
     this.CommandOptions.usage =
@@ -53,6 +51,8 @@ export abstract class SlashCommand {
       this.CommandOptions.DMEnabled ?? client.DMEnabled ?? false;
     this.CommandOptions.groups = this.CommandOptions.groups ?? null;
     this.CommandOptions.subcommands = this.CommandOptions.subcommands ?? null;
+    this.CommandOptions.IgnoreCommand =
+      this.CommandOptions.IgnoreCommand ?? false;
 
     if (!this.CommandOptions?.options.length) {
       if (this.CommandOptions?.groups != null)

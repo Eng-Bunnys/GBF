@@ -16,16 +16,20 @@ export function GBFMessageCreate(client: GBF) {
     if (message.author.bot) return;
 
     const BanData: (IBotBan & Document<any, any, IBotBan>) | null =
-      await BotBanModel.findOne({ userId: message.author.id });
+      client.DatabaseInteractions
+        ? await BotBanModel.findOne({ userId: message.author.id })
+        : null;
 
     const GuildSettings: (IGuildData & Document<any, any, IGuildData>) | null =
-      message.channel.type === ChannelType.DM
+      message.channel.type === ChannelType.DM || !client.DatabaseInteractions
         ? null
         : (await BotGuildModel.findOne({ guildID: message.guildId })) ||
           (await new BotGuildModel({ guildID: message.guildId }).save());
 
     const BotPrefixes = [
-      GuildSettings ? GuildSettings.Prefix : client.Prefix,
+      GuildSettings && client.DatabaseInteractions
+        ? GuildSettings.Prefix
+        : client.Prefix,
       client.Prefix,
       ...client.Prefixes,
     ].filter((prefix) => prefix !== null);

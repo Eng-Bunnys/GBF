@@ -9,3 +9,4 @@ export * from "./Handler Events/Ready";
 export * from "./Command Handlers/Command Registry";
 export * from "./Command Handlers/Message Handler";
 export * from "./Command Handlers/Slash Handler";
+export * from "./Command Handlers/Context Handler";

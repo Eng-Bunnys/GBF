@@ -1,6 +1,6 @@
 export class Emojis {
-  static readonly Verify = "<:verified:821419611438317638>";
-  static readonly Error = "<:error:822091680605011978>";
+  static readonly Verify = "✅";
+  static readonly Error = "❌";
 }
 
 export class ColorCodes {

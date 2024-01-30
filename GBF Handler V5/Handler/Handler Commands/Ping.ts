@@ -15,7 +15,7 @@ export class PingCommand extends SlashCommand {
           .setDescription(
             `API Latency: \`${Math.round(client.ws.ping).toLocaleString(
               "en-US"
-            )} ms`
+            )}\` ms`
           )
           .setColor(ColorCodes.Default);
 

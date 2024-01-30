@@ -5,28 +5,18 @@ import {
   CommandInteraction,
   GatewayIntentBits,
   Message,
+  MessageContextMenuCommandInteraction,
   Snowflake,
+  UserContextMenuCommandInteraction,
 } from "discord.js";
-import { GBF } from "./GBF";
+import { BuiltInCommands, BuiltInEvents, GBF } from "./GBF";
 
-export type CommandCategories = string;
 export type AppConfig = {
   TOKEN: string;
   MongoURI?: string;
 };
 
 export type IgnoreEvents = string[] | "All";
-
-export enum BuiltInEvents {
-  "Ready" = "GBFReady",
-}
-
-export enum BuiltInCommands {
-  "Set Presence" = "set_presence",
-  "Bot Ban" = "bot_ban",
-  "Uptime" = "uptime",
-  "Ping" = "ping",
-}
 
 export interface IGBF {
   TestServers?: string[];
@@ -43,11 +33,11 @@ export interface IGBF {
   BotConfig?: AppConfig | string;
   SupportServer?: string;
   Version?: string;
-  Categories?: string[];
   DisabledHandlerEvents?: BuiltInEvents[];
   DisabledHandlerCommands?: BuiltInCommands[];
   DisabledCommands?: string[];
   LogsChannel?: Snowflake[];
+  DatabaseInteractions?: boolean;
   intents: GatewayIntentBits[] | BitFieldResolvable<string, number>;
 }
 
@@ -63,7 +53,7 @@ export interface MessageCommandOptions<
   name: string;
   description: string;
   aliases?: string[];
-  category?: CommandCategories;
+  category?: string;
   NSFW?: boolean;
   usage?: string;
   cooldown?: number;
@@ -87,6 +77,13 @@ export interface SlashExecute {
   interaction: CommandInteraction;
 }
 
+export interface ContextExecute {
+  client: GBF;
+  interaction:
+    | UserContextMenuCommandInteraction
+    | MessageContextMenuCommandInteraction;
+}
+
 export interface SubOptions {
   description: string;
   SubCommandOptions?: ApplicationCommandOptionData[];
@@ -105,12 +102,8 @@ export interface SubOptions {
 
 export interface SlashOptions {
   name: string;
-  description?: string;
-  category?: CommandCategories;
-  ContextType?:
-    | ApplicationCommandType.Message
-    | ApplicationCommandType.User
-    | ApplicationCommandType.ChatInput;
+  description: string;
+  category?: string;
   NSFW?: boolean;
   usage?: string;
   options?: ApplicationCommandOptionData[];
@@ -121,6 +114,7 @@ export interface SlashOptions {
   DMEnabled?: boolean;
   DeveloperOnly?: boolean;
   DeveloperBypass?: boolean;
+  IgnoreCommand?: boolean;
   groups?: any;
   subcommands?: Record<string, SubOptions>;
   execute?: ({
@@ -130,6 +124,25 @@ export interface SlashOptions {
     | Promise<CommandInteraction | any>
     | CommandInteraction
     | any;
+}
+
+export interface ContextOptions {
+  name: string;
+  category?: string;
+  ContextType: ApplicationCommandType.Message | ApplicationCommandType.User;
+  NSFW?: boolean;
+  UserPermissions?: bigint[];
+  BotPermissions?: bigint[];
+  cooldown?: number;
+  development?: boolean;
+  DMEnabled?: boolean;
+  DeveloperOnly?: boolean;
+  IgnoreCommand?: boolean;
+  DeveloperBypass?: boolean;
+  execute?: ({
+    client,
+    interaction,
+  }: ContextExecute) => Promise<CommandInteraction | any> | any;
 }
 
 export interface Config {

@@ -35,6 +35,12 @@ export class BotBan extends SlashCommand {
             },
           ],
           async execute({ client, interaction }) {
+            if (!client.DatabaseInteractions)
+              return interaction.reply({
+                content: `This command cannot function without a database.`,
+                ephemeral: true,
+              });
+              
             const TargetUser = interaction.options.getUser("user");
             const BanReason = (
               interaction.options as CommandInteractionOptionResolver

@@ -22,7 +22,11 @@ export class Engine {
         else {
           const FileExtension = path.extname(FilePath).toLowerCase();
 
-          if (!FileExtensions || FileExtensions.includes(FileExtension))
+          if (
+            !FileExtensions ||
+            (FileExtensions.includes(FileExtension) &&
+              !Entry.name.includes("d.ts"))
+          )
             Files.push(FilePath);
         }
       });
