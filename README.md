@@ -1,10 +1,19 @@
 ![Discord.JS Logo](https://camo.githubusercontent.com/94402c561f7851d7d3c899ea70b282bd177f344319f08cb1d743de36f00cf020/68747470733a2f2f646973636f72642e6a732e6f72672f7374617469632f6c6f676f2e737667)
 -----------
+# Installation
+You can install GBF Hanlder using 
+
+`npm i gbfcommands`
+
+# Documentation 
+
+https://gamers-best-friend.gitbook.io/gbfcommands/
+
 # Guide
 - GBF Commands Source Code are found in the GBF vN folders where N is the version of Discord.JS used.
-➜ This contains GBF's Source Code, the exact code used for GBF with no notes explaning what it does, contains the actual file that runs in GBF and seperate commands since they're all under one sub-command
+➜ This contains GBF's Source Code, the exact code used for GBF with no notes explaining what it does, contains the actual file that runs in GBF and separate commands since they're all under one sub-command
 #
-- GBF Handler Updated is found in the GBF Folders under name handler
+- GBF Handler Updated is found in the GBF Folders under the name handler
 ➜ The GBF Handler does not have an npm package so to use it you'll have to install it from here and set it up, instructions are found in the README
 
 ## Languages Used:
