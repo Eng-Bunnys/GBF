@@ -2,3 +2,4 @@
 # GBF Handler 
 
 <a href='https://discord.gg/yrM7fhgNBW' target='_blank'>![alt Discord](https://img.shields.io/discord/704781378113241159?color=7289da&logo=discord&logoColor=white)</a> <a href='https://github.com/GBF-Nexus/Discord-Bot-Commands-and-Handler' target='_blank'>![alt GitHub Repo](https://img.shields.io/github/stars/AlexzanderFlores/WOKCommands?style=social)</a>
+<iframe src="https://discord.com/widget?id=704781378113241159&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
