@@ -1,70 +1,49 @@
-import SlashCommand from "../../utils/slashCommands";
-import colors from "../../GBF/GBFColor.json";
-import emojis from "../../GBF/GBFEmojis.json";
-
 import {
   ApplicationCommandOptionType,
+  CommandInteractionOptionResolver,
   PermissionFlagsBits,
-  EmbedBuilder,
-  ColorResolvable,
-  CommandInteractionOptionResolver
 } from "discord.js";
+import { GBF, GBFClearMessages, SlashCommand } from "gbfcommands";
 
-import GBFClient from "../../handler/clienthandler";
-
-export default class ClearCommand extends SlashCommand {
-  constructor(client: GBFClient) {
+export class ClearCommand extends SlashCommand {
+  constructor(client: GBF) {
     super(client, {
       name: "clear",
-      description: "Delete a number of messages",
-
+      description: "Bulk delete messages in this channel.",
+      UserPermissions: [PermissionFlagsBits.ManageMessages],
+      BotPermissions: [PermissionFlagsBits.ManageMessages],
+      category: "Moderation",
+      cooldown: 5,
       options: [
         {
           name: "amount",
-          description: "The number of messages that you want to delete",
+          description: "The number of messages to delete",
           type: ApplicationCommandOptionType.Integer,
+          required: true,
           minValue: 1,
           maxValue: 100,
-          required: true
-        }
+        },
+        {
+          name: "user",
+          description: "Only delete this user's messages",
+          type: ApplicationCommandOptionType.User,
+        },
       ],
+      async execute({ client, interaction }) {
+        const Amount = (
+          interaction.options as CommandInteractionOptionResolver
+        ).getInteger("amount", true);
+        const TargetUser = interaction.options.getUser("user", false);
 
-      devOnly: false,
-      userPermission: [PermissionFlagsBits.ManageMessages],
-      botPermission: [PermissionFlagsBits.ManageMessages],
-      cooldown: 4,
-      category: "Moderation",
-      devBypass: true,
-      development: false,
-      dmEnabled: false,
-      partner: false
+        const MessageDeleter = new GBFClearMessages(
+          interaction,
+          Amount,
+          interaction.channel,
+          TargetUser ? TargetUser : undefined
+        );
+
+        await MessageDeleter.RunClear();
+      },
     });
-  }
-
-  async execute({ client, interaction }) {
-    const count = (
-      interaction.options as CommandInteractionOptionResolver
-    ).getInteger("amount", true);
-
-    const messagesToBeDeleted = await interaction.channel.messages.fetch({
-      limit: count
-    });
-
-    await interaction.channel.bulkDelete(messagesToBeDeleted, true);
-
-    const successEmbed = new EmbedBuilder()
-      .setTitle(`${emojis.VERIFY} Success!`)
-      .setColor(colors.DEFAULT as ColorResolvable)
-      .setDescription(`Successfully deleted **${count}** messages`)
-      .setFooter({
-        text: `This message auto-deletes in 5 seconds`,
-        iconURL: interaction.user.displayAvatarURL()
-      });
-
-    await interaction.reply({
-      embeds: [successEmbed]
-    });
-
-    setTimeout(() => interaction.deleteReply(), 5000);
   }
 }
