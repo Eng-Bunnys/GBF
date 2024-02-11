@@ -1,57 +1,36 @@
-import GBFClient from "../../handler/clienthandler";
-import { ImageModel } from "../../schemas/Beastars Schemas/Images Schema";
-import SlashCommand from "../../utils/slashCommands";
-
 import {
+  ActionRowBuilder,
   ApplicationCommandType,
-  MessageContextMenuCommandInteraction
+  GuildMember,
+  UserContextMenuCommandInteraction,
 } from "discord.js";
+import { ContextCommand, GBF, GBFAvatarBuilder } from "gbfcommands";
 
-interface IExecute {
-  client: GBFClient;
-  interaction: MessageContextMenuCommandInteraction;
-}
-
-export default class AddImageContext extends SlashCommand {
-  constructor(client: GBFClient) {
+export class ContextCommandTemplate extends ContextCommand {
+  constructor(client: GBF) {
     super(client, {
-      name: "get image",
-      category: "General",
-      type: ApplicationCommandType.Message,
+      name: "show avatar",
+      ContextType: ApplicationCommandType.User,
+      category: "Information",
+      cooldown: 2,
+      async execute({ client, interaction }) {
+        const TargetUser = (interaction as UserContextMenuCommandInteraction)
+          .targetUser;
+        const TargetMember = (interaction as UserContextMenuCommandInteraction)
+          .targetMember as GuildMember | null;
 
-      development: true,
-      dmEnabled: false
-    });
-  }
+        const AvatarGenerator = new GBFAvatarBuilder(
+          TargetUser,
+          TargetMember ? TargetMember : undefined
+        );
 
-  async execute({ client, interaction }: IExecute) {
-    let ImageData = await ImageModel.findOne({
-      guildID: interaction.guildId
-    });
-
-    if (!ImageData) {
-      ImageData = new ImageModel({
-        guildID: interaction.guildId
-      });
-
-      await ImageData.save();
-    }
-
-    const TargetImage = ImageData.image?.find((image) =>
-      interaction.targetMessage.content
-        .toLowerCase()
-        .split(" ")
-        .includes(image.name.toLocaleLowerCase())
-    );
-
-    if (!TargetImage)
-      return interaction.reply({
-        content: `I couldn't find ${interaction.targetMessage.content}, use b! add [name] [url] to add it!`,
-        ephemeral: true
-      });
-
-    return interaction.reply({
-      content: `${TargetImage.URL}`
+        return interaction.reply({
+          embeds: [AvatarGenerator.GetEmbed()],
+          components: [
+            AvatarGenerator.GetAvatarButtons() as ActionRowBuilder<any>,
+          ],
+        });
+      },
     });
   }
 }
