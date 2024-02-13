@@ -6,7 +6,13 @@ import {
   CommandInteractionOptionResolver,
   EmbedBuilder,
 } from "discord.js";
-import { SlashCommand, GBF, GetRandomFromArray, msToTime } from "gbfcommands";
+import {
+  SlashCommand,
+  GBF,
+  GetRandomFromArray,
+  msToTime,
+  ColorCodes,
+} from "gbfcommands";
 import { TimerModel } from "../../Models/User Schemas/Timer Schema";
 import CommandIDs from "../../GBF/Command IDs.json";
 import {
@@ -15,6 +21,7 @@ import {
 } from "../../Models/User Schemas/User Profile Schema";
 import { Document } from "mongoose";
 import { GBFColorCodes, GBFEmojis } from "../../Utils/UI";
+import { TimerStats } from "../../Command Classes/Timer Stats Class";
 
 export class TimerUI extends SlashCommand {
   constructor(client: GBF) {
@@ -23,6 +30,39 @@ export class TimerUI extends SlashCommand {
       description: "Timer related commands",
       category: "Timer",
       subcommands: {
+        stats: {
+          description: "Get the active season's stats",
+          SubCommandOptions: [
+            {
+              name: "user",
+              description: "Get this user's active season's stats",
+              type: ApplicationCommandOptionType.User,
+            },
+          ],
+          async execute({ client, interaction }) {
+            const TargetUser =
+              interaction.options.getUser("user") ?? interaction.user;
+
+            const GetStats = new TimerStats(TargetUser.id);
+
+            const WelcomeMessages = [
+              `How's your day, ${interaction.user.username}?`,
+              `Hey there, ${interaction.user.username}!`,
+              `Good to see you, ${interaction.user.username}!`,
+              `Welcome back, ${interaction.user.username}!`,
+              `Hello, ${interaction.user.username}!`,
+              `Hi, ${interaction.user.username}!`,
+              `Hey ${interaction.user.username}!`,
+              `Good day, ${interaction.user.username}!`,
+            ];
+
+            const RandomTitle = GetRandomFromArray(WelcomeMessages);
+
+            const StatsEmbed = new EmbedBuilder().setTitle(
+              `${WelcomeMessages} | `
+            );
+          },
+        },
         start: {
           description: "Create a new session",
           SubCommandOptions: [
@@ -256,16 +296,16 @@ export class TimerUI extends SlashCommand {
                 `GBF Timers offers a cutting-edge tool for hassle-free data tracking right within Discord, and it won't cost you a dime. With this dynamic utility, you can easily keep tabs on study time, relaxation breaks, work sessions, and more. Getting started is a breeze – just sign up using the ${CommandIDs["Timer Register"]} command. Once registered, kick off your sessions effortlessly with ${CommandIDs["Timer Reset"]}. Convenient buttons will pop up for starting, pausing, or stopping the timer. When you're done, dive into detailed stats with ${CommandIDs["Timer Stats"]}. Ready to start fresh? Hit up ${CommandIDs["Timer Reset"]} to wipe the slate clean and sign up again for free. Need a reminder? Just call up ${CommandIDs["Timer Help"]}. It's that simple!`
               );
 
+            await interaction.reply({
+              embeds: [NewSeason],
+            });
+
+            await interaction.followUp({
+              embeds: [HelpEmbed],
+              ephemeral: true,
+            });
+
             if (TimerData && !TimerData.SeasonName) {
-              await interaction.reply({
-                embeds: [NewSeason],
-              });
-
-              await interaction.followUp({
-                embeds: [HelpEmbed],
-                ephemeral: true,
-              });
-
               return TimerData.updateOne({
                 NumberOfSessions: 0,
                 TimeSpent: 0,
@@ -286,16 +326,67 @@ export class TimerUI extends SlashCommand {
               });
 
               await NewUserProfile.save();
+            }
+          },
+        },
+        topic: {
+          description: "Change the active session's topic",
+          SubCommandOptions: [
+            {
+              name: "topic",
+              description: "The new topic for the active session",
+              type: ApplicationCommandOptionType.String,
+              minLength: 2,
+              required: true,
+            },
+          ],
+          async execute({ client, interaction }) {
+            const TimerData = await TimerModel.findOne({
+              userID: interaction.user.id,
+            });
 
-              await interaction.reply({
-                embeds: [NewSeason],
-              });
+            const NoData = new EmbedBuilder()
+              .setTitle(`${GBFEmojis.Error} You can't do that`)
+              .setColor(GBFColorCodes.ErrorRed)
+              .setDescription(
+                `You have no existing timer data / active season.\n\nYou can create one using ${CommandIDs["Timer Register"]}`
+              );
 
-              return interaction.followUp({
-                embeds: [HelpEmbed],
+            if (!TimerData || (TimerData && !TimerData.SeasonName))
+              return interaction.reply({
+                embeds: [NoData],
                 ephemeral: true,
               });
-            }
+
+            const InactiveSession = new EmbedBuilder()
+              .setTitle(`${GBFEmojis.Error} You can't do that`)
+              .setColor(ColorCodes.ErrorRed)
+              .setDescription(
+                `No active session found, you can start one using ${CommandIDs["Timer Start"]}`
+              );
+
+            if (!TimerData.InitiationTime)
+              return interaction.reply({
+                embeds: [InactiveSession],
+                ephemeral: true,
+              });
+
+            const NewTopic = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("topic", true);
+
+            const TopicUpdated = new EmbedBuilder()
+              .setTitle(`${GBFEmojis.Verify}  Session Topic Updated!`)
+              .setDescription(`New Session Topic: ${NewTopic}`)
+              .setColor(GBFColorCodes.Default);
+
+            await TimerData.updateOne({
+              SessionTopic: NewTopic,
+            });
+
+            return interaction.reply({
+              embeds: [TopicUpdated],
+            });
           },
         },
       },
