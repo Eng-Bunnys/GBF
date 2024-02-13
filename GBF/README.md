@@ -1,5 +1,6 @@
 # GBF Source Code V3
 For Discord.JS v14
+
   ![GBF Logo](https://cdn.discordapp.com/attachments/932756227295948910/997240715258101840/GBF_Bot_Logo.png)
 ------------------------
 
