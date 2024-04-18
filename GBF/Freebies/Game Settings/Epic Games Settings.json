@@ -1,0 +1,23 @@
+{
+  "NumberOfFreebies": 1,
+  "GamePicture": "https://cdn.akamai.steamstatic.com/steam/apps/1139900/header.jpg?t=1710442474",
+  "GameTitle": "Ghostrunner",
+  "GameLink": "https://store.epicgames.com/p/ghostrunner",
+  "GameRating": "4.7",
+  "GamePrice": "14.99",
+  "GameTwoTitle": "Thief",
+  "GameTwoLink": "https://store.epicgames.com/p/thief-5bb95f",
+  "GameTwoRating": "9.99",
+  "GameTwoPrice": "5.79",
+  "GameThreeTitle": "Game Three",
+  "GameThreeRating": "4",
+  "GameThreeLink": "https://store.epicgames.com/p/payday-2-c66369",
+  "GameThreePrice": "20.99",
+  "HasTimeStamp": true,
+  "Timestamp": "1713452400",
+  "UpcomingGames": "true",
+  "UpcomingGameOne": "The Big Con",
+  "UpcomingGameTwo": "",
+  "UpcomingGameThree": "",
+  "InstantCheckout": "https://store.epicgames.com/purchase?offers=1-95d0b9561be1464cb43bd029e94cf526-bc1qugrtknpjz52vc4m559q7zumkc4268kp7skrsee"
+}
