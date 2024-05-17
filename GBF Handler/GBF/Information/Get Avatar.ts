@@ -4,130 +4,186 @@ import {
   ButtonStyle,
   ColorResolvable,
   EmbedBuilder,
+  Guild,
   GuildMember,
   ImageURLOptions,
+  Snowflake,
   User,
+  hyperlink,
 } from "discord.js";
-import { ColorCodes } from "../../Utils/GBF Features";
-import { capitalize } from "../../Handler";
+import { client } from "../..";
 
 const ImageData: ImageURLOptions = {
   extension: "jpeg",
   size: 1024,
 };
 
-// The avatar that will be prioritized
-type AvatarPriority = "Global" | "Server";
+type AvatarPriority = "Global" | "Guild";
 
-// Returns the user's avatar!
-export class GBFAvatarBuilder {
-  // The user who's avatar you want to get
-  private readonly TargetUser: User;
-  // The same user as a Guild Member
-  private readonly TargetMember?: GuildMember;
-  // The color of the embed
-  private readonly EmbedColor?: ColorResolvable;
-  // Which type of avatar to prioritize
-  private readonly AvatarPriority?: AvatarPriority;
-  // Shows if the user has a unique guild avatar
+const DefaultColor: ColorResolvable = "Blurple";
+
+export class UserAvatar {
+  public readonly UserID: Snowflake;
+  public readonly GuildID?: Snowflake;
+
+  public readonly EmbedColor?: ColorResolvable;
+
+  private TargetUser?: User;
+  private TargetMember?: GuildMember;
+  private UserGuild?: Guild;
+
+  private DisplayName: string;
+
   private readonly IsAvatarDifferent: boolean;
-  /**
-   * Constructs a new UserAvatar instance.
-   * @param {User} TargetUser - The target user whose avatar is being displayed.
-   * @param {GuildMember} [TargetMember] - The guild member corresponding to the target user.
-   * @param {ColorResolvable} [EmbedColor = ColorCodes.Default] - The color to be used for the embed.
-   * @param {AvatarPriority} [AvatarPriority = 'Global'] - The priority for selecting the avatar.
-   */
+
+  private readonly AvatarPriority?: AvatarPriority;
+
   constructor(
-    TargetUser: User,
-    TargetMember: GuildMember = undefined,
-    EmbedColor: ColorResolvable = ColorCodes.Default,
+    UserID: Snowflake,
+    GuildID: Snowflake,
+    EmbedColor: ColorResolvable = DefaultColor,
     AvatarPriority: AvatarPriority = "Global"
   ) {
-    this.TargetUser = TargetUser;
-    this.TargetMember = TargetMember;
+    this.UserID = UserID;
+    this.GuildID = GuildID;
     this.EmbedColor = EmbedColor;
     this.AvatarPriority = AvatarPriority;
 
-    if (this.TargetMember && this.TargetUser.id !== this.TargetMember.id)
-      throw new Error(`The User and Member provided are different users.`);
+    if (this.GuildID) {
+      const CachedGuild = client.guilds.cache.get(this.GuildID);
 
-    this.IsAvatarDifferent = this.TargetMember
-      ? this.TargetMember.displayAvatarURL() !=
+      if (CachedGuild) this.UserGuild = CachedGuild;
+      else {
+        (async () => {
+          this.UserGuild = await client.guilds.fetch(this.GuildID);
+        })();
+      }
+    }
+
+    const CachedUser = client.users.cache.get(this.UserID);
+
+    if (CachedUser) this.TargetUser = CachedUser;
+    else {
+      (async () => {
+        this.TargetUser = await client.users.fetch(this.UserID);
+      })();
+    }
+
+    let CachedMember: GuildMember;
+
+    if (this.GuildID) {
+      CachedMember = this.UserGuild?.members.cache.get(this.UserID);
+
+      if (CachedMember) this.TargetMember = CachedMember;
+      else {
+        (async () => {
+          this.TargetMember = await this.UserGuild?.members.fetch(this.UserID);
+        })();
+      }
+    } else CachedMember = null;
+
+    if (
+      this.TargetMember &&
+      this.TargetMember.displayAvatarURL() ===
         this.TargetUser.displayAvatarURL()
-      : false;
+    )
+      this.IsAvatarDifferent = true;
+    else this.IsAvatarDifferent = false;
+
+    this.DisplayName = this.TargetMember
+      ? this.TargetMember.displayName
+      : this.TargetUser.displayName;
   }
 
   /**
-   * Generates strings containing links to the user's avatars.
-   * @returns {string} The strings containing links to the user's avatars.
+   * Returns a string with Avatar URLs
+   *
+   * @returns {string} - The string that contains the user's Avatar URLs
+   * @example GetAvatarURL()
+   * //Output: Global Avatar | Server Avatar => Users with 2 different avatars
+   * //Output: Global Avatar => Users with only a global avatar
    */
-  private GetAvatarStrings(): string {
-    let URLS = `[Global Avatar](${this.TargetUser.displayAvatarURL(
-      ImageData
-    )})`;
+  public GetAvatarString(): string {
+    let AvatarString = `${hyperlink(
+      "Global Avatar",
+      this.TargetUser.displayAvatarURL(ImageData)
+    )}`;
 
-    if (this.TargetMember && this.IsAvatarDifferent)
-      URLS += ` | [Server Avatar](${this.TargetMember.displayAvatarURL(
-        ImageData
-      )})`;
+    if (this.IsAvatarDifferent)
+      AvatarString += ` | ${hyperlink(
+        "Server Avatar",
+        this.TargetMember.displayAvatarURL(ImageData)
+      )}`;
 
-    return URLS;
+    return AvatarString;
   }
 
   /**
-   * Retrieves the URL of the user's avatar based on the selected priority.
-   * @returns {string} The URL of the user's avatar.
+   * Returns the Embed with the user's Avatar
+   * Tip: You can update it by accessing the embed
+   *
+   * @param {boolean} ShowBothAvatars - Default: False, If true, it's going to return the Embed with both Image and Thumbnail fields
+   * @returns {EmbedBuilder} - The Embed that contains the Data
+   * @example
+   * //To Edit the Embed:
+   * const Embed = GenerateEmbed();
+   *
+   * Embed.setTitle("Updated Title").setFooter({ text: "Hello, World!" });
    */
-  public GetAvatar(): string {
-    let Avatar = "";
+  public GenerateEmbed(ShowBothAvatars: boolean = false): EmbedBuilder {
+    const UserAvatarEmbed = new EmbedBuilder()
+      .setTitle(`${this.DisplayName}'s Avatar`)
+      .setDescription(this.GetAvatarString())
+      .setColor(this.EmbedColor);
 
-    if (this.AvatarPriority === "Server" && this.IsAvatarDifferent)
-      Avatar = `${this.TargetMember.displayAvatarURL(ImageData)}`;
-    else Avatar = `${this.TargetUser.displayAvatarURL(ImageData)}`;
+    if (ShowBothAvatars && this.AvatarPriority === "Guild") {
+      UserAvatarEmbed.setImage(this.GetAvatar(ShowBothAvatars));
+      UserAvatarEmbed.setThumbnail(this.GetAvatar(false));
+    } else if (ShowBothAvatars && this.AvatarPriority === "Global") {
+      UserAvatarEmbed.setImage(this.GetAvatar(false));
+      UserAvatarEmbed.setThumbnail(this.GetAvatar(ShowBothAvatars));
+    } else UserAvatarEmbed.setImage(this.GetAvatar(false));
 
-    return Avatar;
+    return UserAvatarEmbed;
   }
 
   /**
-   * Generates an embed containing the user's avatar.
-   * @returns {EmbedBuilder} The embed containing the user's avatar.
+   * Returns the user's Avatar string
+   *
+   * @param {boolean} GetGuild - To return the user's Guild Avatar
+   * @returns {string} - The avatar URL
    */
-  public GetEmbed(): EmbedBuilder {
-    const AvatarEmbed = new EmbedBuilder()
-      .setTitle(`${capitalize(this.TargetUser.username)}'s Avatar`)
-      .setColor(this.EmbedColor)
-      .setDescription(this.GetAvatarStrings());
-
-    if (this.AvatarPriority === "Server" && this.IsAvatarDifferent) {
-      AvatarEmbed.setImage(this.GetAvatar()).setThumbnail(
-        this.TargetUser.displayAvatarURL(ImageData)
-      );
-    } else AvatarEmbed.setImage(this.GetAvatar());
-
-    return AvatarEmbed;
+  public GetAvatar(GetGuild: boolean = false): string {
+    if (GetGuild && this.IsAvatarDifferent)
+      return this.TargetMember.displayAvatarURL(ImageData);
+    else return this.TargetUser.displayAvatarURL(ImageData);
   }
 
   /**
-   * Generates buttons for displaying the user's avatars.
-   * @returns {ActionRowBuilder} The action row containing buttons for displaying the user's avatars.
+   * Generates a row of buttons linking to the user's avatar(s).
+   *
+   * @returns {ActionRowBuilder<ButtonBuilder>} - An ActionRow containing button(s) for the user's avatar(s).
+   * @example
+   * const avatarButtons = userAvatar.GetAvatarButtons();
+   * // Returns an ActionRowBuilder with buttons linking to the user's global and possibly server avatars.
    */
-  public GetAvatarButtons(): ActionRowBuilder {
+  public GetAvatarButtons(): ActionRowBuilder<ButtonBuilder> {
     const AvatarButtons = new ButtonBuilder()
       .setLabel("Global Avatar")
       .setStyle(ButtonStyle.Link)
       .setURL(this.TargetUser.displayAvatarURL(ImageData));
 
-    const AvatarButtonsRow: ActionRowBuilder<any> =
-      new ActionRowBuilder().addComponents(AvatarButtons);
+    const AvatarButtonsRow: ActionRowBuilder<ButtonBuilder> =
+      new ActionRowBuilder<ButtonBuilder>().addComponents(AvatarButtons);
 
-    if (this.TargetMember && this.IsAvatarDifferent)
-      AvatarButtonsRow.addComponents([
+    if (this.TargetMember && this.IsAvatarDifferent) {
+      AvatarButtonsRow.addComponents(
         new ButtonBuilder()
           .setLabel("Server Avatar")
           .setStyle(ButtonStyle.Link)
-          .setURL(this.TargetMember.displayAvatarURL(ImageData)),
-      ]);
+          .setURL(this.TargetMember.displayAvatarURL(ImageData))
+      );
+    }
 
     return AvatarButtonsRow;
   }
