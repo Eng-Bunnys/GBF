@@ -41,7 +41,9 @@ export class BotBan extends SlashCommand {
                 ephemeral: true,
               });
 
-            const TargetUser = interaction.options.getUser("user");
+            const TargetUser = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getUser("user");
             const BanReason = (
               interaction.options as CommandInteractionOptionResolver
             ).getString("reason");

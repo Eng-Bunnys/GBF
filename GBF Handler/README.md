@@ -1,24 +1,29 @@
-![GBF Handler Logo](https://cdn.discordapp.com/attachments/932756227295948910/1202259386538663956/HandlerV5.png?ex=65ccce4e&is=65ba594e&hm=7ea896db53420906c6c811ad6cf234ca585293a4c9b64fc618db10f3422b2ef7&)
+# GBF Handler
 
-<a href='https://discord.gg/yrM7fhgNBW' target='_blank'>![Discord](https://img.shields.io/discord/704781378113241159)</a> 
-<a href='https://github.com/GBF-Nexus/Discord-Bot-Commands-and-Handler' target='_blank'>![GitHub Repo stars](https://img.shields.io/github/stars/GBF-Nexus/Discord-Bot-Commands-and-Handler)</a>
+### Update V3.1.0
 
-# GBF Handler 
+GBF Handler is a powerful and user-friendly Discord.JS handler designed to simplify Discord bot development. Whether you're using JavaScript or TypeScript, GBF Handler offers seamless integration to help you build your bot with ease.
 
-GBF Handler is a feature-rich Discord.JS handler that is easy to integrate. Our aim with this handler is to make Discord Bot development as easy as possible!
+## Features 
+- JavaScript & TypeScript Compatibility: Works perfectly with both <br>
+- Built-In Commands: Spend less time on repeated common commands and more on your own custom commands, you can also disable them whenever you want! <br>
+- Ready to Go: Install, Create the config env or JSON, and you're ready to go!
+- Feature-Rich: Continuously updated with new features to enhance your bot's capabilities <br>
 
-GBF Handler is compatible with both JavaScript and TypeScript.
-
-## Documentation
-
-The official documentation can be found [here](https://gamers-best-friend.gitbook.io/gbfcommands/). The documentation is still being updated as GBF Handler is a new system and constantly receives new features.
+## Documentation 
+The official documentation provides comprehensive guidance on using GBF Handler. As GBF Handler is a new and evolving system, the documentation is frequently updated with the latest features and improvements. You can access the documentation [here](https://gamers-best-friend.gitbook.io/gbfcommands/).
 
 ## Installation
 
 ```bash
 npm i gbfcommands
 ```
+### Support
 
-# Support 
+If you need assistance, want to request a feature, or wish to report a bug, please join our support server [here](https://discord.gg/yrM7fhgNBW).
 
-If you'd like to get help, request a feature, or report a bug, you can do so on our [support server.](https://discord.gg/yrM7fhgNBW)
+# Updates
+
+- Added autocomplete support for subcommands, same way as normal slash commands!
+- Added default color and emoji customization 
+- Updated the Avatar Command to only take in the user ID rather than a user and member object
