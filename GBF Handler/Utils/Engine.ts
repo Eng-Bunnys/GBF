@@ -1,8 +1,13 @@
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
-import { redBright } from "chalk";
+import { redBright, yellowBright } from "chalk";
 import { Config } from "../Handler/types";
+import {
+  AutocompleteInteraction,
+  CommandInteractionOptionResolver,
+} from "discord.js";
+import { SlashCommand } from "../Handler";
 
 dotenv.config();
 
@@ -59,5 +64,55 @@ export class Engine {
         TOKEN: process.env.TOKEN,
       };
     }
+  }
+
+  static async HandleAutoComplete(
+    interaction: AutocompleteInteraction,
+    command: SlashCommand | any
+  ) {
+    const autocomplete = command?.autocomplete;
+
+    if (!autocomplete) {
+      process.emitWarning(
+        yellowBright(
+          `• Warning: The autocomplete command ${command?.name} does not have an autocomplete method.`
+        ),
+        {
+          code: "AutoCompleteData",
+          detail: "Invalid input for the autocomplete method",
+        }
+      );
+      return;
+    }
+
+    const FocusedOption = (
+      interaction.options as CommandInteractionOptionResolver
+    ).getFocused(true);
+
+    const AvailableChoices: string[] = await autocomplete(
+      interaction,
+      FocusedOption.name
+    );
+
+    if (AvailableChoices.length > 25) {
+      process.emitWarning(
+        `• Warning: The provided autocomplete options exceed 25 elements, please reduce them or they will automatically be reduced, this might delete some crucial data.`,
+        {
+          code: "AutoCompleteExcess",
+          detail: "Exceeded autocomplete options limit",
+        }
+      );
+    }
+
+    const FilteredChoices = AvailableChoices.filter((choice: string) => {
+      return choice.toLowerCase().startsWith(FocusedOption.value.toLowerCase());
+    }).slice(0, 25);
+
+    await interaction.respond(
+      FilteredChoices.map((choice: string) => ({
+        name: choice,
+        value: choice,
+      }))
+    );
   }
 }

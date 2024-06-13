@@ -11,10 +11,9 @@ import {
 } from "discord.js";
 import { Document } from "mongoose";
 import { MessageCommand } from "../Command Handlers/Message Handler";
-import { GBF } from "../GBF";
+import { ColorCodes, Emojis, GBF } from "../GBF";
 import { IBotBan } from "../Handler Models/Bot Ban Schema";
 import { IGuildData } from "../Handler Models/Bot Settings Schema";
-import { ColorCodes, Emojis } from "../../Utils/GBF Features";
 import { MissingPermissions } from "../../Utils/Utils";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
 import { ContextCommand } from "../Command Handlers/Context Handler";

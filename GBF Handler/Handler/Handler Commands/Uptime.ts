@@ -1,8 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
-import { GBF } from "../GBF";
+import { GBF, ColorCodes } from "../GBF";
 import { msToTime } from "../../Utils/Utils";
-import { ColorCodes } from "../../Utils/GBF Features";
 
 export class Uptime extends SlashCommand {
   constructor(client: GBF) {

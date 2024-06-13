@@ -11,8 +11,9 @@ export * from "./Command Handlers/Message Handler";
 export * from "./Command Handlers/Slash Handler";
 export * from "./Command Handlers/Context Handler";
 export * from "../Utils/Utils";
-export * from "../Utils/GBF Features";
 
 // Built in command classes
 export * from "../GBF/Information/Get Avatar";
 export * from "../GBF/Moderation/Bulk Delete";
+export * from "../GBF/Fun/GBF Fun Commands";
+export * from "../GBF/Fun/GBF Fun Commands";

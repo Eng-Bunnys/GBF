@@ -26,6 +26,7 @@ export abstract class SlashCommand {
       IgnoreCommand: false,
       groups: null,
       subcommands: null,
+      autocomplete: null,
       async execute({ client, interaction }) {},
     }
   ) {
@@ -78,6 +79,7 @@ export abstract class SlashCommand {
         type: ApplicationCommandOptionType.Subcommand,
         nsfw: SubCommands[name].NSFW,
         dmPermission: SubCommands[name].DMEnabled,
+        autocomplete: SubCommands[name].autocomplete,
       };
 
       CommandOptions.push(CommandOption);

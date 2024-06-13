@@ -5,8 +5,7 @@ import {
   PresenceStatusData,
 } from "discord.js";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
-import { GBF } from "../GBF";
-import { Emojis } from "../../Utils/GBF Features";
+import { GBF, Emojis } from "../GBF";
 
 export class SetPresence extends SlashCommand {
   constructor(client: GBF) {

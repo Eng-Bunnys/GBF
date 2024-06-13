@@ -1,12 +1,10 @@
 import { GBF } from "../GBF";
 import { MessageCommandOptions } from "../types";
 
-export abstract class MessageCommand<
-  T extends string[] | undefined = string[]
-> {
+export abstract class MessageCommand {
   constructor(
     protected readonly client: GBF,
-    public readonly CommandOptions: MessageCommandOptions<T> = {
+    public readonly CommandOptions: MessageCommandOptions = {
       name: undefined,
       description: undefined,
       category: "",

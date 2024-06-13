@@ -5,6 +5,7 @@ import { redBright } from "chalk";
 import { MessageCommand } from "./Message Handler";
 import { SlashCommand } from "./Slash Handler";
 import { ContextCommand } from "./Context Handler";
+import { GBFError } from "../../Utils/GBF Errors";
 
 async function LoadCommand(client: GBF, FilePath: string) {
   try {
@@ -104,8 +105,8 @@ export async function RegisterCommands(
           }
         }
       } catch (RegisterError) {
-        console.error(
-          redBright(`• Error when reading directory ${dir}\n${RegisterError}`)
+        throw new GBFError(
+          `Encountered an error while attempting to access the directory "${dir}"\n${RegisterError}`
         );
       }
     })

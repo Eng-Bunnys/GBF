@@ -5,12 +5,14 @@ import {
   Client,
   ClientOptions,
   Collection,
+  ColorResolvable,
   GatewayIntentBits,
   Guild,
   REST,
   Routes,
   Snowflake,
 } from "discord.js";
+
 import {
   redBright,
   greenBright,
@@ -18,6 +20,7 @@ import {
   magentaBright,
   yellowBright,
 } from "chalk";
+
 import { AppConfig, IGBF, IgnoreEvents } from "./types";
 import { Engine } from "../Utils/Engine";
 import { MessageCommand } from "./Command Handlers/Message Handler";
@@ -27,6 +30,7 @@ import { connect } from "mongoose";
 import { SlashCommand } from "./Command Handlers/Slash Handler";
 import { IsValidURL } from "../Utils/Utils";
 import { ContextCommand } from "./Command Handlers/Context Handler";
+import { GBFError } from "../Utils/GBF Errors";
 
 export enum BuiltInEvents {
   "Ready" = "GBFReady",
@@ -40,7 +44,27 @@ export enum BuiltInCommands {
   "Ping" = "ping",
 }
 
+export class Emojis {
+  static Verify = "✅";
+  static Error = "❌";
+  static readonly GBFLogo = "<:LogoTransparent:838994085527945266>";
+}
+
+export class ColorCodes {
+  static Default: ColorResolvable = "#e91e63";
+  static readonly ErrorRed = "#FF0000";
+  static readonly SuccessGreen = "#33a532";
+  static readonly SalmonPink = "#ff91a4";
+  static readonly CardinalRed = "#C41E3A";
+  static readonly Cherry = "#D2042D";
+  static readonly PastelRed = "#FAA0A0";
+  static readonly Cyan = "#00FFFF";
+}
+
 export class GBF extends Client implements IGBF {
+  public readonly VerifyEmoji?: Snowflake | string;
+  public readonly ErrorEmoji?: Snowflake | string;
+  public readonly DefaultColor?: ColorResolvable;
   private HandlerVersion: string;
   public readonly LogActions?: boolean;
   private LogActionsMessage: string = "";
@@ -115,6 +139,14 @@ export class GBF extends Client implements IGBF {
       BuiltInCommands["Set Presence"],
       BuiltInCommands.Uptime,
     ];
+    this.DefaultColor =
+      (HandlerOptions.DefaultColor as ColorResolvable) ??
+      (ColorCodes.Default as ColorResolvable);
+
+    ColorCodes.Default = this.DefaultColor;
+
+    this.VerifyEmoji = HandlerOptions.VerifyEmoji ?? Emojis.Verify;
+    this.ErrorEmoji = HandlerOptions.ErrorEmoji ?? Emojis.Error;
 
     if (this.DisabledCommands.length)
       this.DisabledCommands = this.DisabledCommands.map((Command) =>
@@ -122,8 +154,13 @@ export class GBF extends Client implements IGBF {
       );
 
     if (this.AppealURL && !IsValidURL(this.AppealURL)) {
-      console.warn(
-        yellowBright(`• Warning: The Appeal URL provided is not a valid URL.`)
+      process.emitWarning(
+        yellowBright(`• Warning: The Appeal URL provided is not a valid URL.`),
+        {
+          code: "InvalidURL",
+          detail:
+            "Our validation system has decided that the Appeal URL you provided in the handler options is not a valid URL and will be set to undefined.",
+        }
       );
       this.AppealURL = undefined;
     }
@@ -149,70 +186,102 @@ export class GBF extends Client implements IGBF {
           )} Message Command${this.MessageCommands.size > 1 ? "s." : "."}`
         );
 
+      const FilteredGuildSlashCommands = this.SlashCommands.filter(
+        (Command) => {
+          return (
+            !Command.CommandOptions.IgnoreCommand &&
+            Command.CommandOptions.development &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            ) &&
+            (this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                )) &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            )
+          );
+        }
+      );
+
+      const FilteredGuildContextCommands = this.ContextCommands.filter(
+        (Command) => {
+          return (
+            !Command.CommandOptions.IgnoreCommand &&
+            Command.CommandOptions.development &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            ) &&
+            (this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                )) &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            )
+          );
+        }
+      );
+
+      const FilteredGlobalSlashCommands = this.SlashCommands.filter(
+        (Command) => {
+          return (
+            !Command.CommandOptions.IgnoreCommand &&
+            !Command.CommandOptions.development &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            ) &&
+            (this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                )) &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            )
+          );
+        }
+      );
+
+      const FilteredGlobalContextCommands = this.ContextCommands.filter(
+        (Command) => {
+          return (
+            !Command.CommandOptions.IgnoreCommand &&
+            !Command.CommandOptions.development &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            ) &&
+            (this.DisabledHandlerCommands.includes(BuiltInCommands.All)
+              ? !this.BuiltInHandlerCommands.includes(
+                  Command.CommandOptions.name
+                )
+              : !this.DisabledHandlerCommands.includes(
+                  Command.CommandOptions.name as BuiltInCommands
+                )) &&
+            !this.DisabledCommands.includes(
+              Command.CommandOptions.name.toLowerCase()
+            )
+          );
+        }
+      );
+
       const GuildCommands: ApplicationCommandData[] = [
-        ...this.ToApplicationCommand(
-          this.SlashCommands.filter((Command: SlashCommand) => {
-            return Command.CommandOptions.development &&
-              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
-              ? !this.BuiltInHandlerCommands.includes(
-                  Command.CommandOptions.name
-                )
-              : !this.DisabledHandlerCommands.includes(
-                  Command.CommandOptions.name as BuiltInCommands
-                ) &&
-                  !this.DisabledCommands.includes(
-                    Command.CommandOptions.name.toLowerCase()
-                  );
-          })
-        ),
-        ...this.ToApplicationCommand(
-          this.ContextCommands.filter((Command: ContextCommand) => {
-            return Command.CommandOptions.development &&
-              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
-              ? !this.BuiltInHandlerCommands.includes(
-                  Command.CommandOptions.name
-                )
-              : !this.DisabledHandlerCommands.includes(
-                  Command.CommandOptions.name as BuiltInCommands
-                ) &&
-                  !this.DisabledCommands.includes(
-                    Command.CommandOptions.name.toLowerCase()
-                  );
-          })
-        ),
+        ...this.ToApplicationCommand(FilteredGuildSlashCommands),
+        ...this.ToApplicationCommand(FilteredGuildContextCommands),
       ];
 
       const GlobalCommands: ApplicationCommandData[] = [
-        ...this.ToApplicationCommand(
-          this.SlashCommands.filter((Command: SlashCommand) => {
-            return !Command.CommandOptions.development &&
-              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
-              ? !this.BuiltInHandlerCommands.includes(
-                  Command.CommandOptions.name
-                )
-              : !this.DisabledHandlerCommands.includes(
-                  Command.CommandOptions.name as BuiltInCommands
-                ) &&
-                  !this.DisabledCommands.includes(
-                    Command.CommandOptions.name.toLowerCase()
-                  );
-          })
-        ),
-        ...this.ToApplicationCommand(
-          this.ContextCommands.filter((Command: ContextCommand) => {
-            return !Command.CommandOptions.development &&
-              this.DisabledHandlerCommands.includes(BuiltInCommands.All)
-              ? !this.BuiltInHandlerCommands.includes(
-                  Command.CommandOptions.name
-                )
-              : !this.DisabledHandlerCommands.includes(
-                  Command.CommandOptions.name as BuiltInCommands
-                ) &&
-                  !this.DisabledCommands.includes(
-                    Command.CommandOptions.name.toLowerCase()
-                  );
-          })
-        ),
+        ...this.ToApplicationCommand(FilteredGlobalSlashCommands),
+        ...this.ToApplicationCommand(FilteredGlobalContextCommands),
       ];
 
       const rest = new REST().setToken(this.BotConfig.TOKEN);
@@ -227,7 +296,6 @@ export class GBF extends Client implements IGBF {
             const TestServer = await this.guilds.fetch(ServerID);
             if (TestServer && TestServer instanceof Guild) {
               const GuildID: Snowflake = TestServer.id;
-              await TestServer.commands.set([]);
               await rest
                 .put(Routes.applicationGuildCommands(this.user.id, GuildID), {
                   body: GuildCommands,
@@ -248,7 +316,6 @@ export class GBF extends Client implements IGBF {
       }
 
       if (GlobalCommands && GlobalCommands.length) {
-        await this.application.commands.set([]);
         await rest.put(Routes.applicationCommands(this.user.id), {
           body: GlobalCommands,
         });
@@ -266,7 +333,8 @@ export class GBF extends Client implements IGBF {
           );
       }
     } catch (CommandSetError) {
-      console.log(redBright(`• Error Setting Commands\n${CommandSetError}`));
+      throw new Error(redBright(`• Error Setting Commands\n${CommandSetError}`))
+        .message;
     }
   }
 
@@ -326,8 +394,8 @@ export class GBF extends Client implements IGBF {
 
         EventFunction(this, this.BotConfig);
       } catch (EventLoadError) {
-        console.log(
-          redBright(`• Event Load Error in "${File}"\n${EventLoadError}`)
+        throw new GBFError(
+          `Error Loading Events in "${File}"\n${EventLoadError}`
         );
       }
     }
@@ -342,14 +410,16 @@ export class GBF extends Client implements IGBF {
     try {
       await super.login(BotToken);
     } catch (LoginError) {
-      console.log(redBright(`• Login Error\n${LoginError}`));
+      throw new GBFError(`Error Logging In\n${LoginError}`);
     }
 
     if (this.EventsFolder)
       try {
         await this.LoadEvents(this.EventsFolder);
       } catch (EventsError) {
-        console.log(`• Event Set Error\n${EventsError}`);
+        throw new GBFError(
+          `Error Registering Custom Event Files\n${EventsError}`
+        );
       }
 
     try {
@@ -358,7 +428,9 @@ export class GBF extends Client implements IGBF {
         this.DisabledHandlerEvents
       );
     } catch (BuiltInEventsError) {
-      console.log(redBright(`• Built In Events Error\n${BuiltInEventsError}`));
+      throw new GBFError(
+        `Error Registering Built-In Events\n${BuiltInEventsError}`
+      );
     }
 
     if (!MongoURI) this.DatabaseInteractions = false;
@@ -366,9 +438,10 @@ export class GBF extends Client implements IGBF {
     if (MongoURI && this.DatabaseInteractions) {
       try {
         await connect(this.BotConfig.MongoURI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          useFindAndModify: false,
+          bufferCommands: true,
+          autoCreate: false,
+          autoIndex: true,
+          serverSelectionTimeoutMS: 30000,
         });
 
         this.LogActionsMessage += greenBright(
@@ -376,31 +449,39 @@ export class GBF extends Client implements IGBF {
         );
       } catch (MongoError) {
         if (this.DatabaseInteractions) this.DatabaseInteractions = false;
-        console.error("Error connecting to MongoDB:", MongoError.message);
-        return;
+        throw new GBFError(`Couldn't connect to MongoDB\n${MongoError}`);
       }
     } else {
-      console.warn(
+      process.emitWarning(
         yellowBright(
-          `• Warning: No MongoURI provided, ensure MongoURI exists in your config, no database interactions will occur.`
-        )
+          "• Warning: No MongoURI provided, ensure MongoURI exists in your config, no database interactions will occur."
+        ),
+        {
+          code: "DataBaseWarn",
+          detail:
+            "No MongoURI was provided in the bot config, ensure that the MongoURI is set to the name MongoURI in your .env or JSON file, this instance will not use DataBase interactions until a valid URI is provided.",
+        }
       );
     }
+
+    if (!this.DisabledHandlerCommands.includes(BuiltInCommands.All))
+      try {
+        await this.LoadCommands(
+          path.join(__dirname, "./Handler Commands"),
+          true
+        );
+      } catch (BuiltInCommandsError) {
+        throw new GBFError(
+          `Error Registering Built-In Commands\n${BuiltInCommandsError}`
+        );
+      }
 
     try {
-      await this.LoadCommands(path.join(__dirname, "./Handler Commands"), true);
-    } catch (BuiltInCommandsError) {
-      console.log(
-        redBright(`• Built In Commands Error\n${BuiltInCommandsError}`)
-      );
+      if (this.CommandsFolder) await this.LoadCommands(this.CommandsFolder);
+    } catch (CommandsError) {
+      console.log(CommandsError);
+      process.exit(1);
     }
-
-    if (this.CommandsFolder)
-      try {
-        await this.LoadCommands(this.CommandsFolder);
-      } catch (CommandsError) {
-        console.log(redBright(`• Commands Set Error\n${CommandsError}`));
-      }
 
     if (this.LogActions) console.log(this.LogActionsMessage);
 

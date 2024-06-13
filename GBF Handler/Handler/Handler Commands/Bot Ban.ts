@@ -6,9 +6,8 @@ import {
   hyperlink,
 } from "discord.js";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
-import { GBF } from "../GBF";
+import { ColorCodes, Emojis, GBF } from "../GBF";
 import { BotBanModel } from "../Handler Models/Bot Ban Schema";
-import { ColorCodes, Emojis } from "../../Utils/GBF Features";
 
 export class BotBan extends SlashCommand {
   constructor(client: GBF) {

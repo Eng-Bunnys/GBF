@@ -47,7 +47,7 @@ export function GBFMessageCreate(client: GBF) {
 
     const LowerCommandName = CommandName.toLocaleLowerCase();
 
-    const Command: MessageCommand<string[]> | MessageCommandOptions =
+    const Command: MessageCommand | MessageCommandOptions =
       client.MessageCommands.get(LowerCommandName) ||
       client.MessageCommands.get(client.Aliases.get(LowerCommandName));
 

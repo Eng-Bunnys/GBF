@@ -18,6 +18,11 @@ export function capitalize(str: string): string {
   return str.replace(/(?<=\W)(\w)/g, (char) => char.toUpperCase());
 }
 
+export function GetRandomFromArray<T>(array: T[]): T {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
+}
+
 export function IsValidURL(string: string): boolean {
   try {
     new URL(string);

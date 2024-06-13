@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  Client,
   ColorResolvable,
   EmbedBuilder,
   Guild,
@@ -11,7 +12,7 @@ import {
   User,
   hyperlink,
 } from "discord.js";
-import { client } from "../..";
+import { GBF } from "../../Handler/GBF";
 
 const ImageData: ImageURLOptions = {
   extension: "jpeg",
@@ -23,6 +24,7 @@ type AvatarPriority = "Global" | "Guild";
 const DefaultColor: ColorResolvable = "Blurple";
 
 export class UserAvatar {
+  public readonly client: GBF | Client;
   public readonly UserID: Snowflake;
   public readonly GuildID?: Snowflake;
 
@@ -39,6 +41,7 @@ export class UserAvatar {
   private readonly AvatarPriority?: AvatarPriority;
 
   constructor(
+    client: Client | GBF,
     UserID: Snowflake,
     GuildID: Snowflake,
     EmbedColor: ColorResolvable = DefaultColor,

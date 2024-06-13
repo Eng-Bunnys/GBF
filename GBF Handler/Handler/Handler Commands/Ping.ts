@@ -1,7 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import { SlashCommand } from "../Command Handlers/Slash Handler";
-import { GBF } from "../GBF";
-import { ColorCodes } from "../../Utils/GBF Features";
+import { GBF, ColorCodes } from "../GBF";
 
 export class PingCommand extends SlashCommand {
   constructor(client: GBF) {
