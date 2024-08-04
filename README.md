@@ -1,5 +1,3 @@
-![Discord.JS Logo](https://camo.githubusercontent.com/94402c561f7851d7d3c899ea70b282bd177f344319f08cb1d743de36f00cf020/68747470733a2f2f646973636f72642e6a732e6f72672f7374617469632f6c6f676f2e737667)
------------
 # Installation
 You can install GBF Hanlder using 
 
@@ -17,9 +15,8 @@ https://gamers-best-friend.gitbook.io/gbfcommands/
 ➜ The GBF Handler does not have an npm package so to use it you'll have to install it from here and set it up, instructions are found in the README
 
 ## Languages Used:
-- TypeScript 
-- JavaScript
-- JSON
+- TypeScript
+- C++
 
 ## Live versions:
 - GBF Handler v4
