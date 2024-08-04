@@ -1,4 +1,5 @@
 # GBF API
-### GBF's Open Source API that will be used to have multi-app commands 
+### ⚠️ Warning ⚠️
+GBF's Live API is closed-source, the version that **will** be uploaded to GitHub is the older version of GBF's API
 
-This was made to reduce development time and clutter when developing for multiple apps, for example in an app and a Discord Bot that integrate together, we use the GBF API to ease the connection
+***What you are seeing right now is just there for show, this is NOT GBF's API as of August 2024***
