@@ -275,13 +275,21 @@ export class GBF extends Client implements IGBF {
       );
 
       const GuildCommands: ApplicationCommandData[] = [
-        ...this.ToApplicationCommand(FilteredGuildSlashCommands),
-        ...this.ToApplicationCommand(FilteredGuildContextCommands),
+        ...(this.ToApplicationCommand(
+          FilteredGuildSlashCommands
+        ) as ApplicationCommandData[]),
+        ...(this.ToApplicationCommand(
+          FilteredGuildContextCommands
+        ) as ApplicationCommandData[]),
       ];
 
       const GlobalCommands: ApplicationCommandData[] = [
-        ...this.ToApplicationCommand(FilteredGlobalSlashCommands),
-        ...this.ToApplicationCommand(FilteredGlobalContextCommands),
+        ...(this.ToApplicationCommand(
+          FilteredGlobalSlashCommands
+        ) as ApplicationCommandData[]),
+        ...(this.ToApplicationCommand(
+          FilteredGlobalContextCommands
+        ) as ApplicationCommandData[]),
       ];
 
       const rest = new REST().setToken(this.BotConfig.TOKEN);

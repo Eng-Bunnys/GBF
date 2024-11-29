@@ -1,6 +1,6 @@
 {
   "name": "gbfcommands",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "A feature rich and easy to setup Discord Bot Command Handler",
   "repository": {
     "type": "git",
@@ -26,7 +26,7 @@
   ],
   "dependencies": {
     "chalk": "^4.1.0",
-    "discord.js": "^14.15.3",
+    "discord.js": "^14.16.3",
     "dotenv": "^16.3.1",
     "figlet": "^1.7.0",
     "mongoose": "^8.4.1",

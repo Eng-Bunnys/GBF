@@ -99,9 +99,11 @@ export async function SendAndDelete(
   TimeInSeconds = 5
 ): Promise<Message<false>> {
   if (Channel instanceof DMChannel) return Channel.send(MessageOptions);
+  //@ts-ignore
   const message: Message | Interaction = await Channel.send(MessageOptions);
 
   setTimeout(async () => {
+    //@ts-ignore
     await message.delete();
   }, TimeInSeconds * 1000);
 }
