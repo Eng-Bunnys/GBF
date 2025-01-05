@@ -1,6 +1,6 @@
 # GBF Handler
 
-### Update V3.1.0
+### Update V3.2.0
 
 GBF Handler is a powerful and user-friendly Discord.JS handler designed to simplify Discord bot development. Whether you're using JavaScript or TypeScript, GBF Handler offers seamless integration to help you build your bot with ease.
 
@@ -24,6 +24,4 @@ If you need assistance, want to request a feature, or wish to report a bug, plea
 
 # Updates
 
-- Added autocomplete support for subcommands, same way as normal slash commands!
-- Added default color and emoji customization 
-- Updated the Avatar Command to only take in the user ID rather than a user and member object
+- Added User Activity class

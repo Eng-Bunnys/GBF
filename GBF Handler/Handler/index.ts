@@ -17,3 +17,4 @@ export * from "../GBF/Information/Get Avatar";
 export * from "../GBF/Moderation/Bulk Delete";
 export * from "../GBF/Fun/GBF Fun Commands";
 export * from "../GBF/Fun/GBF Fun Commands";
+export * from "../GBF/Information/Activity RPC";
