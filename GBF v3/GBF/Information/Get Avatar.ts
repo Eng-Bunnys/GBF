@@ -8,13 +8,13 @@ import {
   Guild,
   GuildMember,
   ImageURLOptions,
-  Snowflake,
+  type Snowflake,
   User,
   hyperlink,
 } from "discord.js";
 import { GBF } from "../../Handler/GBF";
 
-const ImageData: ImageURLOptions = {
+export const ImageData: ImageURLOptions = {
   extension: "jpeg",
   size: 1024,
 };

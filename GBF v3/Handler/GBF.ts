@@ -47,6 +47,7 @@ export enum BuiltInCommands {
 export class Emojis {
   static Verify = "✅";
   static Error = "❌";
+  static readonly Spotify = "<:Spotify:962905037649096815>";
   static readonly GBFLogo = "<:LogoTransparent:838994085527945266>";
 }
 

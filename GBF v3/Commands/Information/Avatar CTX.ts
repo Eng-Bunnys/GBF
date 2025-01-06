@@ -9,7 +9,7 @@ export class AvatarContext extends ContextCommand {
       category: "General Context",
       cooldown: 5,
       async execute({ client, interaction }) {
-        const GBFAPI = new UserAvatar(
+        const Avatar = new UserAvatar(
           client,
           interaction.user.id,
           interaction.guildId,
@@ -18,8 +18,8 @@ export class AvatarContext extends ContextCommand {
         );
 
         return await interaction.reply({
-          embeds: [GBFAPI.GenerateEmbed()],
-          components: [GBFAPI.GetAvatarButtons()],
+          embeds: [Avatar.GenerateEmbed()],
+          components: [Avatar.GetAvatarButtons()],
         });
       },
     });

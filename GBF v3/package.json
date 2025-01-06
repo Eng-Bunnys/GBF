@@ -23,6 +23,7 @@
     "dotenv": "^16.3.1",
     "figlet": "^1.7.0",
     "mongoose": "^8.5.1",
+    "nekos.life": "^3.0.0",
     "ts-node-dev": "^2.0.0"
   },
   "devDependencies": {
