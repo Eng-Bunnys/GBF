@@ -319,12 +319,6 @@ const TimerModel = model<ITimerData, TimerDataModel>(
 
 export {
   TimerModel,
-  ITimerData,
-  Account,
-  Semester,
-  Subject,
-  Session,
-  SessionBreak,
   subjectSchema,
   semesterSchema,
   sessionSchema,
