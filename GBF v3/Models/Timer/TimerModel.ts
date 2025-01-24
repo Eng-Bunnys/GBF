@@ -6,8 +6,8 @@ import {
   Semester,
   Session,
   SessionBreak,
-  Subject,
 } from "./TimerTypes";
+import { Subject } from "../../GBF/Timers/GradeEngine";
 
 const subjectSchema = z.object({
   subjectName: z
@@ -214,7 +214,7 @@ const MongoAccountSchema = new Schema<Account>({
   longestSemester: MongoSemesterSchema,
 });
 
-const MongoTimerDataSchema = new Schema<ITimerData, TimerDataModel>(
+const MongoTimerDataSchema = new Schema<ITimerData>(
   {
     account: {
       type: MongoAccountSchema,
