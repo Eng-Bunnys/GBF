@@ -49,6 +49,12 @@ export class Emojis {
   static Error = "❌";
   static readonly Spotify = "<:Spotify:962905037649096815>";
   static readonly GBFLogo = "<:LogoTransparent:838994085527945266>";
+  static readonly progressBarLeftEmpty = "<:leftEmpty:1068143435095220265>";
+  static readonly progressBarLeftFull = "<:leftFull:1068143511179894804>";
+  static readonly progressBarRightEmpty = "<:rightEmpty:1068143887010517032>";
+  static readonly progressBarRightFull = "<:rightFull:1068143806622470244>";
+  static readonly progressBarMiddleEmpty = "<:middleEmpty:1068143614804377681>";
+  static readonly progressBarMiddleFull = "<:middleFull:1068143723080319038>";
 }
 
 export class ColorCodes {

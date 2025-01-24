@@ -39,8 +39,7 @@ const displayTipMessage = chooseRandomFromArray(TipMessages);
 
 const badgesMap = {
   "": "None",
-  [UserFlags[UserFlags.ActiveDeveloper]]:
-    "<:ActiveDeveloper:1118890582673215568>",
+  [UserFlags[UserFlags.ActiveDeveloper]]: "<:ActiveDev:1325638276123590717>",
   [UserFlags[UserFlags.Staff]]: "<:D_Staff:826951574088581140>",
   [UserFlags[UserFlags.Partner]]: "<:D_Partner:826951266357608558>",
   [UserFlags[UserFlags.BugHunterLevel1]]: "<:D_BugHunter:826950777176195123>",

@@ -24,7 +24,8 @@
     "figlet": "^1.7.0",
     "mongoose": "^8.5.1",
     "nekos.life": "^3.0.0",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/discord-rpc": "^4.0.8",

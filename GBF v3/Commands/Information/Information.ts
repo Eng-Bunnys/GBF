@@ -6,9 +6,6 @@ import {
   GuildNSFWLevel,
   GuildPremiumTier,
   GuildVerificationLevel,
-  hyperlink,
-  ImageURLOptions,
-  UserFlags,
 } from "discord.js";
 
 import {
@@ -19,11 +16,7 @@ import {
   UserAvatar,
   ColorCodes,
   msToTime,
-  chooseRandomFromArray,
-  trimArray,
-  KeyPerms,
 } from "../../Handler";
-import { UserActivity } from "../../GBF/Information/Activity RPC";
 import { UserInfo } from "../../GBF/Information/UserInfo";
 
 export class Information extends SlashCommand {
