@@ -1,4 +1,5 @@
 import { type Snowflake } from "discord.js";
+import { Subject } from "../../GBF/Timers/GradeEngine";
 
 /**
  * Represents an account with user-specific study data
@@ -27,23 +28,6 @@ interface Account {
    * @type {Semester}
    */
   longestSemester: Semester;
-}
-
-/**
- * Represents a subject in a semester with study statistics
- */
-interface Subject {
-  /**
-   * The name of the subject
-   * @type {string}
-   */
-  subjectName: string;
-
-  /**
-   * The number of times the user has studied this subject
-   * @type {number}
-   */
-  timesStudied: number;
 }
 
 /**
@@ -97,6 +81,12 @@ interface Semester {
    * @type {number}
    */
   breakCount: number;
+
+  /**
+   * The longest session in the current semester
+   * @type {number}
+   */
+  longestSession: number;
 }
 
 /**
@@ -184,4 +174,4 @@ interface ITimerData extends Document {
   sessionData: Session[];
 }
 
-export { Account, Subject, Semester, SessionBreak, Session, ITimerData };
+export { Account, Semester, SessionBreak, Session, ITimerData };

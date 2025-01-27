@@ -1,6 +1,7 @@
 import { Emojis, msToTime } from "../../Handler";
 import { ITimerData, Semester } from "../../Models/Timer/TimerTypes";
 import { GBFUser } from "../../Models/User/UserTypes";
+import { calculateGPA, Grade, Subject } from "./GradeEngine";
 import { rpRequired, xpRequired } from "./LevelEngine";
 
 export class TimerStats {
@@ -218,5 +219,9 @@ export class TimerStats {
       progressSegments[0] = Emojis.progressBarLeftFull;
 
     return progressSegments.join("");
+  }
+
+  public GPA() {
+    return calculateGPA(this.userData.Subjects);
   }
 }

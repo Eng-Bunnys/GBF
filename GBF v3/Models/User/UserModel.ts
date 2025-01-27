@@ -1,10 +1,12 @@
 import { Schema, Document, model } from "mongoose";
 import { z } from "zod";
-import { GBFUser, Subject } from "./UserTypes";
+import { GBFUser } from "./UserTypes";
+import { Subject } from "../../GBF/Timers/GradeEngine";
 
 const mongooseSubjectSchema = new Schema<Subject>({
   subjectName: { type: String, required: true },
   grade: { type: String, required: true },
+  creditHours: { type: Number, required: true, min: 1 },
 });
 
 const subjectSchema = z.object({
@@ -12,7 +14,8 @@ const subjectSchema = z.object({
     .string()
     .min(1, "Subject name is required")
     .max(100, "Subject name too long"),
-  grade: z.string().min(1, "Grade is required").max(1, "Grade too long"),
+  grade: z.string().min(1, "Grade is required"),
+  creditHours: z.number().int().min(1, "Credit hours must be at least 1"),
 });
 
 const userSchema = z.object({
@@ -24,14 +27,20 @@ const userSchema = z.object({
   Subjects: z.array(subjectSchema),
 });
 
-const UserSchema = new Schema<GBFUser>({
-  friends: { type: [String], default: [] },
-  privateProfile: { type: Boolean, default: false },
-  Rank: { type: Number, default: 0 },
-  RP: { type: Number, default: 0 },
-  Subjects: { type: [mongooseSubjectSchema], default: [] },
-});
+const UserSchema = new Schema<GBFUser>(
+  {
+    userID: { type: String, required: true },
+    friends: { type: [String], default: [] },
+    privateProfile: { type: Boolean, default: false },
+    Rank: { type: Number, default: 0 },
+    RP: { type: Number, default: 0 },
+    Subjects: { type: [mongooseSubjectSchema], default: [] },
+  },
+  {
+    collection: "GBF Users",
+  }
+);
 
-const UserModel = model<GBFUser & Document>("GBFUser", UserSchema);
+const UserModel = model<GBFUser & Document>("GBF Users", UserSchema);
 
 export { UserModel, userSchema };

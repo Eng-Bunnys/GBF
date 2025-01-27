@@ -1,9 +1,4 @@
-import { Grade } from "../../GBF/Timers/GradeEngine";
-
-interface Subject {
-  subjectName: string;
-  grade: Grade;
-}
+import { Subject } from "../../GBF/Timers/GradeEngine";
 
 interface GBFUser {
   userID: string;
@@ -14,4 +9,4 @@ interface GBFUser {
   Subjects: Subject[];
 }
 
-export { GBFUser, Subject };
+export { GBFUser };

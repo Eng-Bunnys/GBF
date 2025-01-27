@@ -32,17 +32,59 @@ const gradeToGPA: { [key in Grade]: number } = {
   [Grade.P]: 0.0,
 };
 
-export function calculateGPA(grades: Grade[]): number {
-  let totalPoints = 0;
-  let totalSubjects = 0;
+/**
+ * Represents a subject that a student studies
+ */
+export interface Subject {
+  /**
+   * The name of the subject
+   */
+  subjectName: string;
 
-  for (const grade of grades) {
-    if (grade !== Grade.W && grade !== Grade.P) {
-      // Exclude Withdrawn and Pass grades
-      totalPoints += gradeToGPA[grade];
-      totalSubjects += 1;
+  /**
+   * The subject's code
+   */
+  subjectCode: string;
+
+  /**
+   * The number of times the subject has been studied
+   */
+  timesStudied: number;
+
+  /**
+   * The grade achieved in the subject
+   * This field is optional
+   */
+  grade?: Grade;
+
+  /**
+   * The number of marks lost in the subject
+   * This field is optional
+   */
+  marksLost?: number;
+
+  /**
+   * The number of credit hours for the subject
+   * This field is optional
+   */
+  creditHours: number;
+}
+
+export function calculateGPA(subjects: Subject[]): number {
+  let totalPoints = 0;
+  let totalCreditHours = 0;
+
+  for (const subject of subjects) {
+    const { grade, creditHours } = subject;
+
+    // Ensure grade and credit hours are defined
+    if (grade && grade !== Grade.W && grade !== Grade.P && creditHours > 0) {
+      // Calculate weighted points
+      totalPoints += gradeToGPA[grade] * creditHours;
+      totalCreditHours += creditHours;
     }
   }
 
-  return totalSubjects === 0 ? 0 : totalPoints / totalSubjects;
+  // Avoid division by zero
+  return totalCreditHours === 0 ? 0 : totalPoints / totalCreditHours;
 }

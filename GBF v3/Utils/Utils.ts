@@ -176,6 +176,28 @@ export function KeyPerms(role: GuildMember) {
   return [KeyPermissions.join(", ") || "No Permissions", KeyPermissions.length];
 }
 
+export function nullifyObjectInPlace<T extends Record<string, any>>(obj: T): T {
+  (Object.keys(obj) as Array<keyof T>).forEach((key) => {
+    const value = obj[key];
+    if (typeof value === "object" && value !== null) {
+      if (Array.isArray(value)) {
+        obj[key] = [] as T[keyof T];
+      } else {
+        nullifyObjectInPlace(value);
+      }
+    } else {
+      obj[key] = null as T[keyof T];
+    }
+  });
+  return obj;
+}
+
+export function nullifyObjectShallow<T extends Record<string, any>>(obj: T): T {
+  return Object.fromEntries(
+    Object.keys(obj).map((key) => [key, Array.isArray(obj[key]) ? [] : null])
+  ) as T;
+}
+
 const timeUnitValues: Record<string, number> = {
   year: 31557600000,
   day: 86400000,
