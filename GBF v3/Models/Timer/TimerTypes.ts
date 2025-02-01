@@ -87,6 +87,18 @@ interface Semester {
    * @type {number}
    */
   longestSession: number;
+
+  /**
+   * The longest streak in the current semester
+   * @type {number}
+   */
+  longestStreak: number;
+
+  /**
+   * The user's current study streak
+   * @type {number}
+   */
+  streak: number;
 }
 
 /**
@@ -106,15 +118,18 @@ interface SessionBreak {
   sessionBreakStart: Date | null;
 }
 
-/**
- * Represents a single study session
- */
 interface Session {
   /**
    * The Discord guild (server) ID associated with the session
    * @type {Snowflake}
    */
   guildID: Snowflake;
+
+  /**
+   * The channel's ID
+   * @type {Snowflake}
+   */
+  channelID: Snowflake;
 
   /**
    * The unique Discord message ID for the session's message
@@ -142,11 +157,25 @@ interface Session {
 
   /**
    * An array of session breaks taken during the session
-   * @type {SessionBreak[]}
+   * @type {SessionBreak}
    */
-  sessionBreaks: SessionBreak[];
+  sessionBreaks: SessionBreak;
 
+  /**
+   * The total number of breaks taken during the session
+   * @type {number}
+   */
+  numberOfBreaks: number;
+
+  /**
+   * The topic of the last session
+   * @type {string}
+   */
   lastSessionTopic: string;
+  /**
+   * The date of the last session
+   * @type {Date}
+   */
   lastSessionDate: Date;
 }
 
@@ -168,10 +197,10 @@ interface ITimerData extends Document {
   currentSemester: Semester;
 
   /**
-   * An array of sessions tracked for the user
-   * @type {Session[]}
+   * The active session
+   * @type {Session}
    */
-  sessionData: Session[];
+  sessionData: Session;
 }
 
 export { Account, Semester, SessionBreak, Session, ITimerData };

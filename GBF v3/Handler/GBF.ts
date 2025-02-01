@@ -45,8 +45,8 @@ export enum BuiltInCommands {
 }
 
 export class Emojis {
-  static Verify = "✅";
-  static Error = "❌";
+  static Verify = "<:verified:821419611438317638>";
+  static Error = "<:error:822091680605011978>";
   static readonly Spotify = "<:Spotify:962905037649096815>";
   static readonly GBFLogo = "<:LogoTransparent:838994085527945266>";
   static readonly progressBarLeftEmpty = "<:leftEmpty:1068143435095220265>";
@@ -55,6 +55,13 @@ export class Emojis {
   static readonly progressBarRightFull = "<:rightFull:1068143806622470244>";
   static readonly progressBarMiddleEmpty = "<:middleEmpty:1068143614804377681>";
   static readonly progressBarMiddleFull = "<:middleFull:1068143723080319038>";
+  static readonly diamondSpin = "<a:DiamondGIF:954506603426635837>";
+  static readonly crownAnimated = "<a:Crown:1335252412394377250>";
+  static readonly blackHeartSpin = "<a:blackSpin:1025851052442005594>";
+  static readonly whiteHeartSpin = "<a:whiteSpin:1025851168720687174>";
+  static readonly redHeartSpin = "<a:redSpin:1025851361583173773>";
+  static readonly pinkHeartSpin = "<a:pinkSpin:1025851222068052101>";
+  static readonly donutSpin = "<a:donutSpin:1025851417421955204>";
 }
 
 export class ColorCodes {

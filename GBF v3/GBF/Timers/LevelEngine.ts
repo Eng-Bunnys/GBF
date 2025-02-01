@@ -1,3 +1,4 @@
+import { Emojis } from "../../Handler";
 /**
  *
  * @param {number} level The user's level + 1
@@ -43,96 +44,109 @@ export function calculateXP(time: number): number {
   return Math.floor(time / 5) * 180;
 }
 
+interface LevelResult {
+  hasLeveledUp: boolean;
+  addedLevels: number;
+  remainingXP: number;
+}
+
 /**
- * Check if the user has ranked up and calculate the number of level ups and remaining XP
+ * Checks the level of a user based on their current rank, current RP (Rank Points),
+ * and the RP to be added. It calculates the number of levels gained and the remaining RP.
  *
- * @param {number} currentRank - The user's current level
- * @param {number} currentRP - The user's XP before any additions
- * @param {number} addedRP - The added XP rewarded
- * @returns {Array<boolean | number>} - An array with the following elements:
- * @returns {Array<boolean | number>[0]} - A boolean indicating if the user has ranked up
- * @returns {Array<boolean | number>[1]} - The number of level ups
- * @returns {Array<boolean | number>[2]} - The remaining XP that was extra
+ * @param currentRank - The current rank of the user.
+ * @param currentRP - The current RP of the user.
+ * @param addedRP - The RP to be added to the user's current RP.
+ * @returns An object containing:
+ *   - `hasRankedUp`: A boolean indicating if the user has ranked up.
+ *   - `addedLevels`: The number of levels the user has gained.
+ *   - `remainingXP`: The remaining RP after leveling up.
  */
 export function checkLevel(
   currentRank: number,
   currentRP: number,
   addedRP: number
-): Array<boolean | number> {
+): LevelResult {
+  const MAX_RANK = 5000;
   let addedLevels = 0;
-  let hasRankedUp = false;
+  let userXP = currentRP + addedRP;
+  let requiredXP = xpRequired(currentRank + addedLevels);
 
-  let requiredRP = xpRequired(currentRank + addedLevels);
-
-  let userRP = currentRP + addedRP;
-
-  if (userRP > requiredRP) {
-    hasRankedUp = true;
+  // Level up while there's enough XP to cover the requirement
+  while (userXP >= requiredXP) {
+    // Deduct the required XP for this level
+    userXP -= requiredXP;
     addedLevels++;
-  }
 
-  let remainingRP = userRP - requiredRP;
-
-  if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
-    for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
-      addedLevels++;
-      if (currentRank + addedLevels >= 5000) {
-        addedLevels--;
-        break;
-      }
-      requiredRP = xpRequired(currentRank + addedLevels);
+    // Prevent leveling up past the maximum rank
+    if (currentRank + addedLevels >= MAX_RANK) {
+      addedLevels--;
+      // If leveling up is not allowed, return the XP before this level up
+      userXP += requiredXP;
+      break;
     }
+
+    // Update the required XP for the next level
+    requiredXP = xpRequired(currentRank + addedLevels);
   }
 
-  if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
+  return {
+    hasLeveledUp: addedLevels > 0,
+    addedLevels,
+    remainingXP: userXP,
+  };
+}
 
-  return [hasRankedUp, addedLevels, remainingRP];
+interface RankResult {
+  hasRankedUp: boolean;
+  addedLevels: number;
+  remainingRP: number;
 }
 
 /**
- * Check if the user has ranked up and calculate the number of level ups and remaining XP
+ * Checks and calculates the new rank and remaining RP after adding a certain amount of RP.
  *
- * @param {number} currentRank - The user's current level
- * @param {number} currentRP - The user's XP before any additions
- * @param {number} addedRP - The added XP rewarded
- * @returns {Array<boolean | number>} - An array with the following elements:
- * @returns {Array<boolean>[0]} - A boolean indicating if the user has ranked up
- * @returns {Array<number>[1]} - The number of level ups
- * @returns {Array<number>[2]} - The remaining XP that was extra
+ * @param currentRank - The current rank of the user.
+ * @param currentRP - The current RP of the user.
+ * @param addedRP - The amount of RP to be added.
+ * @returns An object containing the result of the rank check:
+ * - `hasRankedUp`: A boolean indicating if the user has ranked up.
+ * - `addedLevels`: The number of levels the user has gained.
+ * - `remainingRP`: The remaining RP after leveling up.
  */
 export function checkRank(
   currentRank: number,
   currentRP: number,
   addedRP: number
-): Array<boolean | number> {
+): RankResult {
+  const MAX_RANK = 5000;
   let addedLevels = 0;
-  let hasRankedUp = false;
-
+  let userRP = currentRP + addedRP;
   let requiredRP = rpRequired(currentRank + addedLevels);
 
-  let userRP = currentRP + addedRP;
-
-  if (userRP > requiredRP) {
-    hasRankedUp = true;
+  // Continue leveling up as long as the user has enough RP.
+  while (userRP >= requiredRP) {
+    // Subtract the required RP for the current level.
+    userRP -= requiredRP;
     addedLevels++;
-  }
 
-  let remainingRP = userRP - requiredRP;
-
-  if (Math.abs(remainingRP) === remainingRP && remainingRP > requiredRP) {
-    for (remainingRP; remainingRP > requiredRP; remainingRP -= requiredRP) {
-      addedLevels++;
-      if (currentRank + addedLevels >= 5000) {
-        addedLevels--;
-        break;
-      }
-      requiredRP = rpRequired(currentRank + addedLevels);
+    // Stop if the maximum rank is reached.
+    if (currentRank + addedLevels >= MAX_RANK) {
+      addedLevels--; // Undo the last level-up if it goes over the limit.
+      // Add back the RP subtracted, since the level-up didn't occur.
+      userRP += requiredRP;
+      break;
     }
+
+    // Recalculate the RP required for the new level.
+    requiredRP = rpRequired(currentRank + addedLevels);
   }
 
-  if (Math.abs(remainingRP) !== remainingRP) remainingRP = 0;
-
-  return [hasRankedUp, addedLevels, remainingRP];
+  return {
+    hasRankedUp: addedLevels > 0,
+    addedLevels,
+    remainingRP: userRP,
+  };
 }
 
 export function convertSeasonLevel(level: number): number {
@@ -153,4 +167,26 @@ export function calculateTotalAccountRP(AccountRank: number): number {
     totalXP += level * 800 + (level - 1) * 400 - 500;
   }
   return totalXP;
+}
+
+interface EmojiRange {
+  min: number;
+  max: number;
+  emoji: string;
+}
+
+const emojiRanges: EmojiRange[] = [
+  { min: 0, max: 25, emoji: Emojis.Verify },
+  { min: 26, max: 50, emoji: Emojis.blackHeartSpin },
+  { min: 51, max: 100, emoji: Emojis.whiteHeartSpin },
+  { min: 101, max: 150, emoji: Emojis.pinkHeartSpin },
+  { min: 151, max: 250, emoji: Emojis.redHeartSpin },
+  { min: 251, max: Infinity, emoji: Emojis.donutSpin },
+];
+
+export function rankUpEmoji(level: number): string {
+  const range = emojiRanges.find(
+    ({ min, max }) => level >= min && level <= max
+  );
+  return range ? range.emoji : Emojis.Verify;
 }

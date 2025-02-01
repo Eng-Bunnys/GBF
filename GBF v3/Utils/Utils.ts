@@ -198,6 +198,62 @@ export function nullifyObjectShallow<T extends Record<string, any>>(obj: T): T {
   ) as T;
 }
 
+export function secondsToHours(seconds: number): string {
+  if (seconds < 0) throw new Error("Seconds cannot be negative");
+
+  const hours = seconds / 3600;
+  return `${hours.toFixed(2)} Hours`;
+}
+
+export type UNIXFormat = "d" | "D" | "t" | "T" | "f" | "F" | "R";
+
+/**
+ * Converts a given date to a formatted UNIX timestamp string
+ *
+ * @param date - The date to be converted
+ * @param type - The format type for the UNIX timestamp
+ * 
+ * Format types:
+ * - "d": Short date (e.g., "2025-01-30")
+ * - "D": Long date (e.g., "January 30, 2025")
+ * - "t": Short time (e.g., "12:00 AM")
+ * - "T": Long time (e.g., "12:00:00 AM")
+ * - "f": Short date and time (e.g., "Jan 30, 2025 12:00 AM")
+ * - "F": Long date and time (e.g., "January 30, 2025 12:00:00 AM")
+ * - "R": Relative time (e.g., "5 minutes ago")
+ *
+ * @returns The formatted UNIX timestamp string or `undefined` if the type is invalid
+ */
+export function getTimestamp(date: Date, type: UNIXFormat) {
+  const UNIXTimestamp = Math.round(date.getTime() / 1000); // Get UNIX timestamp in seconds
+
+  switch (type) {
+    case "d":
+      // Short date (e.g., "2025-01-30")
+      return `<t:${UNIXTimestamp}:d>`;
+    case "D":
+      // Long date (e.g., "January 30, 2025")
+      return `<t:${UNIXTimestamp}:D>`;
+    case "t":
+      // Short time (e.g., "12:00 AM")
+      return `<t:${UNIXTimestamp}:t>`;
+    case "T":
+      // Long time (e.g., "12:00:00 AM")
+      return `<t:${UNIXTimestamp}:T>`;
+    case "f":
+      // Short date and time (e.g., "Jan 30, 2025 12:00 AM")
+      return `<t:${UNIXTimestamp}:f>`;
+    case "F":
+      // Long date and time (e.g., "January 30, 2025 12:00:00 AM")
+      return `<t:${UNIXTimestamp}:F>`;
+    case "R":
+      // Relative time (e.g., "5 minutes ago")
+      return `<t:${UNIXTimestamp}:R>`;
+    default:
+      return undefined;
+  }
+}
+
 const timeUnitValues: Record<string, number> = {
   year: 31557600000,
   day: 86400000,

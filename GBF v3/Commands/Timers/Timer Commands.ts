@@ -1,13 +1,46 @@
 import {
+  ActionRowBuilder,
   ApplicationCommandOptionType,
+  ButtonBuilder,
+  ButtonStyle,
   CommandInteractionOptionResolver,
   EmbedBuilder,
+  MessageFlags,
+  type User,
 } from "discord.js";
-import { SlashCommand, GBF, ColorCodes } from "../../Handler";
-import { Timers } from "../../GBF/Timers/Timers";
+import {
+  SlashCommand,
+  GBF,
+  ColorCodes,
+  msToTime,
+  secondsToHours,
+  Emojis,
+} from "../../Handler";
 import { Grade, Subject } from "../../GBF/Timers/GradeEngine";
 import { UserModel } from "../../Models/User/UserModel";
 import { TimerModel } from "../../Models/Timer/TimerModel";
+import {
+  createTimerActionRow,
+  TimerButtonID,
+} from "../../GBF/Timers/TimerHelper";
+import { Timers } from "../../GBF/Timers/Timers";
+
+function randomWelcome(user: User) {
+  const welcomeMessages = [
+    `Welcome, ${user.username}!`,
+    `Hello, ${user.username}!`,
+    `Hey there, ${user.username}!`,
+    `Yo, ${user.username}!`,
+    `Nice to see you, ${user.username}!`,
+    `Ahoy, ${user.username}!`,
+    `Good to have you here, ${user.username}!`,
+    `Hey hey, ${user.username}!`,
+    `Glad you’re here, ${user.username}!`,
+    `What’s up, ${user.username}!`,
+  ];
+
+  return welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+}
 
 export class GBFTimers extends SlashCommand {
   constructor(client: GBF) {
@@ -34,13 +67,23 @@ export class GBFTimers extends SlashCommand {
             const statsEmbed = new EmbedBuilder();
 
             try {
-              const timers = await Timers.create(interaction.user.id);
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
 
               const stats = timers.statDisplay();
 
               statsEmbed
                 .setColor(ColorCodes.Default)
-                .setTitle(timers.getSemesterName())
+                .setTitle(
+                  `${randomWelcome(
+                    interaction.user
+                  )} - ${timers.getSemesterName()}`
+                )
                 .setDescription(stats)
                 .setFooter({
                   text: `Stats for ${interaction.user.username}`,
@@ -49,7 +92,7 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 embeds: [statsEmbed],
-                ephemeral: ephemeral,
+                flags: ephemeral ? MessageFlags.Ephemeral : undefined,
               });
             } catch (error) {
               statsEmbed
@@ -58,10 +101,7 @@ export class GBFTimers extends SlashCommand {
                   `I ran into an error while trying to fetch your stats. Please try again later.\n\n\`\`\`js\n` +
                     error +
                     `\`\`\``
-                )
-                .setFooter({
-                  text: `Error fetching stats`,
-                });
+                );
 
               return interaction.reply({
                 embeds: [statsEmbed],
@@ -164,7 +204,13 @@ export class GBFTimers extends SlashCommand {
               });
 
             try {
-              const timers = await Timers.create(interaction.user.id);
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
 
               const newSubject: Subject = {
                 subjectName: subjectName,
@@ -183,9 +229,7 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 content: `Subject '${subjectName}' has been added to ${
-                  accountType === "S"
-                    ? " the current Semester "
-                    : " your account"
+                  accountType === "S" ? "the current Semester" : "your account"
                 }, with ${credits} credits.\nBest of luck.`,
                 ephemeral: true,
               });
@@ -236,14 +280,20 @@ export class GBFTimers extends SlashCommand {
             if (!userData) return ["NA"];
 
             let subjectCodes = userData.Subjects.map(
-              (subject) => subject.subjectCode
+              (subject) => `${subject.subjectCode} - ${subject.subjectName}`
             );
+
+            if (
+              !timerData ||
+              !timerData.currentSemester.semesterSubjects.length
+            )
+              return subjectCodes;
 
             if (timerData?.currentSemester?.semesterSubjects?.length) {
               subjectCodes = [
                 ...subjectCodes,
                 ...timerData.currentSemester.semesterSubjects.map(
-                  (subject) => subject.subjectCode
+                  (subject) => `${subject.subjectCode} - ${subject.subjectName}`
                 ),
               ];
             }
@@ -251,13 +301,47 @@ export class GBFTimers extends SlashCommand {
             return subjectCodes;
           },
           async execute({ client, interaction }) {
+            const type = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("type");
+
             const chosenSubject = (
               interaction.options as CommandInteractionOptionResolver
-            ).getString("subject-code");
+            )
+              .getString("subject-code")
+              ?.split(" - ")[0];
+
+            if (chosenSubject === "NA")
+              return interaction.reply({
+                content: "You don't have any subjects added to your account.",
+                ephemeral: true,
+              });
 
             try {
-              const timers = await Timers.create(interaction.user.id);
-            } catch (error) {}
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
+
+              if (type === "A")
+                await timers.removeSubjectAccount(chosenSubject);
+
+              if (type === "S")
+                await timers.removeSubjectSemester(chosenSubject);
+
+              return interaction.reply({
+                content: `Removed ${chosenSubject}`,
+                ephemeral: true,
+              });
+            } catch (error) {
+              return interaction.reply({
+                content: error.message,
+                ephemeral: true,
+              });
+            }
           },
         },
         register: {
@@ -285,13 +369,13 @@ export class GBFTimers extends SlashCommand {
 
               if (register) {
                 registerEmbed
+                  .setTitle(
+                    `Welcome ${interaction.user.username} to GBF Timers!`
+                  )
                   .setColor(ColorCodes.Default)
                   .setDescription(
-                    `Welcome to GBF Timers!\n\nNew Semester: ${semesterName}`
+                    `Successfully registered a new Semester '${semesterName}', best of luck.`
                   )
-                  .setFooter({
-                    text: "Best of luck!",
-                  })
                   .setTimestamp();
 
                 return interaction.reply({
@@ -339,7 +423,13 @@ export class GBFTimers extends SlashCommand {
             const subjectsEmbed = new EmbedBuilder();
 
             try {
-              const timers = await Timers.create(interaction.user.id);
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
 
               const subjects = timers.GPAMenu();
 
@@ -351,7 +441,7 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 embeds: [subjectsEmbed],
-                ephemeral: ephemeral,
+                flags: MessageFlags.Ephemeral,
               });
             } catch (error) {
               subjectsEmbed
@@ -368,7 +458,219 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 embeds: [subjectsEmbed],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
+              });
+            }
+          },
+        },
+        start: {
+          description: "Start a study session",
+          SubCommandOptions: [
+            {
+              name: "subject",
+              description: "The subject to be studied",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+              autocomplete: true,
+            },
+          ],
+          async autocomplete(interaction, option) {
+            const timerData = await TimerModel.findOne({
+              "account.userID": interaction.user.id,
+            });
+
+            if (
+              !timerData ||
+              !timerData.currentSemester.semesterSubjects.length
+            )
+              return ["NA"];
+
+            return timerData.currentSemester.semesterSubjects.map(
+              (subject) => `${subject.subjectCode} - ${subject.subjectName}`
+            );
+          },
+          async execute({ client, interaction }) {
+            const chosenSubject = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("subject");
+
+            if (chosenSubject === "NA")
+              return interaction.reply({
+                content:
+                  "You don't have any subjects registered this semester.",
+                flags: MessageFlags.Ephemeral,
+              });
+
+            const splitSubject = chosenSubject?.split(" - ")[0].trim();
+
+            const startEmbed = new EmbedBuilder();
+
+            try {
+              const timers = await Timers.create(
+                interaction.user.id,
+                true,
+                false,
+                interaction,
+                client
+              );
+
+              await interaction.deferReply({
+                withResponse: true,
+              });
+
+              let startDescription = `• Semester Study Time: ${
+                timers.timerStats.getSemesterTime() !== 0
+                  ? msToTime(timers.timerStats.getSemesterTime()) +
+                    `[${secondsToHours(timers.timerStats.getSemesterTime())}]`
+                  : "0s"
+              }\n`;
+
+              startDescription += `• Average Session Time: ${
+                timers.timerStats.getAverageSessionTime() !== 0
+                  ? msToTime(timers.timerStats.getAverageSessionTime())
+                  : "0s"
+              }\n`;
+
+              startDescription += `• Total Sessions: ${timers.timerStats.getSessionCount()}\n\n`;
+
+              startDescription += `• Semester Break Time: ${
+                timers.timerStats.getBreakTime() !== 0
+                  ? msToTime(timers.timerStats.getBreakTime())
+                  : "0s"
+              }\n`;
+
+              startDescription += `• Total Breaks: ${timers.timerStats.getBreakCount()}\n`;
+
+              startDescription += `• Average Break Time: ${
+                timers.timerStats.getAverageBreakTime() !== 0
+                  ? msToTime(timers.timerStats.getAverageBreakTime())
+                  : "0s"
+              }\n\n`;
+
+              const subjectDB =
+                timers.timerData.currentSemester.semesterSubjects.find(
+                  (subject) =>
+                    subject.subjectCode.trim().toLowerCase() ===
+                    splitSubject.toLowerCase()
+                );
+
+              startDescription += `• Times Studied ${chosenSubject}: ${subjectDB.timesStudied}`;
+
+              startEmbed
+                .setTitle(
+                  `${randomWelcome(interaction.user)} | ${chosenSubject}`
+                )
+                .setDescription(startDescription)
+                .setColor(ColorCodes.Default)
+                .setTimestamp();
+
+              const actionRow = createTimerActionRow({
+                [TimerButtonID.Pause]: true,
+                [TimerButtonID.Info]: true,
+                [TimerButtonID.Stop]: true,
+              });
+
+              const sessionStartMessage = await interaction.editReply({
+                embeds: [startEmbed],
+                components: [actionRow],
+              });
+
+              timers.timerData.sessionData.guildID = interaction.guildId;
+              timers.timerData.sessionData.messageID = sessionStartMessage.id;
+              timers.timerData.sessionData.channelID = interaction.channelId;
+              timers.timerData.sessionData.sessionTopic = chosenSubject;
+
+              await timers.timerData!.save();
+            } catch (error) {
+              startEmbed
+                .setTitle("I ran into an error :(")
+                .setColor(ColorCodes.ErrorRed)
+                .setDescription(
+                  `I ran into an error while trying to start a session. Please try again later.\n\n\`\`\`js\n` +
+                    error +
+                    `\`\`\``
+                );
+
+              return interaction.editReply({
+                embeds: [startEmbed],
+              });
+            }
+          },
+        },
+        ["change-subject"]: {
+          description: "Change the subject of the current session",
+          SubCommandOptions: [
+            {
+              name: "subject",
+              description: "The subject to be studied",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+              autocomplete: true,
+            },
+          ],
+          async autocomplete(interaction, option) {
+            const timerData = await TimerModel.findOne({
+              "account.userID": interaction.user.id,
+            });
+
+            if (
+              !timerData ||
+              !timerData.currentSemester.semesterSubjects.length
+            )
+              return ["NA"];
+
+            return timerData.currentSemester.semesterSubjects.map(
+              (subject) => `${subject.subjectCode} - ${subject.subjectName}`
+            );
+          },
+          async execute({ client, interaction }) {
+            const chosenSubject = (
+              interaction.options as CommandInteractionOptionResolver
+            ).getString("subject");
+
+            if (chosenSubject === "NA")
+              return interaction.reply({
+                content:
+                  "You don't have any subjects registered this semester.",
+                flags: MessageFlags.Ephemeral,
+              });
+
+            try {
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
+
+              if (!timers.timerData.sessionData.sessionStartTime)
+                return interaction.reply({
+                  content: "You don't have an active session.",
+                  flags: MessageFlags.Ephemeral,
+                });
+
+              if (chosenSubject === timers.timerData.sessionData.sessionTopic)
+                return interaction.reply({
+                  content: `${chosenSubject} is already the active topic for this session.`,
+                  flags: MessageFlags.Ephemeral,
+                });
+
+              const newTopicEmbed = new EmbedBuilder()
+                .setTitle(`${Emojis.Verify} Success`)
+                .setColor(ColorCodes.Default)
+                .setDescription(
+                  `Set '${chosenSubject}' as the new session topic`
+                )
+                .setTimestamp();
+
+              return interaction.reply({
+                embeds: [newTopicEmbed],
+              });
+            } catch (error) {
+              return interaction.reply({
+                content: `I ran into an error :(\n\n${error.message}`,
+                flags: MessageFlags.Ephemeral,
               });
             }
           },

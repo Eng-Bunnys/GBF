@@ -1,7 +1,7 @@
-import { Emojis, msToTime } from "../../Handler";
+import { Emojis } from "../../Handler";
 import { ITimerData, Semester } from "../../Models/Timer/TimerTypes";
 import { GBFUser } from "../../Models/User/UserTypes";
-import { calculateGPA, Grade, Subject } from "./GradeEngine";
+import { calculateGPA } from "./GradeEngine";
 import { rpRequired, xpRequired } from "./LevelEngine";
 
 export class TimerStats {
@@ -28,7 +28,7 @@ export class TimerStats {
   }
 
   public getSessionCount(): number {
-    return this.timerData.sessionData.length || 0;
+    return this.timerData.currentSemester.sessionStartTimes.length || 0;
   }
 
   public getAverageSessionTime(): number {
@@ -114,28 +114,17 @@ export class TimerStats {
 
   /// Last Session Details
 
-  public getLastSessionTopic() {
-    return this.timerData.sessionData.length > 0
-      ? this.timerData.sessionData[this.timerData.sessionData.length - 1]
-          .sessionTopic
-      : "No Data";
+  public getLastSessionTopic(): string {
+    return this.timerData?.sessionData?.lastSessionTopic || "No Data";
   }
 
   public getLastSessionTime(): number {
-    return this.timerData.sessionData.length > 0
-      ? this.timerData.sessionData[this.timerData.sessionData.length - 1]
-          .sessionTime * 1000
-      : 0;
+    return (this.timerData?.sessionData?.sessionTime || 0) * 1000;
   }
 
   public getLastSessionDateUNIX(): number | null {
-    return this.timerData.sessionData.length > 0
-      ? Math.round(
-          this.timerData.sessionData[
-            this.timerData.sessionData.length - 1
-          ].lastSessionDate.getTime() / 1000
-        )
-      : null;
+    const lastDate = this.timerData?.sessionData?.lastSessionDate;
+    return lastDate ? Math.round(lastDate.getTime() / 1000) : null;
   }
 
   /// Average Session Details
@@ -199,7 +188,6 @@ export class TimerStats {
     totalSegments: number = 4
   ) {
     const clampedPercentage = Math.min(Math.max(percentageComplete, 0), 100);
-
     const filledSegments = Math.floor(
       (clampedPercentage / 100) * totalSegments
     );
@@ -208,20 +196,35 @@ export class TimerStats {
       Emojis.progressBarMiddleEmpty
     );
 
-    for (let i = 0; i < filledSegments; i++) {
-      if (i == 0) progressSegments[i] = Emojis.progressBarLeftFull;
-      else if (i == filledSegments - 1)
-        progressSegments[i] = Emojis.progressBarRightFull;
-      else progressSegments[i] = Emojis.progressBarMiddleFull;
-    }
-
-    if (filledSegments === 0 && clampedPercentage > 0)
+    if (filledSegments > 0) {
       progressSegments[0] = Emojis.progressBarLeftFull;
+
+      for (let i = 1; i < filledSegments - 1; i++) {
+        progressSegments[i] = Emojis.progressBarMiddleFull;
+      }
+
+      if (filledSegments > 1) {
+        progressSegments[filledSegments - 1] = Emojis.progressBarRightFull;
+      }
+    } else {
+      progressSegments[0] = Emojis.progressBarLeftEmpty;
+      progressSegments[totalSegments - 1] = Emojis.progressBarRightEmpty;
+    }
 
     return progressSegments.join("");
   }
 
   public GPA() {
     return calculateGPA(this.userData.Subjects);
+  }
+
+  /// Streak details
+
+  public getCurrentStreak() {
+    return this.timerData.currentSemester.streak;
+  }
+
+  public getLongestStreak() {
+    return this.timerData.currentSemester.longestStreak;
   }
 }

@@ -1,4 +1,4 @@
-import { ActivityType, Events } from "discord.js";
+import { Events } from "discord.js";
 import { GBF } from "../GBF";
 import { redBright, whiteBright, underline } from "chalk";
 

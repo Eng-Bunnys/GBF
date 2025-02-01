@@ -1,10 +1,15 @@
-import { type Snowflake } from "discord.js";
+import {
+  ButtonInteraction,
+  Client,
+  CommandInteraction,
+  type Snowflake,
+} from "discord.js";
 import { Semester, type ITimerData } from "../../Models/Timer/TimerTypes";
 import { TimerModel } from "../../Models/Timer/TimerModel";
 import { type GBFUser } from "../../Models/User/UserTypes";
 import { UserModel } from "../../Models/User/UserModel";
 import { TimerStats } from "./TimerStats";
-import { msToTime, nullifyObjectInPlace } from "../../Handler";
+import { GBF, msToTime, secondsToHours } from "../../Handler";
 import {
   calculateTotalSeasonXP,
   checkRank,
@@ -15,30 +20,75 @@ import {
 } from "./LevelEngine";
 import { Subject } from "./GradeEngine";
 import { Document } from "mongoose";
-import { client } from "../..";
-import { CustomEvents } from "../ClientEvents";
+import { CustomEvents } from "../Data/ClientEvents";
+import { TimerEvents } from "./TimerEvents";
+import { formatHours, RecordBrokenOptions } from "./TimerHelper";
 
 export class Timers {
   public readonly userID: Snowflake;
   public timerData: (ITimerData & Document) | null = null;
   public userData: (GBFUser & Document) | null = null;
+  public timerStats: TimerStats | null = null;
+  public timerEvents: TimerEvents | null = null;
+  public gbfClient: GBF | null = null;
+  public interaction: CommandInteraction | null = null;
   private isDataLoaded: boolean = false;
 
-  constructor(userID: Snowflake) {
+  constructor(
+    userID: Snowflake,
+    client: GBF = undefined,
+    interaction: CommandInteraction = undefined
+  ) {
     this.userID = userID;
+    this.gbfClient = client;
+    this.interaction = interaction;
   }
 
   /// Functions to ensure the system is working properly
 
   /**
-   * Creates a new instance of the Timers class for the specified user
+   * Creates a new instance of the Timers class
    *
    * @param userID - The unique identifier of the user
+   * @param timerStats - Whether to initialize timer statistics. Defaults to false
+   * @param timerEvents - Whether to initialize timer events. Defaults to false
+   * @param interaction - The command interaction object. Optional
+   * @param client - The GBF client object. Optional
    * @returns A promise that resolves to an instance of the Timers class
+   * @throws Will throw an error if `timerEvents` is true and either `interaction` or `client` is not provided
    */
-  public static async create(userID: Snowflake): Promise<Timers> {
-    const instance = new Timers(userID);
+  public static async create(
+    userID: Snowflake,
+    timerStats = false,
+    timerEvents = false,
+    interaction: CommandInteraction | ButtonInteraction = undefined,
+    client: GBF = undefined
+  ): Promise<Timers> {
+    const instance = new Timers(
+      userID,
+      client ? client : undefined,
+      interaction ? (interaction as CommandInteraction) : undefined
+    );
     await instance.setUser();
+
+    if (timerStats)
+      instance.timerStats = new TimerStats(
+        instance.timerData,
+        instance.userData
+      );
+
+    if (timerEvents) {
+      if (!interaction || !client)
+        throw new Error(
+          "To run timerEvents you must provide the Interaction and Client object"
+        );
+      instance.timerEvents = new TimerEvents(
+        instance.gbfClient,
+        interaction as unknown as ButtonInteraction,
+        instance.timerData,
+        instance.userData
+      );
+    }
     return instance;
   }
 
@@ -60,14 +110,14 @@ export class Timers {
       );
 
     if (!this.timerData && !this.userData)
-      throw new Error(`Data not found for userID: ${this.userID}`);
+      throw new Error(`You don't have a GBF Timers account.`);
   }
 
   private checkSemester() {
     this.checkUser();
 
     if (!this.timerData!.currentSemester.semesterName)
-      throw new Error(`Semester data not found for userID: ${this.userID}`);
+      throw new Error(`You don't have an active semester`);
   }
 
   /// Setters and Getters
@@ -119,11 +169,11 @@ export class Timers {
     // Check if the subject already exists in the current semester
     if (
       this.timerData!.currentSemester.semesterSubjects.some(
-        (s) => s.subjectName === subject.subjectName
+        (s) => s.subjectCode === subject.subjectCode
       )
     ) {
       throw new Error(
-        `Subject '${subject.subjectName}' already exists for userID: ${this.userID} in the current semester`
+        `Subject '${subject.subjectCode}' already in the current semester`
       );
     }
 
@@ -132,7 +182,7 @@ export class Timers {
       this.userData?.Subjects.some((s) => s.subjectName === subject.subjectName)
     ) {
       throw new Error(
-        `Subject '${subject.subjectName}' already exists for userID: ${this.userID} in the account subjects list`
+        `Subject '${subject.subjectName}' already exists in the account subjects list`
       );
     }
 
@@ -143,20 +193,21 @@ export class Timers {
   /**
    * Removes a subject from the user's subjects list by name and saves the updated user data
    *
-   * @param {string} subjectName - The name of the subject to be removed
+   * @param {string} subjectCode - The code of the subject to be removed
    * @returns {Promise<void>} A promise that resolves when the user data has been saved
    * @throws Will throw an error if the subject is not found or if the user is not authenticated
    */
-  public async removeSubjectAccount(subjectName: string): Promise<void> {
+  public async removeSubjectAccount(subjectCode: string): Promise<void> {
     this.checkUser();
 
     const index = this.userData!.Subjects.findIndex(
-      (s) => s.subjectName.toLowerCase() === subjectName.toLowerCase()
+      (s) =>
+        s.subjectCode.trim().toLowerCase() === subjectCode.trim().toLowerCase()
     );
 
     if (index === -1) {
       throw new Error(
-        `Subject '${subjectName}' does not exist for userID: ${this.userID}`
+        `You haven't registered '${subjectCode}' in your account.`
       );
     }
 
@@ -168,20 +219,20 @@ export class Timers {
   /**
    * Removes a subject from the user's subjects list by name and saves the updated user data
    *
-   * @param {string} subjectName - The name of the subject to be removed
+   * @param {string} subjectCode - The code of the subject to be removed
    * @returns {Promise<void>} A promise that resolves when the user data has been saved
    * @throws Will throw an error if the subject is not found or if the user is not authenticated
    */
-  public async removeSubjectSemester(subjectName: string): Promise<void> {
+  public async removeSubjectSemester(subjectCode: string): Promise<void> {
     this.checkSemester();
 
     const index = this.timerData.currentSemester!.semesterSubjects.findIndex(
-      (s) => s.subjectName.toLowerCase() === subjectName.toLowerCase()
+      (s) => s.subjectCode.toLowerCase() === subjectCode.toLowerCase()
     );
 
     if (index === -1) {
       throw new Error(
-        `Subject '${subjectName}' does not exist for userID: ${this.userID}`
+        `You haven't registered '${subjectCode}' for this semester`
       );
     }
 
@@ -223,6 +274,16 @@ export class Timers {
       Subjects: [],
     });
 
+    if (!this.timerData) {
+      const newData = new TimerModel({
+        "account.userID": this.userID,
+      });
+
+      this.timerData = newData as unknown as ITimerData & Document;
+
+      await this.timerData!.save();
+    }
+
     await this.userData.save();
   }
 
@@ -236,9 +297,21 @@ export class Timers {
         );
       else {
         // Resetting the data just in-case
-        this.endSemester();
+        const resetSemester: Semester = {
+          breakCount: 0,
+          longestSession: null,
+          semesterLevel: 1,
+          semesterName: semesterName,
+          semesterSubjects: [],
+          semesterTime: 0,
+          semesterXP: 0,
+          sessionStartTimes: [],
+          totalBreakTime: 0,
+          longestStreak: 0,
+          streak: 0,
+        };
 
-        this.timerData.currentSemester.semesterName = semesterName;
+        this.timerData.currentSemester = resetSemester;
 
         await this.timerData!.save();
       }
@@ -248,7 +321,7 @@ export class Timers {
         "currentSemester.semesterName": semesterName,
       });
 
-      this.timerData = newData as ITimerData & Document;
+      this.timerData = newData as unknown as ITimerData & Document;
 
       await this.timerData!.save();
     }
@@ -259,7 +332,7 @@ export class Timers {
 
     const timerStats = new TimerStats(this.timerData, this.userData);
 
-    let gap = "\n\n\n";
+    let gap = "\n";
 
     let stats = "";
 
@@ -267,26 +340,35 @@ export class Timers {
 
     accountDetails += `• Lifetime Study Time: ${
       timerStats.getTotalStudyTime() !== 0
-        ? msToTime(timerStats.getTotalStudyTime())
-        : "No Data"
+        ? msToTime(timerStats.getTotalStudyTime()) +
+          `[${secondsToHours(timerStats.getTotalStudyTime())}]`
+        : "0s"
     }\n`;
 
     if (this.timerData.currentSemester.semesterName) {
       accountDetails += `• Semester Study Time: ${
         timerStats.getSemesterTime() !== 0
-          ? msToTime(timerStats.getSemesterTime())
-          : "No Data"
+          ? msToTime(timerStats.getSemesterTime()) +
+            `[${secondsToHours(timerStats.getSemesterTime())}]`
+          : "0s"
       }\n`;
 
       accountDetails += `• Average Session Time: ${
         timerStats.getAverageSessionTime() !== 0
           ? msToTime(timerStats.getAverageSessionTime())
-          : "No Data"
+          : "0s"
       }\n`;
 
       accountDetails += `• Total Sessions: ${timerStats.getSessionCount()}\n`;
+      stats += accountDetails + gap;
     }
-    stats += accountDetails + gap;
+
+    let streakDetails = "";
+
+    streakDetails += `• Study Streak: ${timerStats.getCurrentStreak()} 🔥\n`;
+    streakDetails += `• Longest Study Streak: ${timerStats.getLongestStreak()} 🔥\n`;
+
+    stats += streakDetails + gap;
 
     let recordDetails = "";
 
@@ -294,14 +376,17 @@ export class Timers {
       recordDetails += `• Longest Session: ${
         timerStats.getLongestSessionTime() !== 0
           ? msToTime(timerStats.getLongestSessionTime())
-          : "No Data"
+          : "0s"
       }\n`;
 
-    recordDetails += `• Longest Semester: ${msToTime(
-      timerStats.getLongestSemester().semesterTime * 1000
-    )} [${timerStats.getLongestSemester().semesterTime / 3600}] - [${
-      timerStats.getLongestSemester().semesterName
-    }]\n`;
+    const longestSemester = timerStats.getLongestSemester();
+
+    if (longestSemester)
+      recordDetails += `• Longest Semester: ${msToTime(
+        longestSemester.semesterTime * 1000
+      )} [${longestSemester.semesterTime / 3600} hours] - [${
+        longestSemester.semesterName
+      }]\n`;
 
     stats += recordDetails + gap;
 
@@ -311,7 +396,7 @@ export class Timers {
       semesterBreakDetails += `• Semester Break Time: ${
         timerStats.getBreakTime() !== 0
           ? msToTime(timerStats.getBreakTime())
-          : "No Data"
+          : "0s"
       }\n`;
 
       semesterBreakDetails += `• Total Breaks: ${timerStats.getBreakCount()}\n`;
@@ -319,13 +404,13 @@ export class Timers {
       semesterBreakDetails += `• Average Break Time: ${
         timerStats.getAverageBreakTime() !== 0
           ? msToTime(timerStats.getAverageBreakTime())
-          : "No Data"
+          : "0s"
       }\n`;
 
       semesterBreakDetails += `• Average Time Between Breaks: ${
         timerStats.getAverageTimeBetweenBreaks() !== 0
           ? msToTime(timerStats.getAverageTimeBetweenBreaks())
-          : "No Data"
+          : "0s"
       }\n`;
 
       stats += semesterBreakDetails + gap;
@@ -335,8 +420,8 @@ export class Timers {
       averageDetails += `• Average Start Time: ${
         timerStats.getAverageStartTimeUNIX() !== null
           ? `<t:${timerStats.getAverageStartTimeUNIX()}:T>`
-          : "No Data"
-      }`;
+          : "N/A"
+      }\n`;
 
       averageDetails += `• Average Session Time / Week: ${
         timerStats.getAverageTimePerWeek() !== 0
@@ -344,8 +429,8 @@ export class Timers {
             "[" +
             timerStats.getAverageTimePerWeek() / 3600 +
             "]"
-          : "No Data"
-      }`;
+          : "0s"
+      }\n`;
 
       stats += averageDetails + gap;
     }
@@ -357,19 +442,19 @@ export class Timers {
       subjectDetails += `• Most Studied Subject: ${
         timerStats.getMostStudiedSubject() !== "No Data"
           ? timerStats.getMostStudiedSubject()
-          : "No Data"
+          : "N/A"
       }\n`;
 
       subjectDetails += `• Least Studied Subject: ${
         timerStats.getLeastStudiedSubject() !== "No Data"
           ? timerStats.getLeastStudiedSubject()
-          : "No Data"
+          : "N/A"
       }\n`;
 
       subjectDetails += `• Average Study Time Per Subject: ${
         timerStats.getAverageStudyTimePerSubject() !== 0
           ? msToTime(timerStats.getAverageStudyTimePerSubject())
-          : "No Data"
+          : "N/A"
       }\n`;
     }
     stats += subjectDetails + gap;
@@ -393,11 +478,13 @@ export class Timers {
       const percentageCompleteSemester = timerStats.percentageToNextLevel();
       levelDetails += `${timerStats.generateProgressBar(
         percentageCompleteSemester
-      )}\n`;
+      )} [${percentageCompleteSemester}%]\n`;
 
       levelDetails += `• Hours to reach level ${
         timerStats.getSemesterLevel() + 1
-      }: ${hoursRequired(xpToNextLevel - timerStats.getSemesterXP())}\n`;
+      }: ${formatHours(
+        hoursRequired(rpToNextLevel - timerStats.getSemesterTime())
+      )}\n`;
     }
     levelDetails += `• Account Level: ${timerStats.getAccountLevel()}\n`;
 
@@ -409,11 +496,13 @@ export class Timers {
 
     levelDetails += `${timerStats.generateProgressBar(
       percentageCompleteAccount
-    )}\n`;
+    )} [${percentageCompleteAccount}%]\n`;
 
     levelDetails += `• Hours to reach level ${
       timerStats.getAccountLevel() + 1
-    }: ${hoursRequired(rpToNextLevel - timerStats.getAccountRP())}\n`;
+    }: ${formatHours(
+      hoursRequired(rpToNextLevel - timerStats.getAccountRP())
+    )}\n`;
 
     stats += levelDetails + gap;
 
@@ -476,11 +565,13 @@ export class Timers {
     ) {
       this.timerData.account.longestSemester = this.timerData.currentSemester;
 
-      client.emit(
-        CustomEvents.SemesterUpdated,
-        this.timerData.account.userID,
-        this.timerData.currentSemester
-      );
+      const recordBroken: RecordBrokenOptions = {
+        interaction: this.interaction,
+        type: "Semester",
+        semester: this.timerData.currentSemester,
+      };
+
+      this.gbfClient.emit(CustomEvents.RecordBroken, recordBroken);
     }
 
     // Updating the account info before deleting the data
@@ -494,12 +585,12 @@ export class Timers {
       convertedXP
     );
 
-    if (rankUpCheck[0])
-      client.emit(
+    if (rankUpCheck.hasRankedUp)
+      this.gbfClient.emit(
         CustomEvents.AccountLevelUp,
         this.timerData.account.userID,
-        rankUpCheck[1],
-        rankUpCheck[2]
+        rankUpCheck.addedLevels,
+        rankUpCheck.remainingRP
       );
     else this.userData.RP += convertedXP;
 
@@ -513,6 +604,8 @@ export class Timers {
       semesterXP: 0,
       sessionStartTimes: [],
       totalBreakTime: 0,
+      longestStreak: 0,
+      streak: 0,
     };
 
     this.timerData.currentSemester = resetSemester;
