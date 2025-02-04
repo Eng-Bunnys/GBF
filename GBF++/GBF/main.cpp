@@ -11,7 +11,7 @@ int main()
 
 		uint32_t intents = dpp::i_all_intents;
 
-		GBFOptions options(botToken, true, intents);
+		GBFOptions options(botToken, true, true, intents);
 
 		GBF client(options);
 
@@ -20,10 +20,10 @@ int main()
 		if (!loggedIn)
 			return EXIT_FAILURE;
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << "I ran into an error\n"
-			<< e.what() << std::endl;
+				  << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;

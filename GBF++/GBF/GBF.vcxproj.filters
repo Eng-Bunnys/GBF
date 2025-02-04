@@ -303,9 +303,6 @@
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\zlibcontext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\MessageEvent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Handler\Event Handler\EventHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -318,16 +315,19 @@
     <ClInclude Include="Utils\EnvReader\EnvReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\ReadyEvent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Handler\Command Handler\Message Handler\MessageCommand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Handler\Command Handler\Message Handler\CommandFactory.h">
+    <ClInclude Include="Events\ReadyEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Handler\Handler Events\MessageOnCreate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handler\Command Handler\Message Handler\MessageHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Commands\Ping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -344,7 +344,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Handler\Event Handler\EventRegistry.cpp">
+    <ClCompile Include="Handler\index.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -11,9 +11,14 @@ struct GBFOptions
 	bool debugger;
 	/** The bots intents */
 	uint32_t intents;
+	/** When true, the handler will register commands*/
+	bool registerCommands;
+	/** The bot's prefix*/
+	std::string prefix;
 
-	GBFOptions(const std::string& token, bool debugger = false, uint32_t intents = dpp::i_default_intents)
-		: token(token), debugger(debugger), intents(intents) {
+	GBFOptions(const std::string &token, bool debugger = false, bool registerCommands = true, uint32_t intents = dpp::i_default_intents)
+		: token(token), debugger(debugger), intents(intents), registerCommands(registerCommands)
+	{
 	}
 };
 

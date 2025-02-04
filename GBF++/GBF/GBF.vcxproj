@@ -188,6 +188,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Commands\Ping.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\appcommand.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\application.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\auditlog.h" />
@@ -280,20 +281,20 @@
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\win32_safe_warnings.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\wsclient.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\zlibcontext.h" />
-    <ClInclude Include="events\MessageEvent.h" />
-    <ClInclude Include="events\ReadyEvent.h" />
-    <ClInclude Include="Handler\Command Handler\Message Handler\CommandFactory.h" />
-    <ClInclude Include="Handler\Command Handler\Message Handler\MessageCommand.h" />
+    <ClInclude Include="Events\ReadyEvent.h" />
+    <ClInclude Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.h" />
     <ClInclude Include="Handler\Event Handler\EventHandler.h" />
     <ClInclude Include="Handler\GBF.h" />
     <ClInclude Include="Handler\GBFOptions.h" />
     <ClInclude Include="Handler\Handler Events\MessageOnCreate.h" />
+    <ClInclude Include="Handler\Command Handler\Message Handler\MessageHandler.h" />
     <ClInclude Include="Utils\EnvReader\EnvReader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.cpp" />
     <ClCompile Include="Handler\Event Handler\EventHandler.cpp" />
-    <ClCompile Include="Handler\Event Handler\EventRegistry.cpp" />
     <ClCompile Include="Handler\GBF.cpp" />
+    <ClCompile Include="Handler\index.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utils\EnvReader\EnvReader.cpp" />
   </ItemGroup>

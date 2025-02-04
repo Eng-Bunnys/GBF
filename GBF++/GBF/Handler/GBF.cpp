@@ -1,40 +1,55 @@
 #include "GBF.h"
 
-GBF::GBF(const GBFOptions& options)
-	: options(options), client(nullptr)
+GBF::GBF(const GBFOptions &options)
+    : options(options), client(nullptr)
 {
-	this->debugger = options.debugger;
+    this->debugger = options.debugger;
 }
 
 bool GBF::login()
 {
-	try
-	{
-		this->client = new dpp::cluster(this->options.token);
-		this->client->intents = this->options.intents;
+    try
+    {
+        this->client = new dpp::cluster(this->options.token);
+        this->client->intents = this->options.intents;
 
-		EventFactory::setGBF(this);
-		EventHandler::setGBF(this);
+        // Set up factories
+        EventFactory::setGBF(this);
+        CommandFactory::setGBF(this);
+        MessageCommandRegistry::getInstance().setGBF(this);
 
-		// Load all registered events
-		this->events = EventFactory::createAll();
+        // Load events
+        this->events = EventFactory::createAll();
 
-		if (this->options.debugger)
-			std::cout << "Total Events Loaded: " << events.size() << std::endl;
+        // Load commands if enabled
+        if (this->options.registerCommands)
+        {
+            auto commands = CommandFactory::createAll();
+            for (auto &cmd : commands)
+            {
+                MessageCommandRegistry::getInstance().registerCommand(std::move(cmd));
+            }
+        }
 
-		// Register events
-		for (auto& event : events)
-		{
-			event->registerEvent(*client);
-		}
+        if (this->options.debugger)
+        {
+            std::cout << "Total Events Loaded: " << events.size() << std::endl;
+            std::cout << "Commands Enabled: " << (this->options.registerCommands ? "Yes" : "No") << std::endl;
+        }
 
-		this->client->start(dpp::st_wait);
+        // Register events
+        for (auto &event : events)
+        {
+            event->registerEvent(*client);
+        }
 
-		return true;
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "I ran into an error:\n" << e.what() << std::endl;
-		return false;
-	}
+        this->client->start(dpp::st_wait);
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error during login:\n"
+                  << e.what() << std::endl;
+        return false;
+    }
 }

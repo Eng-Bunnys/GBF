@@ -10,25 +10,25 @@ class GBF;
 class EventHandler
 {
 protected:
-	static GBF* gbf;
+	static GBF *gbf;
 
 public:
-	virtual void registerEvent(dpp::cluster& client) = 0;
+	virtual void registerEvent(dpp::cluster &client) = 0;
 	virtual ~EventHandler() = default;
 
-	static void setGBF(GBF* instance) { gbf = instance; }
+	static void setGBF(GBF *instance) { gbf = instance; }
 };
 
 class EventFactory
 {
 private:
 	static std::unordered_map<std::string, std::function<std::unique_ptr<EventHandler>()>> eventRegistry;
-	static GBF* gbf;
+	static GBF *gbf;
 
 public:
-	static void registerEvent(const std::string& name, std::function<std::unique_ptr<EventHandler>()> constructor);
+	static void registerEvent(const std::string &name, std::function<std::unique_ptr<EventHandler>()> constructor);
 	static std::vector<std::unique_ptr<EventHandler>> createAll();
-	static void setGBF(GBF* instance) { gbf = instance; }
+	static void setGBF(GBF *instance) { gbf = instance; }
 };
 
 // Macro for auto-registering events

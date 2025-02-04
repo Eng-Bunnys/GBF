@@ -2,12 +2,12 @@
 #include "../GBF.h"
 #include <iostream>
 
-GBF* EventHandler::gbf = nullptr;
-GBF* EventFactory::gbf = nullptr;
+GBF *EventHandler::gbf = nullptr;
+GBF *EventFactory::gbf = nullptr;
 
 std::unordered_map<std::string, std::function<std::unique_ptr<EventHandler>()>> EventFactory::eventRegistry;
 
-void EventFactory::registerEvent(const std::string& name, std::function<std::unique_ptr<EventHandler>()> constructor)
+void EventFactory::registerEvent(const std::string &name, std::function<std::unique_ptr<EventHandler>()> constructor)
 {
     eventRegistry[name] = constructor;
 
@@ -18,7 +18,7 @@ void EventFactory::registerEvent(const std::string& name, std::function<std::uni
 std::vector<std::unique_ptr<EventHandler>> EventFactory::createAll()
 {
     std::vector<std::unique_ptr<EventHandler>> events;
-    for (const auto& [name, constructor] : eventRegistry)
+    for (const auto &[name, constructor] : eventRegistry)
     {
         std::cout << "Registering Event: " << name << std::endl;
         events.push_back(constructor());

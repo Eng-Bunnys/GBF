@@ -6,7 +6,8 @@
 #include <fstream>
 #include <iostream>
 
-class EnvReader {
+class EnvReader
+{
 private:
     std::string filename;
     std::map<std::string, std::string> envVariables;
@@ -14,8 +15,8 @@ private:
     void loadEnvFile();
 
 public:
-    EnvReader(const std::string& envFile);
-    std::string get(const std::string& key) const;
+    EnvReader(const std::string &envFile);
+    std::string get(const std::string &key) const;
 };
 
 #endif
