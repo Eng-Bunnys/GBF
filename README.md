@@ -19,9 +19,13 @@ https://gamers-best-friend.gitbook.io/gbfcommands/
 - C++
 
 ## Live versions:
+- GBF v2
+- GBF Handler v3
+
+# Upcoming versions:
+- GBF v3
 - GBF Handler v4
-- Discord.JS v14
-- GBF v14
+- GBF++
 
 Made by .Bunnys
 
