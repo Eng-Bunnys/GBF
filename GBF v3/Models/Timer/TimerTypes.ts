@@ -18,12 +18,6 @@ interface Account {
   lifetimeTime: number;
 
   /**
-   * The longest duration the user has studied in a single session, in seconds
-   * @type {number}
-   */
-  longestSessionTime: number;
-
-  /**
    * The longest semester the user had
    * @type {Semester}
    */
@@ -99,6 +93,12 @@ interface Semester {
    * @type {number}
    */
   streak: number;
+
+  /**
+   * Last time the streak was updated
+   * @type {Date}
+   */
+  lastStreakUpdate: Date;
 }
 
 /**

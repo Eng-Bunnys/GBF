@@ -4,7 +4,9 @@ import {
   ButtonBuilder,
   ButtonStyle,
   CommandInteractionOptionResolver,
+  ComponentType,
   EmbedBuilder,
+  Interaction,
   MessageFlags,
   type User,
 } from "discord.js";
@@ -407,19 +409,7 @@ export class GBFTimers extends SlashCommand {
         gpa: {
           description:
             "Returns a list of all of the subjects taken with their grade",
-          SubCommandOptions: [
-            {
-              name: "ephemeral",
-              description: "Choose whether to hide this message or not",
-              type: ApplicationCommandOptionType.Boolean,
-              required: true,
-            },
-          ],
           async execute({ client, interaction }) {
-            const ephemeral = (
-              interaction.options as CommandInteractionOptionResolver
-            ).getBoolean("ephemeral");
-
             const subjectsEmbed = new EmbedBuilder();
 
             try {
@@ -521,7 +511,9 @@ export class GBFTimers extends SlashCommand {
               let startDescription = `• Semester Study Time: ${
                 timers.timerStats.getSemesterTime() !== 0
                   ? msToTime(timers.timerStats.getSemesterTime()) +
-                    `[${secondsToHours(timers.timerStats.getSemesterTime())}]`
+                    ` [${secondsToHours(
+                      timers.timerStats.getSemesterTime() / 1000
+                    )}]`
                   : "0s"
               }\n`;
 
@@ -671,6 +663,115 @@ export class GBFTimers extends SlashCommand {
               return interaction.reply({
                 content: `I ran into an error :(\n\n${error.message}`,
                 flags: MessageFlags.Ephemeral,
+              });
+            }
+          },
+        },
+        end: {
+          description: "End the current Semester",
+          async execute({ client, interaction }) {
+            try {
+              const timers = await Timers.create(
+                interaction.user.id,
+                false,
+                false,
+                interaction,
+                client
+              );
+
+              const confirmationButtons =
+                new ActionRowBuilder<ButtonBuilder>().addComponents([
+                  new ButtonBuilder()
+                    .setCustomId("endSemester")
+                    .setStyle(ButtonStyle.Danger)
+                    .setLabel("End Semester"),
+                  new ButtonBuilder()
+                    .setCustomId("stopEndSemester")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel("Don't End the Semester"),
+                ]);
+
+              const endEmbed = new EmbedBuilder()
+                .setTitle(`⚠️ Confirmation Required ⚠️`)
+                .setColor(ColorCodes.ErrorRed)
+                .setDescription(
+                  `Use the buttons below to confirm or deny ending the current semester, we recommend using timer stats before ending the semester.\n\nButtons are active for 5 minutes.`
+                )
+                .setFooter({
+                  text: "Your season level will be converted to RP that will be added to your account rank if you reset.",
+                })
+                .setTimestamp();
+
+              await interaction.reply({
+                embeds: [endEmbed],
+                components: [confirmationButtons],
+                withResponse: true,
+              });
+
+              const filter = (i: Interaction) => {
+                return i.user.id === interaction.user.id;
+              };
+
+              const collector =
+                interaction.channel.createMessageComponentCollector({
+                  filter,
+                  time: 300000,
+                  componentType: ComponentType.Button,
+                });
+
+              collector.on("collect", async (i) => {
+                if (i.customId === "stopEndSemester") {
+                  endEmbed.setDescription("Process aborted by user request.");
+
+                  await interaction.editReply({
+                    embeds: [endEmbed],
+                    components: [],
+                  });
+
+                  return collector.stop("1407");
+                } else if (i.customId === "endSemester") {
+                  const semesterName =
+                    timers.timerData.currentSemester.semesterName;
+                  const endHelper = await timers.endSemester();
+
+                  endEmbed
+                    .setTitle(`${semesterName} Recap`)
+                    .setColor(ColorCodes.Default)
+                    .setDescription(endHelper)
+                    .setFooter({
+                      text: "Good luck on your next journey, we wish you the best!",
+                    })
+                    .setTimestamp();
+
+                  await interaction.editReply({
+                    embeds: [endEmbed],
+                    components: [],
+                  });
+
+                  return collector.stop("1407");
+                }
+              });
+
+              collector.on("end", (collected, reason) => {
+                if (reason === "1407") return;
+
+                endEmbed
+                  .setTitle(`Process Aborted`)
+                  .setDescription("Session Timed Out")
+                  .setColor(ColorCodes.Default)
+                  .setFooter({
+                    text: "Re-run the command to use the buttons",
+                  })
+                  .setTimestamp();
+
+                return interaction.editReply({
+                  embeds: [endEmbed],
+                  components: [],
+                });
+              });
+            } catch (error) {
+              return interaction.editReply({
+                content: error,
               });
             }
           },

@@ -8,14 +8,20 @@ interface ITimerData extends Document {
   sessionData: Session;
 }
 
+const roundToThree = (num: number) => parseFloat(num.toFixed(3));
+
 const SubjectSchema = new Schema<Subject>(
   {
     subjectName: { type: String, default: null },
-    subjectCode: { type: String, default: null },
-    timesStudied: { type: Number, default: 0 },
-    creditHours: { type: Number, default: null },
-    grade: { type: String, default: null },
-    marksLost: { type: Number, default: 0 },
+    subjectCode: { type: String, default: null, unique: true, trim: true },
+    timesStudied: { type: Number, default: 0, min: 0 },
+    creditHours: { type: Number, default: null, min: 1 },
+    grade: {
+      type: String,
+      default: null,
+      enum: ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"],
+    },
+    marksLost: { type: Number, default: 0, min: 0 },
   },
   {
     _id: false,
@@ -25,16 +31,17 @@ const SubjectSchema = new Schema<Subject>(
 const SemesterSchema = new Schema<Semester>(
   {
     semesterName: { type: String, default: null },
-    semesterLevel: { type: Number, default: 1 },
-    semesterXP: { type: Number, default: 0 },
-    semesterTime: { type: Number, default: 0 },
+    semesterLevel: { type: Number, default: 1, min: 1, max: 5000 },
+    semesterXP: { type: Number, default: 0, min: 0 },
+    semesterTime: { type: Number, default: 0, min: 0, set: roundToThree },
     semesterSubjects: { type: [SubjectSchema], default: [] },
     sessionStartTimes: { type: [Number], default: [] },
-    totalBreakTime: { type: Number, default: 0 },
-    breakCount: { type: Number, default: 0 },
-    longestSession: { type: Number, default: 0 },
+    totalBreakTime: { type: Number, default: 0, min: 0, set: roundToThree },
+    breakCount: { type: Number, default: 0, min: 0 },
+    longestSession: { type: Number, default: 0, set: roundToThree },
     longestStreak: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
+    lastStreakUpdate: { type: Date, default: null },
   },
   {
     _id: false,
@@ -43,7 +50,7 @@ const SemesterSchema = new Schema<Semester>(
 
 const SessionBreakSchema = new Schema<SessionBreak>(
   {
-    sessionBreakTime: { type: Number, default: 0 },
+    sessionBreakTime: { type: Number, default: 0, set: roundToThree },
     sessionBreakStart: { type: Date, default: null },
   },
   {
@@ -58,7 +65,7 @@ const SessionSchema = new Schema<Session>(
     messageID: { type: String },
     sessionStartTime: { type: Date, default: null },
     sessionTopic: { type: String },
-    sessionTime: { type: Number, default: 0 },
+    sessionTime: { type: Number, default: 0, set: roundToThree },
     numberOfBreaks: { type: Number, default: 0 },
     sessionBreaks: { type: SessionBreakSchema, default: () => ({}) },
     lastSessionTopic: { type: String, default: null },
@@ -72,8 +79,7 @@ const SessionSchema = new Schema<Session>(
 const AccountSchema = new Schema<Account>(
   {
     userID: { type: String, required: true },
-    lifetimeTime: { type: Number, default: 0 },
-    longestSessionTime: { type: Number, default: 0 },
+    lifetimeTime: { type: Number, default: 0, set: roundToThree },
     longestSemester: { type: SemesterSchema, default: null },
   },
   {

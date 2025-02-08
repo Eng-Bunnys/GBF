@@ -15,7 +15,7 @@ export enum Grade {
   P = "Pass",
 }
 
-const gradeToGPA: { [key in Grade]: number } = {
+export const gradeToGPA: { [key in Grade]: number } = {
   [Grade.A_PLUS]: 4.0,
   [Grade.A]: 4.0,
   [Grade.A_MINUS]: 3.7,

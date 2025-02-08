@@ -2,7 +2,7 @@ import { Emojis } from "../../Handler";
 import { ITimerData, Semester } from "../../Models/Timer/TimerTypes";
 import { GBFUser } from "../../Models/User/UserTypes";
 import { calculateGPA } from "./GradeEngine";
-import { rpRequired, xpRequired } from "./LevelEngine";
+import { hoursRequired, rpRequired, xpRequired } from "./LevelEngine";
 
 export class TimerStats {
   public timerData: ITimerData;
@@ -16,6 +16,8 @@ export class TimerStats {
   /// Account Details
 
   public getTotalStudyTime(): number {
+    // Assuming timerData.account.lifetimeTime is stored in seconds,
+    // we multiply by 1000 to convert to milliseconds.
     return this.timerData.account.lifetimeTime > 0
       ? this.timerData.account.lifetimeTime * 1000
       : 0;
@@ -40,8 +42,8 @@ export class TimerStats {
   /// Record Details
 
   public getLongestSessionTime(): number {
-    return this.timerData.account.longestSessionTime !== null
-      ? this.timerData.account.longestSessionTime * 1000
+    return this.timerData.currentSemester.longestSession !== null
+      ? this.timerData.currentSemester.longestSession * 1000
       : 0;
   }
 
@@ -71,7 +73,7 @@ export class TimerStats {
       : 0;
   }
 
-  public getAverageTimeBetweenBreaks() {
+  public getAverageTimeBetweenBreaks(): number {
     return this.timerData.currentSemester.semesterTime > 0 &&
       this.getBreakCount() > 0
       ? (this.timerData.currentSemester.semesterTime /
@@ -86,7 +88,7 @@ export class TimerStats {
     return this.timerData.currentSemester.semesterSubjects.length || 0;
   }
 
-  public getMostStudiedSubject() {
+  public getMostStudiedSubject(): string {
     return this.timerData.currentSemester.semesterSubjects.length > 0
       ? this.timerData.currentSemester.semesterSubjects.reduce(
           (prev, current) =>
@@ -95,7 +97,7 @@ export class TimerStats {
       : "No Data";
   }
 
-  public getLeastStudiedSubject() {
+  public getLeastStudiedSubject(): string {
     return this.timerData.currentSemester.semesterSubjects.length > 0
       ? this.timerData.currentSemester.semesterSubjects.reduce(
           (prev, current) =>
@@ -174,57 +176,60 @@ export class TimerStats {
   }
 
   public percentageToNextLevel(): number {
-    return this.timerData.currentSemester.semesterLevel
-      ? Math.round(
-          (this.timerData.currentSemester.semesterXP /
-            xpRequired(this.timerData.currentSemester.semesterLevel)) *
-            100
-        )
-      : 0;
+    const currentXP = this.timerData.currentSemester.semesterXP;
+    const requiredXP = xpRequired(
+      this.timerData.currentSemester.semesterLevel + 1
+    );
+    return Math.round((currentXP / requiredXP) * 100);
+  }
+
+  public getMsToNextLevel(): number {
+    const xpLeft =
+      xpRequired(this.timerData.currentSemester.semesterLevel + 1) -
+      this.timerData.currentSemester.semesterXP;
+    return hoursRequired(xpLeft) * 60 * 60 * 1000; // Convert hours to milliseconds
+  }
+
+  public getMsToNextRank(): number {
+    const rpLeft = rpRequired(this.userData.Rank + 1) - this.userData.RP;
+    return hoursRequired(rpLeft) * 60 * 60 * 1000; // Convert hours to milliseconds
   }
 
   public generateProgressBar(
     percentageComplete: number,
-    totalSegments: number = 4
-  ) {
+    totalSegments: number = 3
+  ): string {
     const clampedPercentage = Math.min(Math.max(percentageComplete, 0), 100);
-    const filledSegments = Math.floor(
+    const filledSegments = Math.round(
       (clampedPercentage / 100) * totalSegments
     );
 
-    const progressSegments = Array(totalSegments).fill(
-      Emojis.progressBarMiddleEmpty
-    );
-
-    if (filledSegments > 0) {
-      progressSegments[0] = Emojis.progressBarLeftFull;
-
-      for (let i = 1; i < filledSegments - 1; i++) {
-        progressSegments[i] = Emojis.progressBarMiddleFull;
-      }
-
-      if (filledSegments > 1) {
-        progressSegments[filledSegments - 1] = Emojis.progressBarRightFull;
-      }
-    } else {
-      progressSegments[0] = Emojis.progressBarLeftEmpty;
-      progressSegments[totalSegments - 1] = Emojis.progressBarRightEmpty;
-    }
+    let progressSegments = [
+      filledSegments >= 1
+        ? Emojis.progressBarLeftFull
+        : Emojis.progressBarLeftEmpty,
+      filledSegments >= 2
+        ? Emojis.progressBarMiddleFull
+        : Emojis.progressBarMiddleEmpty,
+      filledSegments >= 3
+        ? Emojis.progressBarRightFull
+        : Emojis.progressBarRightEmpty,
+    ];
 
     return progressSegments.join("");
   }
 
-  public GPA() {
+  public GPA(): number {
     return calculateGPA(this.userData.Subjects);
   }
 
   /// Streak details
 
-  public getCurrentStreak() {
+  public getCurrentStreak(): number {
     return this.timerData.currentSemester.streak;
   }
 
-  public getLongestStreak() {
+  public getLongestStreak(): number {
     return this.timerData.currentSemester.longestStreak;
   }
 }

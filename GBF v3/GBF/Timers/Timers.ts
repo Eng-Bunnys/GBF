@@ -18,7 +18,7 @@ import {
   rpRequired,
   xpRequired,
 } from "./LevelEngine";
-import { Subject } from "./GradeEngine";
+import { gradeToGPA, Subject } from "./GradeEngine";
 import { Document } from "mongoose";
 import { CustomEvents } from "../Data/ClientEvents";
 import { TimerEvents } from "./TimerEvents";
@@ -309,6 +309,7 @@ export class Timers {
           totalBreakTime: 0,
           longestStreak: 0,
           streak: 0,
+          lastStreakUpdate: null,
         };
 
         this.timerData.currentSemester = resetSemester;
@@ -341,7 +342,9 @@ export class Timers {
     accountDetails += `• Lifetime Study Time: ${
       timerStats.getTotalStudyTime() !== 0
         ? msToTime(timerStats.getTotalStudyTime()) +
-          `[${secondsToHours(timerStats.getTotalStudyTime())}]`
+          ` [${Number(
+            secondsToHours(timerStats.getTotalStudyTime() / 1000).split(" ")[0]
+          ).toLocaleString("en-US")} hours]`
         : "0s"
     }\n`;
 
@@ -349,7 +352,7 @@ export class Timers {
       accountDetails += `• Semester Study Time: ${
         timerStats.getSemesterTime() !== 0
           ? msToTime(timerStats.getSemesterTime()) +
-            `[${secondsToHours(timerStats.getSemesterTime())}]`
+            ` [${secondsToHours(timerStats.getSemesterTime() / 1000)}]`
           : "0s"
       }\n`;
 
@@ -425,10 +428,7 @@ export class Timers {
 
       averageDetails += `• Average Session Time / Week: ${
         timerStats.getAverageTimePerWeek() !== 0
-          ? msToTime(timerStats.getAverageTimePerWeek()) +
-            "[" +
-            timerStats.getAverageTimePerWeek() / 3600 +
-            "]"
+          ? msToTime(timerStats.getAverageTimePerWeek())
           : "0s"
       }\n`;
 
@@ -473,58 +473,97 @@ export class Timers {
 
       levelDetails += `• XP to reach level ${
         timerStats.getSemesterLevel() + 1
-      }: ${timerStats.getSemesterXP() + "/" + xpToNextLevel}\n`;
+      }: ${
+        timerStats.getSemesterXP().toLocaleString("en-US") +
+        "/" +
+        xpToNextLevel.toLocaleString("en-US")
+      }\n`;
 
       const percentageCompleteSemester = timerStats.percentageToNextLevel();
       levelDetails += `${timerStats.generateProgressBar(
         percentageCompleteSemester
       )} [${percentageCompleteSemester}%]\n`;
 
-      levelDetails += `• Hours to reach level ${
+      levelDetails += `• Time until level ${
         timerStats.getSemesterLevel() + 1
-      }: ${formatHours(
-        hoursRequired(rpToNextLevel - timerStats.getSemesterTime())
-      )}\n`;
+      }: ${msToTime(timerStats.getMsToNextLevel())}\n`;
+
+      levelDetails += `• Account Level: ${timerStats.getAccountLevel()}\n`;
+
+      levelDetails += `• RP to reach level ${
+        timerStats.getAccountLevel() + 1
+      }: ${timerStats
+        .getAccountRP()
+        .toLocaleString("en-US")}/${rpToNextLevel}\n`;
+
+      const percentageCompleteAccount = timerStats.percentageToNextRank();
+
+      levelDetails += `${timerStats.generateProgressBar(
+        percentageCompleteAccount
+      )} [${percentageCompleteAccount}%]\n`;
+
+      levelDetails += `• Time until level ${
+        timerStats.getAccountLevel() + 1
+      }: ${msToTime(timerStats.getMsToNextRank())}\n`;
+
+      stats += levelDetails + gap;
+
+      levelDetails += `• GPA: ${timerStats.GPA()}`;
+
+      return stats;
     }
-    levelDetails += `• Account Level: ${timerStats.getAccountLevel()}\n`;
-
-    levelDetails += `• RP to reach level ${
-      timerStats.getAccountLevel() + 1
-    }: ${timerStats.getAccountRP()}/${rpToNextLevel}\n`;
-
-    const percentageCompleteAccount = timerStats.percentageToNextRank();
-
-    levelDetails += `${timerStats.generateProgressBar(
-      percentageCompleteAccount
-    )} [${percentageCompleteAccount}%]\n`;
-
-    levelDetails += `• Hours to reach level ${
-      timerStats.getAccountLevel() + 1
-    }: ${formatHours(
-      hoursRequired(rpToNextLevel - timerStats.getAccountRP())
-    )}\n`;
-
-    stats += levelDetails + gap;
-
-    levelDetails += `• GPA: ${timerStats.GPA()}`;
-
-    return stats;
   }
 
   public GPAMenu() {
     this.checkUser();
-
     const timerStats = new TimerStats(this.timerData, this.userData);
 
-    let subjectsList = "";
+    const gradeOrder: Record<string, number> = {
+      "A+": 10,
+      A: 9,
+      "A-": 8,
+      "B+": 7,
+      B: 6,
+      "B-": 5,
+      "C+": 4,
+      C: 3,
+      "C-": 2,
+      "D+": 1,
+      D: 0,
+      F: -1,
+    };
 
-    this.userData.Subjects.forEach((subject) => {
-      subjectsList += `• ${subject.subjectName} - ${subject.grade}\n`;
+    let subjectsList = "";
+    const gradeCounts: Record<string, number> = {};
+
+    // Sort subjects by grade descending (higher first)
+    const sortedSubjects = this.userData.Subjects.sort(
+      (a, b) => (gradeOrder[b.grade] || -1) - (gradeOrder[a.grade] || -1)
+    );
+
+    sortedSubjects.forEach((subject) => {
+      subjectsList += `• ${subject.subjectName} - ${subject.grade ?? "N/A"}\n`;
+      if (subject.grade) {
+        const normalizedGrade = subject.grade.trim();
+        gradeCounts[normalizedGrade] = (gradeCounts[normalizedGrade] || 0) + 1;
+      }
     });
 
     const formattedGPA = parseFloat(timerStats.GPA().toPrecision(3));
+    subjectsList += `• GPA: ${formattedGPA}\n`;
 
-    subjectsList += `• GPA: ${formattedGPA}`;
+    // Sort grade counts in descending order
+    const sortedGradeSummary = Object.entries(gradeCounts)
+      .sort(
+        ([gradeA], [gradeB]) =>
+          (gradeOrder[gradeB] || -1) - (gradeOrder[gradeA] || -1)
+      )
+      .map(([grade, count]) => `${count} ${grade}${count > 1 ? "s" : ""}`)
+      .join(", ");
+
+    if (sortedGradeSummary) {
+      subjectsList += `• ${sortedGradeSummary}`;
+    }
 
     return subjectsList;
   }
@@ -532,36 +571,45 @@ export class Timers {
   public async endSemester() {
     this.checkSemester();
 
+    // These are needed incase the user resets the semester before ever starting a session
+
+    const semester = this.timerData.currentSemester;
+
+    const longestSession = semester.longestSession
+      ? msToTime(semester.longestSession * 1000)
+      : "0s";
+
+    const totalTime = semester.semesterTime
+      ? msToTime(semester.semesterTime * 1000)
+      : "0s";
+
+    const totalBreakTime = semester.totalBreakTime
+      ? msToTime(semester.totalBreakTime * 1000)
+      : "0s";
+
+    const sessionCount = Array.isArray(semester.sessionStartTimes)
+      ? semester.sessionStartTimes.length
+      : 0;
+
     const convertedXP =
-      convertSeasonLevel(this.timerData.currentSemester.semesterLevel) +
-      this.timerData.currentSemester.semesterXP;
+      convertSeasonLevel(semester.semesterLevel) + (semester.semesterXP ?? 0);
 
-    let semesterRecap = `• Semester: ${
-      this.timerData.currentSemester.semesterName
-    }\n
-    • Total Time: ${msToTime(
-      this.timerData.currentSemester.semesterTime * 1000
-    )}\n
-    • Number of Sessions: ${
-      this.timerData.currentSemester.sessionStartTimes.length
-    }\n
-    • Total Break Time: ${msToTime(
-      this.timerData.currentSemester.totalBreakTime * 1000
-    )}\n
-    • Longest Session: ${msToTime(
-      this.timerData.currentSemester.longestSession * 1000
-    )}\n
-    • Semester Level: ${this.timerData.currentSemester.semesterLevel}\n
-    • Semester XP: ${(
-      this.timerData.currentSemester.semesterXP +
-      calculateTotalSeasonXP(this.timerData.currentSemester.semesterXP)
-    ).toLocaleString("en-US")}\n
-    • Account XP Converted: ${convertedXP.toLocaleString("en-US")}`;
+    const semesterXP = semester.semesterXP ?? 0;
+    const totalSemesterXP = calculateTotalSeasonXP(semesterXP) + semesterXP;
 
-    // Checking if the current semester time is higher than the previous record
+    let semesterRecap = `
+      **• Total Time:** ${totalTime}\n
+      **• Number of Sessions:** ${sessionCount}\n
+      **• Total Break Time:** ${totalBreakTime}\n
+      **• Longest Session:** ${longestSession}\n
+      **• Semester Level:** ${semester.semesterLevel ?? 0}\n
+      **• Semester XP:** ${totalSemesterXP.toLocaleString("en-US")}\n
+      **• Account XP Converted:** ${convertedXP.toLocaleString("en-US")}`;
+
     if (
+      this.timerData.account.longestSemester &&
       this.timerData.account.longestSemester.semesterTime <
-      this.timerData.currentSemester.semesterTime
+        this.timerData.currentSemester.semesterTime
     ) {
       this.timerData.account.longestSemester = this.timerData.currentSemester;
 
@@ -574,8 +622,6 @@ export class Timers {
       this.gbfClient.emit(CustomEvents.RecordBroken, recordBroken);
     }
 
-    // Updating the account info before deleting the data
-
     this.timerData.account.lifetimeTime +=
       this.timerData.currentSemester.semesterTime;
 
@@ -585,18 +631,20 @@ export class Timers {
       convertedXP
     );
 
-    if (rankUpCheck.hasRankedUp)
+    if (rankUpCheck.hasRankedUp) {
       this.gbfClient.emit(
         CustomEvents.AccountLevelUp,
         this.timerData.account.userID,
         rankUpCheck.addedLevels,
         rankUpCheck.remainingRP
       );
-    else this.userData.RP += convertedXP;
+    } else {
+      this.userData.RP += convertedXP;
+    }
 
     const resetSemester: Semester = {
       breakCount: 0,
-      longestSession: null,
+      longestSession: 0,
       semesterLevel: 1,
       semesterName: null,
       semesterSubjects: [],
@@ -606,6 +654,7 @@ export class Timers {
       totalBreakTime: 0,
       longestStreak: 0,
       streak: 0,
+      lastStreakUpdate: null,
     };
 
     this.timerData.currentSemester = resetSemester;

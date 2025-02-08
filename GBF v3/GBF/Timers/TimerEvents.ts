@@ -314,179 +314,199 @@ export class TimerEvents {
     return timeElapsed;
   }
 
-  public async handleStop(): Promise<string | TimerEventsReturns> {
+  public async handleStop() {
     await this.checkMessageOwner();
 
-    // Guard: Timer not started
     if (!this.timerData.sessionData.sessionStartTime) {
-      this.fixTimerButtons([]);
+      const fixerButtons: ButtonFixerOptions = {
+        enabledButtons: [],
+      };
+      this.client.emit(
+        CustomEvents.FixTimerButtons,
+        this.client,
+        this.interaction,
+        fixerButtons
+      );
+
       return TimerEventsReturns.TimerNotStarted;
     }
 
-    // Guard: Session is paused
     if (this.timerData.sessionData.sessionBreaks.sessionBreakStart) {
-      this.fixTimerButtons([TimerButtonID.Unpause, TimerButtonID.Info], true);
+      const fixerOptions: ButtonFixerOptions = {
+        enabledButtons: [TimerButtonID.Unpause, TimerButtonID.Info],
+        isPaused: true,
+      };
+
+      this.client.emit(
+        CustomEvents.FixTimerButtons,
+        this.client,
+        this.interaction,
+        fixerOptions
+      );
+
       return TimerEventsReturns.CannotStopPaused;
     }
 
-    // Calculate session metrics
-    const { startTime, elapsedSeconds, totalSeconds, formattedMetrics } =
-      this.calculateSessionMetrics();
-
     let endMessage = `• Start Time: ${getTimestamp(
-      startTime,
+      this.timerData.sessionData.sessionStartTime,
       "F"
-    )}\n${formattedMetrics}`;
+    )}\n`;
 
-    // Update semester totals
-    this.updateSemesterTotals(elapsedSeconds);
+    const breakTimeRaw = this.timerData.sessionData.sessionBreaks
+      .sessionBreakTime
+      ? this.timerData.sessionData.sessionBreaks.sessionBreakTime * 1000
+      : 0;
 
-    // Check for new longest session record
-    this.checkAndEmitRecord(elapsedSeconds);
+    const breakTime =
+      breakTimeRaw > this.timerData.sessionData.sessionStartTime.getTime()
+        ? breakTimeRaw
+        : 0;
 
-    // Calculate XP and check for level/rank ups
-    const xpEarned = Math.round(calculateXP(elapsedSeconds / 60));
+    // Time Elapsed = Total Time - Break Time
+    let timeElapsed = Math.abs(
+      Number(
+        (
+          (Date.now() - this.timerData.sessionData.sessionStartTime.getTime()) /
+            1000 -
+          breakTime
+        ).toFixed(3)
+      )
+    );
 
-    const rankUpResult = checkRank(
+    // If Break Time is > Total Time Unpaused, we exclude Break Time to avoid -ive time
+    if (timeElapsed <= 0) timeElapsed = timeElapsed + breakTime;
+
+    const totalTime = timeElapsed + breakTimeRaw / 1000;
+
+    endMessage += `• Time Elapsed: ${msToTime(
+      totalTime * 1000
+    )}\n• Session Time: ${msToTime(timeElapsed * 1000)}`;
+
+    const averageBreakTime =
+      this.timerData.sessionData.numberOfBreaks > 0
+        ? this.timerData.sessionData.sessionBreaks.sessionBreakTime /
+          this.timerData.sessionData.numberOfBreaks
+        : 0;
+
+    endMessage += `\n\n• Average Break Time: ${
+      averageBreakTime !== 0 ? msToTime(averageBreakTime) : "No Breaks Taken"
+    }\n• Total Break Time: ${
+      breakTimeRaw > 0 ? msToTime(breakTimeRaw) : "No Breaks Taken"
+    }\n• Number of Breaks: ${this.timerData.sessionData.numberOfBreaks}`;
+
+    const disabledButtons: ButtonFixerOptions = {
+      enabledButtons: [],
+    };
+
+    this.client.emit(
+      CustomEvents.FixTimerButtons,
+      this.client,
+      this.interaction,
+      disabledButtons
+    );
+
+    // Updating the total break time
+    this.timerData.currentSemester.totalBreakTime += breakTimeRaw / 1000;
+    // Updating the total semester time
+    this.timerData.currentSemester.semesterTime += timeElapsed;
+
+    this.timerData.currentSemester.breakCount +=
+      this.timerData.sessionData.numberOfBreaks;
+
+    if (this.timerData.currentSemester.longestSession < timeElapsed) {
+      this.timerData.currentSemester.longestSession = timeElapsed;
+
+      const recordBroken: RecordBrokenOptions = {
+        interaction: this.interaction as unknown as CommandInteraction,
+        type: "Session",
+        sessionTime: timeElapsed,
+      };
+
+      this.client.emit(CustomEvents.RecordBroken, recordBroken);
+    }
+
+    const xpEarned = Math.round(calculateXP(timeElapsed / 60));
+
+    const hasRankedUp = checkRank(
       this.userData.Rank,
       this.userData.RP,
       xpEarned
     );
-    const levelUpResult = checkLevel(
+
+    const hasLeveledUp = checkLevel(
       this.timerData.currentSemester.semesterLevel,
       this.timerData.currentSemester.semesterXP,
       xpEarned
     );
 
-    if (rankUpResult.hasRankedUp) {
+    if (hasRankedUp.hasRankedUp) {
       const rankUpOptions: LevelUpOptions = {
-        interaction: this.interaction as CommandInteraction,
-        levelUps: rankUpResult.addedLevels,
-        carryOverXP: rankUpResult.remainingRP,
+        interaction: this.interaction as unknown as CommandInteraction,
+        levelUps: hasRankedUp.addedLevels,
+        carryOverXP: hasRankedUp.remainingRP,
         userData: this.userData,
       };
+
+      this.userData.Rank +=
+        hasRankedUp.addedLevels > 0 ? hasRankedUp.addedLevels : 1;
+      this.userData.RP = hasRankedUp.remainingRP;
+
       this.client.emit(CustomEvents.AccountLevelUp, rankUpOptions);
     }
 
-    if (levelUpResult.hasLeveledUp) {
+    if (hasLeveledUp.hasLeveledUp) {
       const levelUpOptions: LevelUpOptions = {
-        interaction: this.interaction as CommandInteraction,
-        levelUps: levelUpResult.addedLevels,
-        carryOverXP: levelUpResult.remainingXP,
+        interaction: this.interaction as unknown as CommandInteraction,
+        levelUps: hasLeveledUp.addedLevels,
+        carryOverXP: hasLeveledUp.remainingXP,
         timerData: this.timerData,
       };
+
+      this.timerData.currentSemester.semesterLevel +=
+        hasLeveledUp.addedLevels > 0 ? hasLeveledUp.addedLevels : 1;
+      this.timerData.currentSemester.semesterXP = hasLeveledUp.remainingXP;
+
       this.client.emit(CustomEvents.SemesterLevelUp, levelUpOptions);
     }
 
-    // Disable buttons and reset session data
-    this.fixTimerButtons([]);
-    this.resetSessionData();
-
-    await this.timerData.save();
-    return endMessage;
-  }
-
-  /**
-   * Emits FixTimerButtons event
-   */
-  private fixTimerButtons(
-    enabledButtons: TimerButtonID[],
-    isPaused: boolean = false
-  ): void {
-    const options: ButtonFixerOptions = { enabledButtons, isPaused };
-    this.client.emit(
-      CustomEvents.FixTimerButtons,
-      this.client,
-      this.interaction,
-      options
-    );
-  }
-
-  /**
-   * Calculates time metrics for the session
-   */
-  private calculateSessionMetrics() {
-    const { sessionStartTime, sessionBreaks, numberOfBreaks } =
-      this.timerData.sessionData;
-    const startTime = sessionStartTime!;
-
-    // Convert break time to milliseconds if available
-    const totalBreakMs = sessionBreaks.sessionBreakTime
-      ? sessionBreaks.sessionBreakTime * 1000
-      : 0;
-
-    // Ensure break time is valid compared to session start timestamp
-    const validBreakMs = totalBreakMs > startTime.getTime() ? totalBreakMs : 0;
-
-    // Calculate elapsed time (subtract break time)
-    let elapsedSeconds = Number(
-      ((Date.now() - startTime.getTime()) / 1000 - validBreakMs).toFixed(3)
-    );
-    // Adjust if break time exceeds total unpaused time
-    if (elapsedSeconds <= 0) {
-      elapsedSeconds += validBreakMs;
-    }
-
-    const totalSeconds = elapsedSeconds + totalBreakMs / 1000;
-    const formattedMetrics =
-      `• Time Elapsed: ${msToTime(
-        totalSeconds * 1000
-      )}\n• Session Time: ${msToTime(elapsedSeconds * 1000)}\n` +
-      `\n• Average Break Time: ${
-        numberOfBreaks > 0
-          ? msToTime(totalBreakMs / numberOfBreaks)
-          : "No Breaks Taken"
-      }\n• Total Break Time: ${
-        totalBreakMs > 0 ? msToTime(totalBreakMs) : "No Breaks Taken"
-      }\n• Number of Breaks: ${numberOfBreaks}`;
-
-    return { startTime, elapsedSeconds, totalSeconds, formattedMetrics };
-  }
-
-  /**
-   * Update semester totals with the current session's metrics
-   */
-  private updateSemesterTotals(elapsedSeconds: number): void {
-    const totalBreakSec = this.timerData.sessionData.sessionBreaks
-      .sessionBreakTime
-      ? this.timerData.sessionData.sessionBreaks.sessionBreakTime
-      : 0;
-    this.timerData.currentSemester.totalBreakTime += totalBreakSec;
-    this.timerData.currentSemester.semesterTime += elapsedSeconds;
-    this.timerData.currentSemester.breakCount +=
-      this.timerData.sessionData.numberOfBreaks;
-    this.timerData.account.lifetimeTime += elapsedSeconds;
-  }
-
-  /**
-   * Check if the current session is the longest and emit event if so
-   */
-  private checkAndEmitRecord(sessionTime: number): void {
-    if (this.timerData.currentSemester.longestSession < sessionTime) {
-      this.timerData.currentSemester.longestSession = sessionTime;
-      const recordBroken: RecordBrokenOptions = {
-        interaction: this.interaction as CommandInteraction,
-        type: "Session",
-        sessionTime,
-      };
-      this.client.emit(CustomEvents.RecordBroken, recordBroken);
-    }
-  }
-
-  /**
-   * Resets session data after stopping
-   */
-  private resetSessionData(): void {
+    // Resetting the session
     this.timerData.sessionData.sessionStartTime = null;
     this.timerData.sessionData.channelID = null;
     this.timerData.sessionData.messageID = null;
     this.timerData.sessionData.guildID = null;
-
     this.timerData.sessionData.numberOfBreaks = 0;
     this.timerData.sessionData.sessionTime = 0;
     this.timerData.sessionData.sessionBreaks.sessionBreakTime = 0;
     this.timerData.sessionData.sessionBreaks.sessionBreakStart = null;
     this.timerData.sessionData.lastSessionTopic =
       this.timerData.sessionData.sessionTopic;
+
+    // Updating account details
+    this.timerData.account.lifetimeTime += timeElapsed;
+
+    const oneDayMS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    if (
+      this.timerData.currentSemester.lastStreakUpdate === null ||
+      now - this.timerData.currentSemester.lastStreakUpdate.getTime() >=
+        oneDayMS
+    ) {
+      this.timerData.currentSemester.streak++;
+
+      this.timerData.currentSemester.lastStreakUpdate = new Date();
+
+      if (
+        this.timerData.currentSemester.streak >
+        this.timerData.currentSemester.longestStreak
+      )
+        this.timerData.currentSemester.longestStreak =
+          this.timerData.currentSemester.longestStreak;
+    }
+
+    await this.timerData!.save();
+    await this.userData!.save();
+
+    return endMessage;
   }
 }

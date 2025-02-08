@@ -37,10 +37,8 @@ const userSchema = z.object({
 const UserSchema = new Schema<GBFUser>(
   {
     userID: { type: String, required: true },
-    friends: { type: [String], default: [] },
-    privateProfile: { type: Boolean, default: false },
-    Rank: { type: Number, default: 0 },
-    RP: { type: Number, default: 0 },
+    Rank: { type: Number, default: 0, min: 0, max: 5000 },
+    RP: { type: Number, default: 0, min: 0 },
     Subjects: { type: [mongooseSubjectSchema], default: [] },
   },
   {

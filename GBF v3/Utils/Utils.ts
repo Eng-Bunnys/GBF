@@ -202,7 +202,7 @@ export function secondsToHours(seconds: number): string {
   if (seconds < 0) throw new Error("Seconds cannot be negative");
 
   const hours = seconds / 3600;
-  return `${hours.toFixed(2)} Hours`;
+  return `${hours.toFixed(2)} hours`;
 }
 
 export type UNIXFormat = "d" | "D" | "t" | "T" | "f" | "F" | "R";
