@@ -107,7 +107,7 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 embeds: [statsEmbed],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             }
           },
@@ -202,7 +202,7 @@ export class GBFTimers extends SlashCommand {
               return interaction.reply({
                 content:
                   "If you want to add a subject to your account, you must specify the grade achieved.",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
 
             try {
@@ -233,12 +233,12 @@ export class GBFTimers extends SlashCommand {
                 content: `Subject '${subjectName}' has been added to ${
                   accountType === "S" ? "the current Semester" : "your account"
                 }, with ${credits} credits.\nBest of luck.`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             } catch (error) {
               return interaction.reply({
                 content: error.message,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             }
           },
@@ -316,7 +316,7 @@ export class GBFTimers extends SlashCommand {
             if (chosenSubject === "NA")
               return interaction.reply({
                 content: "You don't have any subjects added to your account.",
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
 
             try {
@@ -336,12 +336,12 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 content: `Removed ${chosenSubject}`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             } catch (error) {
               return interaction.reply({
                 content: error.message,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             }
           },
@@ -401,7 +401,7 @@ export class GBFTimers extends SlashCommand {
 
               return interaction.reply({
                 embeds: [registerEmbed],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
               });
             }
           },
@@ -655,6 +655,22 @@ export class GBFTimers extends SlashCommand {
                   `Set '${chosenSubject}' as the new session topic`
                 )
                 .setTimestamp();
+
+              timers.timerData.sessionData.sessionTopic = chosenSubject;
+
+              let sessionTopic =
+                timers.timerData.currentSemester.semesterSubjects.find(
+                  (subject) =>
+                    subject.subjectCode.trim().toLowerCase() ===
+                    timers.timerData.sessionData.sessionTopic
+                      ?.split(" - ")[0]
+                      .trim()
+                      .toLowerCase()
+                );
+
+              if (sessionTopic) sessionTopic.timesStudied++;
+
+              await timers!.timerData.save();
 
               return interaction.reply({
                 embeds: [newTopicEmbed],
