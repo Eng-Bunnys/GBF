@@ -188,6 +188,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Utils\UI Resources\ColorCodes.h" />
     <ClInclude Include="Commands\Ping.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\appcommand.h" />
     <ClInclude Include="dependencies\include\dpp-10.1\dpp\application.h" />
@@ -289,6 +290,7 @@
     <ClInclude Include="Handler\Handler Events\MessageOnCreate.h" />
     <ClInclude Include="Handler\Command Handler\Message Handler\MessageHandler.h" />
     <ClInclude Include="Utils\EnvReader\EnvReader.h" />
+    <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.cpp" />
@@ -297,6 +299,7 @@
     <ClCompile Include="Handler\index.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utils\EnvReader\EnvReader.cpp" />
+    <ClCompile Include="Utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".env" />

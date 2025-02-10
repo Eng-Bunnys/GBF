@@ -4,15 +4,22 @@
 #include <dpp/dpp.h>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 class MessageCommandRegistry;
+struct CommandOptions
+{
+    std::string name;
+    std::string description;
+    std::vector<std::string> aliases;
+};
 
 class MessageCommand
 {
 public:
-    std::string name;
+    CommandOptions options;
 
-    explicit MessageCommand(const std::string &name) : name(name) {}
+    explicit MessageCommand(const CommandOptions &opts) : options(opts) {}
 
     virtual void execute(dpp::cluster &client,
                          const dpp::message_create_t &event,

@@ -20,6 +20,7 @@ public:
     void setGBF(GBF *instance);
     void registerCommand(std::unique_ptr<MessageCommand> command);
     MessageCommand *getCommand(const std::string &commandName);
+    const std::unordered_map<std::string, std::unique_ptr<MessageCommand>> &getCommands() const;
 };
 
 class CommandFactory

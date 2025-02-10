@@ -9,9 +9,14 @@ int main()
 		EnvReader env(".env");
 		std::string botToken = env.get("TOKEN");
 
-		uint32_t intents = dpp::i_all_intents;
+		uint32_t intents = dpp::i_guilds | dpp::i_guild_members | dpp::i_guild_messages | dpp::i_message_content;
 
-		GBFOptions options(botToken, true, true, intents);
+		GBFOptions options;
+		options.setToken(botToken)
+			.setPrefix("!!")
+			.setDebugger(true)
+			.setRegisterCommands(true)
+			.setIntents(intents);
 
 		GBF client(options);
 

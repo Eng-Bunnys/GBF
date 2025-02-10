@@ -1,5 +1,5 @@
 #ifndef GBF_H
-#define GBF_h
+#define GBF_H
 
 #include <string>
 #include <vector>

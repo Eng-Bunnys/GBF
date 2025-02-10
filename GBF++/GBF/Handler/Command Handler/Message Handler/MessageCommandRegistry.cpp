@@ -18,10 +18,15 @@ void MessageCommandRegistry::registerCommand(std::unique_ptr<MessageCommand> com
     if (!command)
         return;
 
-    std::string commandName = command->name;
+    std::string commandName = command->options.name;
+    if (this->commands.find(commandName) != this->commands.end())
+    {
+        throw std::runtime_error("Command already registered: " + commandName);
+    }
     this->commands[commandName] = std::move(command);
 
-    if (this->gbf && this->gbf->debugger) {
+    if (this->gbf && this->gbf->debugger)
+    {
         std::cout << "Command registered: " << commandName << std::endl;
         std::cout << "Total Commands Loaded: " << this->commands.size() << std::endl;
     }
@@ -31,6 +36,11 @@ MessageCommand *MessageCommandRegistry::getCommand(const std::string &commandNam
 {
     auto it = this->commands.find(commandName);
     return (it != this->commands.end()) ? it->second.get() : nullptr;
+}
+
+const std::unordered_map<std::string, std::unique_ptr<MessageCommand>> &MessageCommandRegistry::getCommands() const
+{
+    return commands;
 }
 
 // CommandFactory implementation
