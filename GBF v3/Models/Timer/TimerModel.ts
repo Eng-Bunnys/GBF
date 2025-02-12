@@ -70,6 +70,7 @@ const SessionSchema = new Schema<Session>(
     sessionBreaks: { type: SessionBreakSchema, default: () => ({}) },
     lastSessionTopic: { type: String, default: null },
     lastSessionDate: { type: Date, default: null },
+    subjectsStudied: { type: [String], default: [] },
   },
   {
     _id: false,

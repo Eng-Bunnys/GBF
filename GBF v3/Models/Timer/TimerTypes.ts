@@ -177,6 +177,12 @@ interface Session {
    * @type {Date}
    */
   lastSessionDate: Date;
+
+  /**
+   * An array that contains the subjects studied in the session, this is added to avoid increasing the times studied for a subject more than once in a single session, stores using subject code.
+   * @type {string[]}
+   */
+  subjectsStudied: string[];
 }
 
 /**

@@ -662,15 +662,22 @@ export class GBFTimers extends SlashCommand {
                 timers.timerData.currentSemester.semesterSubjects.find(
                   (subject) =>
                     subject.subjectCode.trim().toLowerCase() ===
-                    timers.timerData.sessionData.sessionTopic
-                      ?.split(" - ")[0]
-                      .trim()
-                      .toLowerCase()
+                    chosenSubject.split(" - ")[0].trim().toLowerCase()
                 );
 
-              if (sessionTopic) sessionTopic.timesStudied++;
+              if (
+                sessionTopic &&
+                !timers.timerData.sessionData.subjectsStudied.includes(
+                  sessionTopic.subjectCode
+                )
+              ) {
+                sessionTopic.timesStudied++;
+                timers.timerData.sessionData.subjectsStudied.push(
+                  sessionTopic.subjectCode
+                );
+              }
 
-              await timers!.timerData.save();
+              await timers.timerData.save();
 
               return interaction.reply({
                 embeds: [newTopicEmbed],
