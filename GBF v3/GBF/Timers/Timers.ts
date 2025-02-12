@@ -299,7 +299,7 @@ export class Timers {
         // Resetting the data just in-case
         const resetSemester: Semester = {
           breakCount: 0,
-          longestSession: null,
+          longestSession: 0,
           semesterLevel: 1,
           semesterName: semesterName,
           semesterSubjects: [],
@@ -363,6 +363,7 @@ export class Timers {
       }\n`;
 
       accountDetails += `• Total Sessions: ${timerStats.getSessionCount()}\n`;
+
       stats += accountDetails + gap;
     }
 
@@ -422,42 +423,47 @@ export class Timers {
 
       averageDetails += `• Average Start Time: ${
         timerStats.getAverageStartTimeUNIX() !== null
-          ? `<t:${timerStats.getAverageStartTimeUNIX()}:T>`
+          ? `<t:${timerStats.getAverageStartTimeUNIX()}:t>`
           : "N/A"
       }\n`;
 
-      averageDetails += `• Average Session Time / Week: ${
-        timerStats.getAverageTimePerWeek() !== 0
-          ? msToTime(timerStats.getAverageTimePerWeek())
-          : "0s"
-      }\n`;
+      // Will re-add later when I add a semester start time
+
+      // averageDetails += `• Average Session Time / Week: ${
+      //   timerStats.getAverageTimePerWeek() !== 0
+      //     ? msToTime(timerStats.getAverageTimePerWeek())
+      //     : "0s"
+      // }\n`;
 
       stats += averageDetails + gap;
     }
     let subjectDetails = "";
 
-    subjectDetails += `• Total Subjects: ${timerStats.getSubjectCount()}\n`;
-
     if (this.timerData.currentSemester.semesterName) {
+      subjectDetails += `• Total Subjects: ${timerStats.getSubjectCount()}\n`;
+
+      subjectDetails += `• Total study instances across all subjects: ${timerStats.getTotalTimesStudied()}\n`;
+
       subjectDetails += `• Most Studied Subject: ${
         timerStats.getMostStudiedSubject() !== "No Data"
           ? timerStats.getMostStudiedSubject()
           : "N/A"
-      }\n`;
+      } [${timerStats.getMostStudiedCount()}]\n`;
 
       subjectDetails += `• Least Studied Subject: ${
         timerStats.getLeastStudiedSubject() !== "No Data"
           ? timerStats.getLeastStudiedSubject()
           : "N/A"
-      }\n`;
+      } [${timerStats.getLeastStudiedCount()}]\n`;
 
       subjectDetails += `• Average Study Time Per Subject: ${
         timerStats.getAverageStudyTimePerSubject() !== 0
           ? msToTime(timerStats.getAverageStudyTimePerSubject())
           : "N/A"
       }\n`;
+
+      stats += subjectDetails + gap;
     }
-    stats += subjectDetails + gap;
 
     let levelDetails = "";
 
@@ -494,7 +500,7 @@ export class Timers {
         timerStats.getAccountLevel() + 1
       }: ${timerStats
         .getAccountRP()
-        .toLocaleString("en-US")}/${rpToNextLevel}\n`;
+        .toLocaleString("en-US")}/${rpToNextLevel.toLocaleString("en-US")}\n`;
 
       const percentageCompleteAccount = timerStats.percentageToNextRank();
 
@@ -558,7 +564,7 @@ export class Timers {
         ([gradeA], [gradeB]) =>
           (gradeOrder[gradeB] || -1) - (gradeOrder[gradeA] || -1)
       )
-      .map(([grade, count]) => `${count} ${grade}${count > 1 ? "s" : ""}`)
+      .map(([grade, count]) => `${count} ${grade}`)
       .join(", ");
 
     if (sortedGradeSummary) {

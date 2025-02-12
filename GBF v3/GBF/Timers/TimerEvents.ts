@@ -362,7 +362,6 @@ export class TimerEvents {
         ? breakTimeRaw
         : 0;
 
-    // Time Elapsed = Total Time - Break Time
     let timeElapsed = Math.abs(
       Number(
         (
@@ -373,7 +372,6 @@ export class TimerEvents {
       )
     );
 
-    // If Break Time is > Total Time Unpaused, we exclude Break Time to avoid -ive time
     if (timeElapsed <= 0) timeElapsed = timeElapsed + breakTime;
 
     const totalTime = timeElapsed + breakTimeRaw / 1000;
@@ -394,6 +392,16 @@ export class TimerEvents {
       breakTimeRaw > 0 ? msToTime(breakTimeRaw) : "No Breaks Taken"
     }\n• Number of Breaks: ${this.timerData.sessionData.numberOfBreaks}`;
 
+    // Add studied subjects summary
+    const studiedSubjects =
+      this.timerData.sessionData.subjectsStudied.length > 0
+        ? `\n• Studied Subjects: ${this.timerData.sessionData.subjectsStudied.join(
+            ", "
+          )}`
+        : "\n• No subjects studied this session.";
+
+    endMessage += studiedSubjects;
+
     const disabledButtons: ButtonFixerOptions = {
       enabledButtons: [],
     };
@@ -407,9 +415,7 @@ export class TimerEvents {
 
     // Updating the total break time
     this.timerData.currentSemester.totalBreakTime += breakTimeRaw / 1000;
-    // Updating the total semester time
     this.timerData.currentSemester.semesterTime += timeElapsed;
-
     this.timerData.currentSemester.breakCount +=
       this.timerData.sessionData.numberOfBreaks;
 
@@ -469,6 +475,9 @@ export class TimerEvents {
       this.client.emit(CustomEvents.SemesterLevelUp, levelUpOptions);
     }
 
+    // Reset subjects studied array
+    this.timerData.sessionData.subjectsStudied = [];
+
     // Resetting the session
     this.timerData.sessionData.sessionStartTime = null;
     this.timerData.sessionData.channelID = null;
@@ -481,7 +490,6 @@ export class TimerEvents {
     this.timerData.sessionData.lastSessionTopic =
       this.timerData.sessionData.sessionTopic;
 
-    // Updating account details
     this.timerData.account.lifetimeTime += timeElapsed;
 
     const oneDayMS = 24 * 60 * 60 * 1000;
@@ -493,7 +501,6 @@ export class TimerEvents {
         oneDayMS
     ) {
       this.timerData.currentSemester.streak++;
-
       this.timerData.currentSemester.lastStreakUpdate = new Date();
 
       if (
@@ -501,7 +508,7 @@ export class TimerEvents {
         this.timerData.currentSemester.longestStreak
       )
         this.timerData.currentSemester.longestStreak =
-          this.timerData.currentSemester.longestStreak;
+          this.timerData.currentSemester.streak;
     }
 
     await this.timerData!.save();

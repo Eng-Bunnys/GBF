@@ -34,8 +34,10 @@ export class TimerStats {
   }
 
   public getAverageSessionTime(): number {
-    return this.timerData.account.lifetimeTime > 0 && this.getSessionCount() > 0
-      ? (this.timerData.account.lifetimeTime / this.getSessionCount()) * 1000
+    return this.timerData.currentSemester.semesterTime > 0 &&
+      this.getSessionCount() > 0
+      ? (this.timerData.currentSemester.semesterTime / this.getSessionCount()) *
+          1000
       : 0;
   }
 
@@ -97,6 +99,15 @@ export class TimerStats {
       : "No Data";
   }
 
+  public getMostStudiedCount(): number {
+    return this.timerData.currentSemester.semesterSubjects.length > 0
+      ? this.timerData.currentSemester.semesterSubjects.reduce(
+          (prev, current) =>
+            prev.timesStudied > current.timesStudied ? prev : current
+        ).timesStudied
+      : 0;
+  }
+
   public getLeastStudiedSubject(): string {
     return this.timerData.currentSemester.semesterSubjects.length > 0
       ? this.timerData.currentSemester.semesterSubjects.reduce(
@@ -106,11 +117,29 @@ export class TimerStats {
       : "No Data";
   }
 
+  public getLeastStudiedCount(): number {
+    return this.timerData.currentSemester.semesterSubjects.length > 0
+      ? this.timerData.currentSemester.semesterSubjects.reduce(
+          (prev, current) =>
+            prev.timesStudied < current.timesStudied ? prev : current
+        ).timesStudied
+      : 0;
+  }
+
   public getAverageStudyTimePerSubject(): number {
     return this.timerData.currentSemester.semesterSubjects.length > 0
       ? (this.timerData.currentSemester.semesterTime /
           this.timerData.currentSemester.semesterSubjects.length) *
           1000
+      : 0;
+  }
+
+  public getTotalTimesStudied(): number {
+    return this.timerData.currentSemester.semesterSubjects.length > 0
+      ? this.timerData.currentSemester.semesterSubjects.reduce(
+          (total, subject) => total + subject.timesStudied,
+          0
+        )
       : 0;
   }
 
