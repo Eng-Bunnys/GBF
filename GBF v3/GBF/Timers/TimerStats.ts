@@ -161,15 +161,19 @@ export class TimerStats {
   /// Average Session Details
 
   public getAverageStartTimeUNIX(): number | null {
-    return this.timerData.currentSemester.sessionStartTimes.length > 0
-      ? Math.round(
-          this.timerData.currentSemester.sessionStartTimes.reduce(
-            (prev, current) => prev + current
-          ) /
-            this.timerData.currentSemester.sessionStartTimes.length /
-            1000
-        )
-      : null;
+    if (this.timerData.currentSemester.sessionStartTimes.length === 0)
+      return null;
+
+    // Calculate the average timestamp correctly
+    const avgTimestamp = Math.round(
+      this.timerData.currentSemester.sessionStartTimes.reduce(
+        (prev, current) => prev + current,
+        0
+      ) / this.timerData.currentSemester.sessionStartTimes.length
+    );
+
+    // Convert to seconds for Discord's timestamp format
+    return Math.floor(avgTimestamp / 1000);
   }
 
   public getAverageTimePerWeek(): number {

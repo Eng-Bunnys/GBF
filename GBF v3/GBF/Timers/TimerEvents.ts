@@ -143,7 +143,10 @@ export class TimerEvents {
           .toLowerCase()
     );
 
-    sessionTopic.timesStudied++;
+    if (sessionTopic) {
+      this.timerData.sessionData.subjectsStudied.push(sessionTopic.subjectCode);
+      sessionTopic.timesStudied++;
+    }
 
     await this.timerData!.save();
   }
@@ -433,6 +436,8 @@ export class TimerEvents {
 
     const xpEarned = Math.round(calculateXP(timeElapsed / 60));
 
+    endMessage += `\n• XP & RP Earned: ${xpEarned.toLocaleString("en-US")}`;
+
     const hasRankedUp = checkRank(
       this.userData.Rank,
       this.userData.RP,
@@ -458,7 +463,7 @@ export class TimerEvents {
       this.userData.RP = hasRankedUp.remainingRP;
 
       this.client.emit(CustomEvents.AccountLevelUp, rankUpOptions);
-    }
+    } else this.userData.RP += xpEarned;
 
     if (hasLeveledUp.hasLeveledUp) {
       const levelUpOptions: LevelUpOptions = {
@@ -473,7 +478,7 @@ export class TimerEvents {
       this.timerData.currentSemester.semesterXP = hasLeveledUp.remainingXP;
 
       this.client.emit(CustomEvents.SemesterLevelUp, levelUpOptions);
-    }
+    } else this.timerData.currentSemester.semesterXP += xpEarned;
 
     // Reset subjects studied array
     this.timerData.sessionData.subjectsStudied = [];
