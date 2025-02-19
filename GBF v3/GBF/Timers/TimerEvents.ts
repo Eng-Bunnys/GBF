@@ -384,9 +384,8 @@ export class TimerEvents {
     )}\n• Session Time: ${msToTime(timeElapsed * 1000)}`;
 
     const averageBreakTime =
-      this.timerData.sessionData.numberOfBreaks > 0
-        ? this.timerData.sessionData.sessionBreaks.sessionBreakTime /
-          this.timerData.sessionData.numberOfBreaks
+      breakTimeRaw > 0 && this.timerData.sessionData.numberOfBreaks > 0
+        ? breakTimeRaw / this.timerData.sessionData.numberOfBreaks
         : 0;
 
     endMessage += `\n\n• Average Break Time: ${

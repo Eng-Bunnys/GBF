@@ -356,6 +356,20 @@ export class Timers {
           : "0s"
       }\n`;
 
+      // Assuming the user only does 1 session a day, another way to do this is to get the start time for the semester but this will be added later
+      const numberOfWeeks = Math.floor(timerStats.getSessionCount() / 7);
+
+      const averageTimePerWeek = Number(
+        (timerStats.getSemesterTime() / numberOfWeeks).toFixed(3)
+      );
+
+      accountDetails += `• Average Session Time / 7 Sessions: ${
+        averageTimePerWeek !== 0
+          ? msToTime(averageTimePerWeek) +
+            ` [${secondsToHours(averageTimePerWeek / 1000)}]`
+          : "0s"
+      }\n`;
+
       accountDetails += `• Average Session Time: ${
         timerStats.getAverageSessionTime() !== 0
           ? msToTime(timerStats.getAverageSessionTime())
