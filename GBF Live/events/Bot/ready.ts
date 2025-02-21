@@ -15,8 +15,7 @@ import {
 export default function botReady(client: GBFClient) {
   client.on(Events.ClientReady, async () => {
     const totalUsers =
-      client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0) +
-      40000;
+      client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
 
     removeSpacesInUrls(`C:\\GBF\\GBF Live\\GBF\\Freebies\\Game Settings`);
 
