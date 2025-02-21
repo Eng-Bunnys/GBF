@@ -20,7 +20,7 @@ export class GBFFun {
     return ReturnEmbed ? EightBallEmbed : Result;
   }
 
-  static TopicGenerate(EmbedColor: ColorResolvable = "#00FFFF"): EmbedBuilder {
+  static TopicGenerate(EmbedColor: ColorResolvable = ColorCodes.Default): EmbedBuilder {
     const TopicQuestion = GetRandomFromArray(TopicQuestions);
 
     const TopicEmbed = new EmbedBuilder()
