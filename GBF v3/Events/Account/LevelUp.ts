@@ -7,7 +7,9 @@ import { rankUpEmoji, rpRequired } from "../../GBF/Timers/LevelEngine";
 export function LevelUpAccount(client: GBF) {
   client.on(CustomEvents.AccountLevelUp, async (options: LevelUpOptions) => {
     const newRank =
-      options.userData.Rank + options.levelUps != 0 ? options.levelUps : 1;
+      options.levelUps !== 0
+        ? options.userData.Rank + options.levelUps
+        : options.userData.Rank + 1;
 
     const rankUpEmbed = new EmbedBuilder()
       .setTitle(`${rankUpEmoji(newRank)} Ranked Up`)
