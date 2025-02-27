@@ -458,7 +458,7 @@ export class Timers {
 
       subjectDetails += `• Total study instances across all subjects: ${timerStats.getTotalTimesStudied()}\n`;
 
-      subjectDetails += `• Most Studied Subject: ${
+      /*   subjectDetails += `• Most Studied Subject: ${
         timerStats.getMostStudiedSubject() !== "No Data"
           ? timerStats.getMostStudiedSubject()
           : "N/A"
@@ -468,7 +468,19 @@ export class Timers {
         timerStats.getLeastStudiedSubject() !== "No Data"
           ? timerStats.getLeastStudiedSubject()
           : "N/A"
-      } [${timerStats.getLeastStudiedCount()}]\n`;
+      } [${timerStats.getLeastStudiedCount()}]\n`; */
+
+      const orderedSubjects = timerStats.getSubjectsInOrder();
+
+      if (orderedSubjects.length > 0) {
+        subjectDetails += "**\nSubject Stats**\n";
+        orderedSubjects.forEach(
+          (subject) =>
+            (subjectDetails += `• ${subject.subjectName} [${subject.timesStudied}]\n`)
+        );
+      } else {
+        subjectDetails += "**Subject Stats**\nN/A\n";
+      }
 
       subjectDetails += `• Average Study Time Per Subject: ${
         timerStats.getAverageStudyTimePerSubject() !== 0

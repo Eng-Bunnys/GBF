@@ -90,7 +90,15 @@ export class TimerStats {
     return this.timerData.currentSemester.semesterSubjects.length || 0;
   }
 
-  public getMostStudiedSubject(): string {
+  public getSubjectsInOrder(): { subjectName: string; timesStudied: number }[] {
+    return this.timerData.currentSemester.semesterSubjects.length > 0
+      ? [...this.timerData.currentSemester.semesterSubjects].sort(
+          (a, b) => b.timesStudied - a.timesStudied
+        )
+      : [];
+  }
+
+  /*   public getMostStudiedSubject(): string {
     return this.timerData.currentSemester.semesterSubjects.length > 0
       ? this.timerData.currentSemester.semesterSubjects.reduce(
           (prev, current) =>
@@ -124,7 +132,7 @@ export class TimerStats {
             prev.timesStudied < current.timesStudied ? prev : current
         ).timesStudied
       : 0;
-  }
+  } */
 
   public getAverageStudyTimePerSubject(): number {
     return this.timerData.currentSemester.semesterSubjects.length > 0
