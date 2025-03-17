@@ -293,6 +293,7 @@
     <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Commands\Mimic.h" />
     <ClCompile Include="Handler\Command Handler\Message Handler\MessageCommandRegistry.cpp" />
     <ClCompile Include="Handler\Event Handler\EventHandler.cpp" />
     <ClCompile Include="Handler\GBF.cpp" />

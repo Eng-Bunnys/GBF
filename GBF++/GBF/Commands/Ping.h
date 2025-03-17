@@ -2,7 +2,6 @@
 #define PingCommand_H
 
 #include "../Handler/Command Handler/Message Handler/MessageCommandRegistry.h"
-#include "../../../Utils/UI Resources/ColorCodes.h"
 
 class PingCommand : public MessageCommand
 {
@@ -14,13 +13,15 @@ public:
         // Gets the bot's REST latency in milliseconds
         int64_t latency = static_cast<int64_t>(client.rest_ping * 1000); 
 
-        dpp::embed embed;
+     /*   dpp::embed embed;
         embed.set_title("Pong 🏓")
             .add_field("Latency", std::to_string(latency) + " ms")
             .set_color(ColorCodes::ColorResolvable(ColorCodes::Default))
             .set_footer("", message.msg.author.get_avatar_url());
 
-        message.reply(embed, true);
+        message.reply(embed, true);*/
+
+        message.reply("Pong");
     }
 };
 

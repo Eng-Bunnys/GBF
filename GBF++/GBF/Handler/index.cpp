@@ -1,5 +1,6 @@
 /// Commands
 #include "../Commands/Ping.h"
+#include "../Commands/Mimic.h"
 
 /// Events
 #include "../Events/ReadyEvent.h"

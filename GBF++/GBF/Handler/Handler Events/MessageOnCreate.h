@@ -13,19 +13,26 @@ public:
     {
         client.on_message_create([&client](const dpp::message_create_t &event)
                                  {
-                std::string lowerCaseContent = Utils::toLowerCase(event.msg.content);
+         
+                std::string messageContent = event.msg.content;
+                std::string lowerCaseContent = messageContent; // Preserve original content
+                Utils::toLowerCase(lowerCaseContent);
 
+                std::vector<std::string> argsLower;
                 std::vector<std::string> args;
-                std::istringstream iss(lowerCaseContent);
-                std::string word;
+                std::istringstream issLower(lowerCaseContent);
+                std::istringstream issOriginal(messageContent);
+                std::string wordLower, wordOriginal;
 
-                while (iss >> word) {
-                    args.push_back(word);
+                while (issLower >> wordLower && issOriginal >> wordOriginal) {
+                    argsLower.push_back(wordLower);
+                    args.push_back(wordOriginal); // Preserve original case
                 }
 
-                if (args.empty()) return;
+                if (argsLower.empty() 
+                    || args.empty()) return;
 
-                std::string commandName = args[0].substr(1); // Remove prefix (assumes prefix is 1 character)
+                std::string commandName = argsLower[0].substr(1); // Remove prefix (assumes prefix is 1 character)
 
                 MessageCommand* command = MessageCommandRegistry::getInstance().getCommand(commandName);
                 if (!command) {
