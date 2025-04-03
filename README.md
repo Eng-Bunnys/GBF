@@ -19,13 +19,12 @@ https://gamers-best-friend.gitbook.io/gbfcommands/
 - C++
 
 ## Live versions:
-- GBF v2
-- GBF Handler v3
+- GBF v3
+- GBF Handler v5
 
 # Upcoming versions:
-- GBF v3
-- GBF Handler v4
 - GBF++
+- JGBF Timers
 
 Made by .Bunnys
 
