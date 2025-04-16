@@ -1,5 +1,5 @@
 # Installation
-You can install GBF Hanlder using 
+You can install GBF Handler using 
 
 `npm i gbfcommands`
 
@@ -8,52 +8,52 @@ You can install GBF Hanlder using
 https://gamers-best-friend.gitbook.io/gbfcommands/
 
 # Guide
-- GBF Commands Source Code are found in the GBF vN folders where N is the version of Discord.JS used.
-➜ This contains GBF's Source Code, the exact code used for GBF with no notes explaining what it does, contains the actual file that runs in GBF and separate commands since they're all under one sub-command
+- GBF Commands Source Code is found in the GBF vN folders, where N is the version of Discord.js used.
+➜ This contains GBF's Source Code, the exact code used for GBF, with no notes explaining what it does, contains the actual file that runs in GBF, and separate commands since they're all under one sub-command
 #
 - GBF Handler Updated is found in the GBF Folders under the name handler
-➜ The GBF Handler does not have an npm package so to use it you'll have to install it from here and set it up, instructions are found in the README
+➜ The GBF Handler does not have an npm package, so to use it, you'll have to install it from here and set it up. Instructions are found in the README
 
 ## Languages Used:
 - TypeScript
-- C++
+- Java
 
 ## Live versions:
 - GBF v3
 - GBF Handler v5
 
 # Upcoming versions:
-- GBF++
-- JGBF Timers
+- GBF v4 Java Edition
+- GBF Handler v6 Java Edition
 
 Made by .Bunnys
 
-# GBF Handler V5
+## GBF v4 & GBF Handler v6 (Java) Update
 
-GBF Handler V5: Revolutionizing Discord Bot Development
+### **Overview**
+GBF v4 and GBF Handler v6 are currently being developed as a complete rewrite in Java.
 
-Exciting times are ahead! GBF Handler V5 is gearing up to redefine the landscape of Discord bot development, making the process seamless and easy for all.
+### **Why?**
+The TypeScript version has limitations when it comes to efficiently scaling operations across multiple guilds, and handling concurrent requests becomes increasingly difficult as the bot grows. The JVM (Java Virtual Machine) is known for better memory management and optimized performance in long-running applications, which will allow us to handle larger volumes of data with improved speed and responsiveness.
 
-Swift Integration:
-GBF Handler V5 is designed to seamlessly integrate with Discord bot development workflows. With a simplified and intuitive setup, developers can effortlessly incorporate powerful automation features into their bots.
+Switching to either version of GBF Handler is completely up to you. If you have a simple bot, the TypeScript version is more than sufficient. However, if performance is a key concern, I suggest switching to the Java version. If performance remains a concern down the line, a C++ version might be considered in the distant future.
 
-Modular Architecture:
-Our modular architecture empowers developers to enhance their Discord bots with ease. Adding new functionalities becomes a breeze, allowing for rapid development and adaptation to evolving requirements.
+### **What's New?**
+- **GBF v4**: The new Java-based version of the bot will bring enhanced stability and scalability. It is specifically designed to handle sending freebie messages to multiple servers simultaneously and fetch free games much more efficiently.
 
-Automated Efficiency:
-Experience a new era of efficiency with GBF Handler V5's automated processes. From task execution to response handling, the system ensures precision and reliability, reducing the burden on developers.
+- **GBF Handler v6**: Alongside GBF v4, the handler is being completely reworked for better integration. The new version will be more modular, flexible, and optimized for performance, making maintenance more straightforward.
 
-Feature-Rich Functionality:
-GBF Handler V5 introduces a wealth of features designed to elevate Discord bot capabilities. Customization options, advanced automation, and rich functionality create a robust environment for crafting sophisticated and responsive bots.
+### **TypeScript Version**
+The existing **TypeScript version** of GBF will continue to receive updates and remain functional. The Java rewrite is essentially a parallel project focused on improving performance and scalability. Both versions will coexist, with the TypeScript version still being supported while the Java version matures. 
+The TypeScript version (original) will be referred to as **GBF Handler**, while the Java version will be called **GBF Java Edition** — a fun reference to Minecraft!
 
-Future-Proof Development:
-GBF Handler V5 is not just about today; it's about tomorrow. Our forward-looking approach ensures that developers can effortlessly adapt their Discord bots to the evolving landscape of Discord API updates and new feature integrations.
+As of April 2025, since discord.js hasn't received any major updates recently, this will also reflect in the updates to the TypeScript version.
 
-As we approach the release in late 2024, we invite you to join us on this journey of innovation. GBF Handler V5 is set to make Discord bot development an exhilarating and streamlined experience. Stay tuned for a new era in bot development!
+### **Current Status**
+Development is underway, and updates are being tracked in the `#gbf-github-updates` channel. While progress is slower than anticipated, I am working hard to bring these updates to life and deliver significant improvements.
 
-Best Regards,
-
-The GBF Dev Team 
+### **Note**
+I am currently working on these updates solo, but I am committed to making the transition as smooth as possible. Thank you for your patience and continued support!
 
 
 ### For Salma
