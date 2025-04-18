@@ -27,7 +27,7 @@ public class EnvLoader {
                     envVars.put(parts[0].trim(), parts[1].trim());
             }
         } catch (Exception err) {
-            System.out.println("Error loading .env from resources\n" + err.getMessage());
+            Logger.error("Error loading .env file\n" + err.getMessage());
         }
     }
 
