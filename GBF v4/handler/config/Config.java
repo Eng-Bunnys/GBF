@@ -41,6 +41,12 @@ public class Config {
      * */
     private boolean ignoreEventsFromHandler;
 
+    /**
+     * The path to the commands folder
+     * @default null
+     * */
+    private String commandsFolder;
+
     // Bot Features
     private String token;
     List<GatewayIntent> intents;
@@ -58,6 +64,8 @@ public class Config {
         this.eventFolder = null;
         this.ignoreEvents = false;
         this.ignoreEventsFromHandler = false;
+
+        this.commandsFolder = null;
     }
 
     /// For Method Chaining
@@ -105,6 +113,11 @@ public class Config {
         return this;
     }
 
+    public Config CommandsFolder(String path) {
+        this.commandsFolder = path;
+        return this;
+    }
+
     /// Getters
 
     // Bot Features
@@ -120,4 +133,5 @@ public class Config {
     public String EventFolder() { return eventFolder; }
     public boolean IgnoreEvents() { return ignoreEvents; }
     public boolean IgnoreEventsFromHandler() { return ignoreEventsFromHandler; }
+    public String CommandsFolder() { return commandsFolder; }
 }

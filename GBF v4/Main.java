@@ -11,6 +11,8 @@ public class Main {
                 .version("1.0.0")
                 .AutoLogin(true)
                 .LogActions(true)
+                .IgnoreEventsFromHandler(false)
+                .CommandsFolder("org.bunnys.commands")
                 .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS));
 
         GBF client = new GBF(config);

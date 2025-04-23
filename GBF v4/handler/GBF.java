@@ -5,24 +5,31 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import org.bunnys.handler.commands.CommandLoader;
+import org.bunnys.handler.commands.message.MessageCommand;
 import org.bunnys.handler.config.Config;
 import org.bunnys.handler.events.Event;
 import org.bunnys.handler.events.EventLoader;
 import org.bunnys.handler.utils.EnvLoader;
 import org.bunnys.handler.utils.Logger;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GBF {
     public Config config;
+    private static GBF client;
 
     // Events
     private boolean loadEvents;
-    private boolean loadHandlerEvents;
-    private final String handlerEventFolder = "org.bunnys.handler.events.defaults";
+    private final boolean loadHandlerEvents;
     private final AtomicInteger eventCount = new AtomicInteger(0);
+
+    // Commands
+    private Map<String, MessageCommand> messageCommands = new HashMap<>();
 
     long startTime = System.currentTimeMillis();
 
@@ -30,10 +37,11 @@ public class GBF {
         this.config = config;
         this.config.token(this.getToken());
 
+        GBF.client = this;
+
         if (this.config.EventFolder() != null
                 && !this.config.EventFolder().isBlank()
-                && !this.config.IgnoreEvents()
-        )
+                && !this.config.IgnoreEvents())
             this.loadEvents = true;
 
         this.loadHandlerEvents = !this.config.IgnoreEventsFromHandler();
@@ -46,6 +54,42 @@ public class GBF {
             }
     }
 
+    private void RegisterCommands() {
+        // To-do: Add checks for command folder etc.
+        messageCommands = CommandLoader.loadCommands(this.config.CommandsFolder());
+
+        Logger.success("Loaded " + messageCommands.size() + " commands");
+    }
+
+    private void RegisterEvents(JDA builder) {
+        try {
+            if (this.loadHandlerEvents) {
+                String handlerEventFolder = "org.bunnys.handler.events.defaults";
+                List<Event> handlerEvents = EventLoader.loadEvents(handlerEventFolder);
+
+                handlerEvents.forEach(event -> {
+                    event.register(builder);
+
+                    if (this.config.LogActions())
+                        this.eventCount.incrementAndGet();
+                });
+            }
+
+            if (this.loadEvents) {
+                List<Event> events = EventLoader.loadEvents(this.config.EventFolder());
+
+                events.forEach(event -> {
+                    event.register(builder);
+
+                    if (this.config.LogActions())
+                        this.eventCount.incrementAndGet();
+                });
+            }
+        } catch (Exception e) {
+            Logger.error("Error loading events\n" + e.getMessage());
+        }
+    }
+
     public void login() throws InterruptedException {
         try {
             List<GatewayIntent> intents = this.config.intents();
@@ -56,31 +100,8 @@ public class GBF {
                     .build();
 
             CompletableFuture<Void> eventRegistration = CompletableFuture.runAsync(() -> {
-                try {
-                    if (this.loadHandlerEvents) {
-                        List<Event> handlerEvents = EventLoader.loadEvents(this.handlerEventFolder);
-
-                        handlerEvents.forEach(event -> {
-                            event.register(builder);
-
-                            if (this.config.LogActions())
-                                this.eventCount.incrementAndGet();
-                        });
-                    }
-
-                    if (this.loadEvents) {
-                        List<Event> events = EventLoader.loadEvents(this.config.EventFolder());
-
-                        events.forEach(event -> {
-                            event.register(builder);
-
-                            if (this.config.LogActions())
-                                this.eventCount.incrementAndGet();
-                        });
-                    }
-                } catch (Exception e) {
-                    Logger.error("Error loading events\n" + e.getMessage());
-                }
+                RegisterEvents(builder);
+                RegisterCommands();
             });
 
             CompletableFuture<Void> botReady = CompletableFuture.runAsync(() -> {
@@ -109,7 +130,16 @@ public class GBF {
         }
     }
 
+    public static GBF getClient() {
+        return GBF.client;
+    }
+
     private String getToken() {
         return EnvLoader.get("TOKEN");
+    }
+
+    // Command Getters
+    public MessageCommand getCommand(String name) {
+        return messageCommands.get(name);
     }
 }
