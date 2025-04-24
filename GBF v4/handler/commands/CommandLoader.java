@@ -29,10 +29,14 @@ public class CommandLoader {
 
                         String commandName = commandInstance.CommandOptions().getName();
 
-                        if (commandName == null || commandName.isBlank()) {
+                        if (commandName == null || commandName.isBlank())
                             throw new IllegalStateException("Command name is not defined for "
                                     + commandInstance.getClass().getSimpleName());
-                        }
+
+                        if (messageCommands.containsKey(commandName))
+                            throw new IllegalStateException("Duplicate command name detected: '" + commandName +
+                                    "' in classes " + messageCommands.get(commandName).getClass().getName() + " and "
+                                    + cls.getName());
 
                         messageCommands.put(commandName, commandInstance);
                     }
@@ -41,8 +45,12 @@ public class CommandLoader {
                 }
             }
 
+            if (messageCommands.isEmpty())
+                throw new IllegalStateException("No commands found in the specified package: " + packageName);
+
         } catch (Exception e) {
             Logger.error("Failed to scan commands in package: " + packageName + "\n" + e.getMessage());
+            throw new IllegalStateException("Failed to load commands from package: " + packageName, e);
         }
 
         return messageCommands;

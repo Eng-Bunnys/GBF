@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bunnys.handler.GBF;
 import org.bunnys.handler.commands.message.MessageCommand;
 import org.bunnys.handler.events.Event;
+import org.bunnys.handler.utils.Logger;
 
 public class MessageCreate extends ListenerAdapter implements Event {
 
@@ -15,27 +16,39 @@ public class MessageCreate extends ListenerAdapter implements Event {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
-        System.out.println("In onMessageReceived");
-        String prefix = "!"; // optionally make this configurable
-        String content = event.getMessage().getContentRaw();
-
-        System.out.println("Content: " + content);
-
-        if (!content.startsWith(prefix) || event.getAuthor().isBot())
+    public void onMessageReceived(MessageReceivedEvent message) {
+        if (message.getAuthor().isBot())
             return;
 
-        String[] split = content.substring(prefix.length()).split("\\s+");
+        String messageContent = message.getMessage().getContentRaw();
+
+        String prefix = GBF.getClient().config.Prefix();
+
+        if (!messageContent.startsWith(prefix))
+            return;
+
+        String[] split = messageContent.substring(prefix.length())
+                .split("\\s+");
+
         String commandName = split[0];
-        System.out.println("Command Name: " + commandName);
-        String[] args = split.length > 1 ? content.substring(prefix.length() + commandName.length()).trim().split("\\s+") : new String[0];
 
         GBF client = GBF.getClient();
 
-        MessageCommand command = client.getCommand(commandName);
-        System.out.println("Command: " + command);
-        if (command != null) {
-            command.execute(event, args);
-        }
+        MessageCommand command =
+                client.getCommand(commandName);
+
+        if (command == null)
+            return;
+
+        String[] args = split.length > 1
+                ? messageContent.substring(prefix.length() + commandName.length())
+                .trim().split("\\s+")
+                : new String[0];
+
+            try {
+                command.execute(client, message, args);
+            } catch (Exception err) {
+                Logger.error("• Error executing command: " + commandName + "\n" + err.getMessage());
+            }
     }
 }

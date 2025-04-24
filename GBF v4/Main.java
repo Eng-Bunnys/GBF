@@ -12,7 +12,7 @@ public class Main {
                 .AutoLogin(true)
                 .LogActions(true)
                 .IgnoreEventsFromHandler(false)
-                .CommandsFolder("org.bunnys.commands")
+                .CommandsFolder("Test")
                 .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS));
 
         GBF client = new GBF(config);

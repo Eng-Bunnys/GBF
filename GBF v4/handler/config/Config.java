@@ -1,6 +1,7 @@
 package org.bunnys.handler.config;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.bunnys.handler.utils.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -9,43 +10,57 @@ public class Config {
     // Handler Features
     /**
      * The bot's version
+     * 
      * @default 1.0.0
-     * */
+     */
     private String version;
     /**
      * Whether the bot should automatically log in or not
+     * 
      * @default false
-     * */
+     */
     private boolean autoLogin;
     /**
      * Prints handler actions like commands registered, connected to DB, etc.
+     * 
      * @default false
-     *  */
+     */
     private boolean logActions;
 
     /**
      * The path to the events folder
-     * @default  null
-     * */
+     * 
+     * @default null
+     */
     private String eventFolder;
 
     /**
      * Stops the handler from loading events
+     * 
      * @default false
-     * */
+     */
     private boolean ignoreEvents;
 
     /**
      * Stops the handler from loading events from the handler
+     * 
      * @default false
-     * */
+     */
     private boolean ignoreEventsFromHandler;
 
     /**
      * The path to the commands folder
+     * 
      * @default null
-     * */
+     */
     private String commandsFolder;
+
+    /**
+     * The prefix for message commands
+     *
+     * @default null
+     */
+    private String prefix;
 
     // Bot Features
     private String token;
@@ -66,6 +81,7 @@ public class Config {
         this.ignoreEventsFromHandler = false;
 
         this.commandsFolder = null;
+        this.prefix = "!";
     }
 
     /// For Method Chaining
@@ -118,20 +134,58 @@ public class Config {
         return this;
     }
 
+    public Config Prefix(String prefix) {
+        if (prefix == null
+                || prefix.isBlank())
+        {
+            this.prefix = "!";
+            Logger.warning("Prefix cannot be null or blank. Defaulting to '!'");
+        }
+
+        return this;
+    }
+
     /// Getters
 
     // Bot Features
 
-    public String token() { return token; }
+    public String token() {
+        return token;
+    }
 
     // Handler Features
 
-    public String version() { return version; }
-    public boolean AutoLogin() { return autoLogin; }
-    public List<GatewayIntent> intents() { return intents; }
-    public boolean LogActions() { return logActions; }
-    public String EventFolder() { return eventFolder; }
-    public boolean IgnoreEvents() { return ignoreEvents; }
-    public boolean IgnoreEventsFromHandler() { return ignoreEventsFromHandler; }
-    public String CommandsFolder() { return commandsFolder; }
+    public String version() {
+        return version;
+    }
+
+    public boolean AutoLogin() {
+        return autoLogin;
+    }
+
+    public List<GatewayIntent> intents() {
+        return intents;
+    }
+
+    public boolean LogActions() {
+        return logActions;
+    }
+
+    public String EventFolder() {
+        return eventFolder;
+    }
+
+    public boolean IgnoreEvents() {
+        return ignoreEvents;
+    }
+
+    public boolean IgnoreEventsFromHandler() {
+        return ignoreEventsFromHandler;
+    }
+
+    public String CommandsFolder() {
+        return commandsFolder;
+    }
+
+    public String Prefix() { return prefix;}
 }

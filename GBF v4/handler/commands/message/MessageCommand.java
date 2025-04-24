@@ -1,6 +1,7 @@
 package org.bunnys.handler.commands.message;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.bunnys.handler.GBF;
 
 public abstract class MessageCommand {
     private final MessageCommandConfig options = new MessageCommandConfig();
@@ -11,7 +12,9 @@ public abstract class MessageCommand {
         CommandOptions(options);
     }
 
-    public abstract void execute(MessageReceivedEvent message, String[] args);
+    public abstract void execute(GBF client, MessageReceivedEvent message, String[] args);
 
-    public MessageCommandConfig CommandOptions() { return this.options; }
+    public MessageCommandConfig CommandOptions() {
+        return this.options;
+    }
 }

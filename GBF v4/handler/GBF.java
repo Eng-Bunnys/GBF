@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GBF {
     public Config config;
     private static GBF client;
+    private static JDA jda;
 
     // Events
     private boolean loadEvents;
@@ -35,7 +36,10 @@ public class GBF {
 
     public GBF(Config config) {
         this.config = config;
-        this.config.token(this.getToken());
+
+        if (this.config.token() == null ||
+                this.config.token().isBlank())
+          this.config.token(this.getToken());
 
         GBF.client = this;
 
@@ -94,19 +98,19 @@ public class GBF {
         try {
             List<GatewayIntent> intents = this.config.intents();
 
-            JDA builder = JDABuilder.create(this.config.token(), intents)
+            GBF.jda = JDABuilder.create(this.config.token(), intents)
                     .setMemberCachePolicy(MemberCachePolicy.DEFAULT)
                     .setChunkingFilter(ChunkingFilter.NONE)
                     .build();
 
             CompletableFuture<Void> eventRegistration = CompletableFuture.runAsync(() -> {
-                RegisterEvents(builder);
+                RegisterEvents(GBF.jda);
                 RegisterCommands();
             });
 
             CompletableFuture<Void> botReady = CompletableFuture.runAsync(() -> {
                 try {
-                    builder.awaitReady();
+                    GBF.jda.awaitReady();
 
                     if (this.config.LogActions()) {
                         if (this.loadEvents)
@@ -132,6 +136,17 @@ public class GBF {
 
     public static GBF getClient() {
         return GBF.client;
+    }
+
+    /**
+     * Note: I just recommend using getClient() then .jda to get the JDA instance lol
+     * */
+    public static JDA getJDA() {
+        return GBF.jda;
+    }
+
+    public static String getHandlerVersion() {
+        return "4.0.0";
     }
 
     private String getToken() {

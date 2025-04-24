@@ -4,6 +4,7 @@ import com.github.lalyos.jfiglet.FigletFont;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.bunnys.handler.GBF;
 import org.bunnys.handler.events.Event;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class ClientReady extends ListenerAdapter implements Event {
         String underline = "_".repeat(maxLength);
 
         System.out.println(RED + clientNameASCII + underline + RESET);
-        System.out.println(clientName + " is now online!");
+        System.out.println("• " + clientName + "v" + GBF.getClient().config.version() + " is now online");
+        System.out.println("• GBF Handler v" + GBF.getHandlerVersion());
     }
 }
