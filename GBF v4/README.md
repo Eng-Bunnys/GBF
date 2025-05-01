@@ -1,3 +1,6 @@
+# GBF v4
+### Most optimized version of GBF Handler
+
 # Update Log for GBF Handler v4
 
 This document summarizes the changes, optimizations, and fixes made to the GBF Handler v4 codebase during the optimization process on May 2, 2025. The changes focus on improving performance, reliability, and error handling across the `Config`, `EventLoader`, `CommandLoader`, and `GBF` classes.
