@@ -40,7 +40,7 @@ public class ClientReady extends ListenerAdapter implements Event {
         String underline = "_".repeat(maxLength);
 
         System.out.println(RED + clientNameASCII + underline + RESET);
-        System.out.println("• " + clientName + "v" + GBF.getClient().config.version() + " is now online");
+        System.out.println("• " + clientName + "v" + GBF.getClient().getConfig().version() + " is now online");
         System.out.println("• GBF Handler v" + GBF.getHandlerVersion());
     }
 }

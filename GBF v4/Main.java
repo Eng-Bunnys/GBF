@@ -7,14 +7,16 @@ import org.bunnys.handler.utils.IntentHandler;
 
 public class Main {
     public static void main(String[] args) {
-        Config config = new Config()
+        Config config = new Config.Builder()
                 .version("1.0.0")
-                .AutoLogin(true)
-                .LogActions(true)
-                .IgnoreEventsFromHandler(false)
-                .CommandsFolder("Test")
-                .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS));
+                .autoLogin(true)
+                .logActions(true)
+                .ignoreEvents(false)
+                .commandsFolder("org.bunnys.commands")
+                .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))
+                .build();
 
+        @SuppressWarnings("unused")
         GBF client = new GBF(config);
     }
 }

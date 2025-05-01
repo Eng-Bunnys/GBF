@@ -22,20 +22,20 @@ public class MessageCreate extends ListenerAdapter implements Event {
 
         String messageContent = message.getMessage().getContentRaw();
 
-        String prefix = GBF.getClient().config.Prefix();
+        String prefix = GBF.getClient().getConfig().Prefix();
 
         if (!messageContent.startsWith(prefix))
             return;
 
+        GBF client = GBF.getClient();
+
         String[] split = messageContent.substring(prefix.length())
                 .split("\\s+");
 
-        String commandName = split[0];
-
-        GBF client = GBF.getClient();
+        String commandName = client.resolveCommandFromAlias(split[0]);
 
         MessageCommand command =
-                client.getCommand(commandName);
+                client.getMessageCommand(commandName);
 
         if (command == null)
             return;

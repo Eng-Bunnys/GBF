@@ -12,7 +12,8 @@ public class PingCommand extends MessageCommand {
     protected void CommandOptions(MessageCommandConfig options) {
         options
                 .setName("ping")
-                .setDescription("Replies with Pong!");
+                .setDescription("Replies with Pong!")
+                .setAliases("p", "latency");
     }
 
     @Override
