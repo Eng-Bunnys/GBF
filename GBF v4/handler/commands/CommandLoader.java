@@ -14,11 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 
 public class CommandLoader {
-
     public static ConcurrentHashMap<String, MessageCommand> loadCommands(String packageName) {
-        if (packageName == null || packageName.isBlank()) {
+        if (packageName == null || packageName.isBlank())
             throw new IllegalArgumentException("Package name cannot be null or blank");
-        }
 
         long startTime = System.nanoTime();
         ConcurrentHashMap<String, MessageCommand> messageCommands = new ConcurrentHashMap<>();
@@ -46,13 +44,14 @@ public class CommandLoader {
                                         && MessageCommand.class.isAssignableFrom(cls)) {
                                     Constructor<?> constructor = constructorCache
                                             .computeIfAbsent(cls, c -> {
-                                        try {
-                                            return c.getDeclaredConstructor();
-                                        } catch (NoSuchMethodException e) {
-                                            throw new IllegalStateException("No default constructor for " + c.getName(),
-                                                    e);
-                                        }
-                                    });
+                                                try {
+                                                    return c.getDeclaredConstructor();
+                                                } catch (NoSuchMethodException e) {
+                                                    throw new IllegalStateException(
+                                                            "No default constructor for " + c.getName(),
+                                                            e);
+                                                }
+                                            });
 
                                     long instanceStart = System.nanoTime();
                                     MessageCommand commandInstance = (MessageCommand) constructor.newInstance();

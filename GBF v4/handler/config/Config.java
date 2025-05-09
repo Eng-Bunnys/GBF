@@ -1,5 +1,6 @@
 package org.bunnys.handler.config;
 
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.bunnys.handler.utils.Logger;
 
@@ -16,6 +17,7 @@ public class Config {
     private final boolean ignoreEventsFromHandler;
     private final String commandsFolder;
     private final String prefix;
+    private final List<UserSnowflake> developers;
 
     // Bot Features
     private String token;
@@ -33,6 +35,7 @@ public class Config {
         this.ignoreEventsFromHandler = false;
         this.commandsFolder = null;
         this.prefix = "!";
+        this.developers = Collections.emptyList();
     }
 
     // Builder Pattern for Config
@@ -47,6 +50,7 @@ public class Config {
         private boolean ignoreEventsFromHandler = false;
         private String commandsFolder = null;
         private String prefix = "!";
+        private List<UserSnowflake> developers = Collections.emptyList();
 
         public Builder token(String token) {
             this.token = token;
@@ -103,6 +107,11 @@ public class Config {
             return this;
         }
 
+        public Builder developers(List<UserSnowflake> developers) {
+            this.developers = developers != null ? developers : Collections.emptyList();
+            return this;
+        }
+
         public Config build() {
             return new Config(this);
         }
@@ -119,6 +128,7 @@ public class Config {
         this.ignoreEventsFromHandler = builder.ignoreEventsFromHandler;
         this.commandsFolder = builder.commandsFolder;
         this.prefix = builder.prefix;
+        this.developers = builder.developers;
     }
 
     // Setter for token (only mutable field)
@@ -168,5 +178,9 @@ public class Config {
 
     public String Prefix() {
         return prefix;
+    }
+
+    public List<UserSnowflake> Developers() {
+        return developers;
     }
 }

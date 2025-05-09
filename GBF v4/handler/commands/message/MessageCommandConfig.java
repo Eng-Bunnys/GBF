@@ -7,21 +7,42 @@ public class MessageCommandConfig {
     private String name;
     /**
      * The description of the command
+     * 
      * @default No description
      * @optional
      */
     private String description;
     /**
      * The aliases of the command
+     * 
      * @default []
      * @optional
      */
     private String[] aliases;
 
+    /**
+     * Whether the command can be used in NSFW channels or not
+     * 
+     * @default false
+     * @optional
+     */
+    private boolean NSFW;
+
+    /***
+     * Whether the command can be used by anyone but a developer
+     * 
+     * @default false
+     * @optional
+     */
+    private boolean developerOnly;
+
     public MessageCommandConfig() {
         this.name = null;
         this.description = null;
         this.aliases = new String[0];
+
+        this.NSFW = false;
+        this.developerOnly = false;
     }
 
     public MessageCommandConfig setName(String name) {
@@ -45,6 +66,18 @@ public class MessageCommandConfig {
         return this;
     }
 
+    public MessageCommandConfig setNSFW(boolean NSFW) {
+        this.NSFW = NSFW;
+        return this;
+    }
+
+    public MessageCommandConfig setDeveloperOnly(boolean developerOnly) {
+        this.developerOnly = developerOnly;
+        return this;
+    }
+
+    // Getters
+
     public String getName() {
         return this.name;
     }
@@ -55,5 +88,13 @@ public class MessageCommandConfig {
 
     public String[] getAliases() {
         return this.aliases;
+    }
+
+    public boolean isNSFW() {
+        return this.NSFW;
+    }
+
+    public boolean isDeveloperOnly() {
+        return this.developerOnly;
     }
 }

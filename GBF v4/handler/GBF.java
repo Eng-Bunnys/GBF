@@ -13,7 +13,6 @@ import org.bunnys.handler.utils.EnvLoader;
 import org.bunnys.handler.utils.Logger;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -323,22 +322,6 @@ public class GBF {
                         "' for command " + commandName + " (already used by " + existing + ")");
             }
         }
-    }
-
-    public Set<String> getAliases(String commandName) {
-        if (commandName == null || commandName.isBlank()) {
-            Logger.warning("Command name cannot be null or blank for alias lookup.");
-            return Collections.emptySet();
-        }
-        return aliases.getOrDefault(commandName, Collections.emptySet());
-    }
-
-    public boolean isAlias(String alias) {
-        if (alias == null || alias.isBlank()) {
-            Logger.warning("Alias cannot be null or blank for lookup.");
-            return false;
-        }
-        return aliasToCommandMap.containsKey(alias);
     }
 
     public String resolveCommandFromAlias(String alias) {
