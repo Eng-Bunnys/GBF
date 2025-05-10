@@ -17,7 +17,7 @@ public class Main {
                 .ignoreEvents(false)
                 .commandsFolder("org.bunnys.commands")
                 .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))
-                .developers(List.of(UserSnowflake.fromId("333644367539470337")))
+              //  .developers(List.of(UserSnowflake.fromId("333644367539470337")))
                 .build();
 
         @SuppressWarnings("unused")

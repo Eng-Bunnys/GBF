@@ -1,54 +1,36 @@
 package org.bunnys.handler.commands.message;
 
+import net.dv8tion.jda.api.Permission;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class MessageCommandConfig {
-    /**
-     * The name of the command
-     */
     private String name;
-    /**
-     * The description of the command
-     * 
-     * @default No description
-     * @optional
-     */
     private String description;
-    /**
-     * The aliases of the command
-     * 
-     * @default []
-     * @optional
-     */
     private String[] aliases;
-
-    /**
-     * Whether the command can be used in NSFW channels or not
-     * 
-     * @default false
-     * @optional
-     */
-    private boolean NSFW;
-
-    /***
-     * Whether the command can be used by anyone but a developer
-     * 
-     * @default false
-     * @optional
-     */
+    private boolean nsfw;
     private boolean developerOnly;
+    private float cooldown;
+    private final List<Permission> requiredUserPermissions;
+    private final List<Permission> requiredBotPermissions;
 
     public MessageCommandConfig() {
         this.name = null;
         this.description = null;
         this.aliases = new String[0];
-
-        this.NSFW = false;
+        this.nsfw = false;
         this.developerOnly = false;
+        this.cooldown = 0;
+        this.requiredUserPermissions = new ArrayList<>();
+        this.requiredBotPermissions = new ArrayList<>();
     }
 
     public MessageCommandConfig setName(String name) {
-        if (name == null || name.isBlank())
+        if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Message Command Name cannot be null or blank");
-
+        }
         this.name = name;
         return this;
     }
@@ -59,15 +41,15 @@ public class MessageCommandConfig {
     }
 
     public MessageCommandConfig setAliases(String... aliases) {
-        if (aliases == null || aliases.length == 0)
+        if (aliases == null || aliases.length == 0) {
             throw new IllegalArgumentException("Message Command Aliases cannot be null or empty");
-
+        }
         this.aliases = aliases;
         return this;
     }
 
-    public MessageCommandConfig setNSFW(boolean NSFW) {
-        this.NSFW = NSFW;
+    public MessageCommandConfig setNsfw(boolean nsfw) {
+        this.nsfw = nsfw;
         return this;
     }
 
@@ -76,25 +58,59 @@ public class MessageCommandConfig {
         return this;
     }
 
-    // Getters
+    public MessageCommandConfig setCooldown(float cooldown) {
+        if (cooldown < 0) {
+            throw new IllegalArgumentException("Message Command Cooldown cannot be negative");
+        }
+        this.cooldown = cooldown;
+        return this;
+    }
+
+    public MessageCommandConfig setRequiredUserPermissions(Permission... permissions) {
+        this.requiredUserPermissions.clear();
+        if (permissions != null && permissions.length > 0) {
+            this.requiredUserPermissions.addAll(Arrays.asList(permissions));
+        }
+        return this;
+    }
+
+    public MessageCommandConfig setRequiredBotPermissions(Permission... permissions) {
+        this.requiredBotPermissions.clear();
+        if (permissions != null && permissions.length > 0) {
+            this.requiredBotPermissions.addAll(Arrays.asList(permissions));
+        }
+        return this;
+    }
 
     public String getName() {
-        return this.name;
+        return name;
     }
 
     public String getDescription() {
-        return this.description;
+        return description;
     }
 
     public String[] getAliases() {
-        return this.aliases;
+        return aliases;
     }
 
     public boolean isNSFW() {
-        return this.NSFW;
+        return nsfw;
     }
 
     public boolean isDeveloperOnly() {
-        return this.developerOnly;
+        return developerOnly;
+    }
+
+    public float getCooldown() {
+        return cooldown;
+    }
+
+    public List<Permission> getRequiredUserPermissions() {
+        return requiredUserPermissions;
+    }
+
+    public List<Permission> getRequiredBotPermissions() {
+        return requiredBotPermissions;
     }
 }

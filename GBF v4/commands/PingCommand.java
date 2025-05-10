@@ -1,5 +1,6 @@
 package org.bunnys.commands;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import org.bunnys.handler.GBF;
@@ -15,6 +16,9 @@ public class PingCommand extends MessageCommand {
                 .setDescription("Replies with Pong!")
                 .setAliases("p", "latency")
                 .setDeveloperOnly(false)
+                .setCooldown(5)
+                .setUserPermissions(Permission.ADMINISTRATOR)
+                .setBotPermissions(Permission.ADMINISTRATOR)
                 .setNSFW(false);
     }
 
