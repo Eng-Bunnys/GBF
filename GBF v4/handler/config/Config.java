@@ -52,52 +52,52 @@ public class Config {
         private String prefix = "!";
         private List<UserSnowflake> developers = Collections.emptyList();
 
-        public Builder token(String token) {
+        public Builder Token(String token) {
             this.token = token;
             return this;
         }
 
-        public Builder intents(List<GatewayIntent> intents) {
+        public Builder Intents(List<GatewayIntent> intents) {
             this.intents = intents != null ? intents : Collections.emptyList();
             return this;
         }
 
-        public Builder version(String version) {
+        public Builder Version(String version) {
             this.version = version != null ? version : "1.0.0";
             return this;
         }
 
-        public Builder autoLogin(boolean autoLogin) {
+        public Builder AutoLogin(boolean autoLogin) {
             this.autoLogin = autoLogin;
             return this;
         }
 
-        public Builder logActions(boolean logActions) {
+        public Builder LogActions(boolean logActions) {
             this.logActions = logActions;
             return this;
         }
 
-        public Builder eventFolder(String path) {
+        public Builder EventFolder(String path) {
             this.eventFolder = path;
             return this;
         }
 
-        public Builder ignoreEvents(boolean ignoreEvents) {
+        public Builder IgnoreEvents(boolean ignoreEvents) {
             this.ignoreEvents = ignoreEvents;
             return this;
         }
 
-        public Builder ignoreEventsFromHandler(boolean ignoreEventsFromHandler) {
+        public Builder IgnoreEventsFromHandler(boolean ignoreEventsFromHandler) {
             this.ignoreEventsFromHandler = ignoreEventsFromHandler;
             return this;
         }
 
-        public Builder commandsFolder(String path) {
+        public Builder CommandsFolder(String path) {
             this.commandsFolder = path;
             return this;
         }
 
-        public Builder prefix(String prefix) {
+        public Builder Prefix(String prefix) {
             if (prefix == null || prefix.isBlank()) {
                 this.prefix = "!";
                 Logger.warning("Prefix cannot be null or blank. Defaulting to '!'");
@@ -107,12 +107,12 @@ public class Config {
             return this;
         }
 
-        public Builder developers(List<UserSnowflake> developers) {
+        public Builder Developers(List<UserSnowflake> developers) {
             this.developers = developers != null ? developers : Collections.emptyList();
             return this;
         }
 
-        public Config build() {
+        public Config Build() {
             return new Config(this);
         }
     }

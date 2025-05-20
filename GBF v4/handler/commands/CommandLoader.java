@@ -3,8 +3,9 @@ package org.bunnys.handler.commands;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.bunnys.handler.GBF;
-import org.bunnys.handler.commands.message.MessageCommand;
-import org.bunnys.handler.commands.message.MessageCommandConfig;
+import org.bunnys.handler.commands.message.config.MessageCommand;
+import org.bunnys.handler.commands.message.config.MessageCommandConfig;
+import org.bunnys.handler.config.Config;
 import org.bunnys.handler.utils.Logger;
 
 import java.lang.reflect.Constructor;
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 
 public class CommandLoader {
-    public static ConcurrentHashMap<String, MessageCommand> loadCommands(String packageName) {
+    public static ConcurrentHashMap<String, MessageCommand> loadCommands(String packageName, Config config) {
         if (packageName == null || packageName.isBlank())
             throw new IllegalArgumentException("Package name cannot be null or blank");
 
@@ -30,7 +31,9 @@ public class CommandLoader {
                 .scan()) {
 
             long scanEndTime = System.nanoTime();
-            Logger.info("Command class scanning took " + (scanEndTime - startTime) / 1_000_000 + "ms");
+            if (config.LogActions()) {
+                Logger.info("Command class scanning took " + (scanEndTime - startTime) / 1_000_000 + "ms");
+            }
 
             @SuppressWarnings("resource")
             ForkJoinPool threadPool = new ForkJoinPool(Math.max(4, Runtime.getRuntime().availableProcessors() * 2));
@@ -56,10 +59,6 @@ public class CommandLoader {
                                     long instanceStart = System.nanoTime();
                                     MessageCommand commandInstance = (MessageCommand) constructor.newInstance();
                                     long instanceEnd = System.nanoTime();
-
-                                    if ((instanceEnd - instanceStart) / 1_000_000 > 1)
-                                        Logger.warning("Slow instantiation for " + cls.getSimpleName() + ": " +
-                                                (instanceEnd - instanceStart) / 1_000_000 + "ms");
 
                                     MessageCommandConfig options = commandInstance.CommandOptions();
 
@@ -123,7 +122,9 @@ public class CommandLoader {
         }
 
         long endTime = System.nanoTime();
-        Logger.info("Command loading took " + (endTime - startTime) / 1_000_000 + "ms");
+        if (config.LogActions()) {
+            Logger.info("Command loading took " + (endTime - startTime) / 1_000_000 + "ms");
+        }
         return messageCommands;
     }
 }

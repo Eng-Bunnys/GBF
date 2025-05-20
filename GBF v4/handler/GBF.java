@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.bunnys.handler.commands.CommandLoader;
-import org.bunnys.handler.commands.message.MessageCommand;
+import org.bunnys.handler.commands.message.config.MessageCommand;
 import org.bunnys.handler.config.Config;
 import org.bunnys.handler.events.EventLoader;
 import org.bunnys.handler.utils.EnvLoader;
@@ -88,14 +88,14 @@ public class GBF {
 
             ForkJoinPool threadPool = new ForkJoinPool(Math.max(2, Runtime.getRuntime().availableProcessors()));
             CompletableFuture.supplyAsync(() -> {
-                try {
-                    return CommandLoader.loadCommands(this.config.CommandsFolder());
-                } catch (Exception e) {
-                    Logger.error("Failed to load commands: " + e.getMessage() +
-                            "\nStack trace: " + Arrays.toString(e.getStackTrace()));
-                    throw e;
-                }
-            }, threadPool).orTimeout(10, TimeUnit.SECONDS)
+                        try {
+                            return CommandLoader.loadCommands(this.config.CommandsFolder(), config);
+                        } catch (Exception e) {
+                            Logger.error("Failed to load commands: " + e.getMessage() +
+                                    "\nStack trace: " + Arrays.toString(e.getStackTrace()));
+                            throw e;
+                        }
+                    }, threadPool).orTimeout(10, TimeUnit.SECONDS)
                     .whenComplete((commands, throwable) -> {
                         try {
                             if (throwable != null) {
@@ -105,8 +105,10 @@ public class GBF {
                             }
                             messageCommands.putAll(commands);
                             commandsLoaded = true;
-                            Logger.success("Loaded " + messageCommands.size() + " commands in " +
-                                    (System.currentTimeMillis() - start) + "ms");
+                            if (config.LogActions()) {
+                                Logger.success("Loaded " + messageCommands.size() + " commands in " +
+                                        (System.currentTimeMillis() - start) + "ms");
+                            }
                         } finally {
                             threadPool.shutdown();
                         }
@@ -133,14 +135,22 @@ public class GBF {
                 String handlerEventFolder = "org.bunnys.handler.events.defaults";
 
                 handlerEventsFuture = CompletableFuture
-                        .supplyAsync(() -> EventLoader.loadEvents(handlerEventFolder), threadPool)
+                        .supplyAsync(() -> {
+                            long scanStart = System.nanoTime();
+                            var events = EventLoader.loadEvents(handlerEventFolder);
+                            if (config.LogActions()) {
+                                Logger.info("Event class scanning took " + (System.nanoTime() - scanStart) / 1_000_000 + "ms");
+                                Logger.info("Loaded " + events.size() + " events from package: " + handlerEventFolder);
+                            }
+                            return events;
+                        }, threadPool)
                         .thenAcceptAsync(handlerEvents -> handlerEvents.forEach(event -> {
                             try {
                                 long eventStart = System.nanoTime();
                                 event.register(builder);
                                 long eventEnd = System.nanoTime();
 
-                                if ((eventEnd - eventStart) / 1_000_000 > 1)
+                                if (config.LogActions() && (eventEnd - eventStart) / 1_000_000 > 1)
                                     Logger.warning(
                                             "Slow event registration for " + event.getClass().getSimpleName() +
                                                     ": " + (eventEnd - eventStart) / 1_000_000 + "ms");
@@ -156,15 +166,24 @@ public class GBF {
             }
 
             if (this.loadEvents) {
+                String customEventFolder = this.config.EventFolder();
                 customEventsFuture = CompletableFuture
-                        .supplyAsync(() -> EventLoader.loadEvents(this.config.EventFolder()), threadPool)
+                        .supplyAsync(() -> {
+                            long scanStart = System.nanoTime();
+                            var events = EventLoader.loadEvents(customEventFolder);
+                            if (config.LogActions()) {
+                                Logger.info("Event class scanning took " + (System.nanoTime() - scanStart) / 1_000_000 + "ms");
+                                Logger.info("Loaded " + events.size() + " events from package: " + customEventFolder);
+                            }
+                            return events;
+                        }, threadPool)
                         .thenAcceptAsync(events -> events.forEach(event -> {
                             try {
                                 long eventStart = System.nanoTime();
                                 event.register(builder);
                                 long eventEnd = System.nanoTime();
 
-                                if ((eventEnd - eventStart) / 1_000_000 > 1)
+                                if (config.LogActions() && (eventEnd - eventStart) / 1_000_000 > 1)
                                     Logger.warning(
                                             "Slow event registration for " + event.getClass().getSimpleName() +
                                                     ": " + (eventEnd - eventStart) / 1_000_000 + "ms");
@@ -185,7 +204,7 @@ public class GBF {
                         if (throwable != null)
                             Logger.error("Event registration failed: " + throwable.getMessage() +
                                     "\nStack trace: " + Arrays.toString(throwable.getStackTrace()));
-                        else
+                        else if (config.LogActions())
                             Logger.success("Loaded " + eventCount.get() + " events in " +
                                     (System.currentTimeMillis() - start) + "ms");
                     }).join();
@@ -224,7 +243,9 @@ public class GBF {
                 }
             }
 
-            Logger.info("JDA initialization took " + (System.currentTimeMillis() - jdaStart) + "ms");
+            if (config.LogActions()) {
+                Logger.info("JDA initialization took " + (System.currentTimeMillis() - jdaStart) + "ms");
+            }
 
             CompletableFuture<Void> eventRegistration = CompletableFuture.runAsync(() -> {
                 RegisterEvents(GBF.jda);

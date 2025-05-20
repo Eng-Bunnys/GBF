@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class Utils {
     /**
@@ -22,5 +24,23 @@ public class Utils {
                     sentMessage.delete().queueAfter(Math.max(1, delay), TimeUnit.SECONDS)
             );
         }
+    }
+
+    /**
+     * Converts a string to title case, capitalizing the first letter of each word.
+     * Words are assumed to be separated by underscores or spaces.
+     * Example: "KICK_MEMBERS" -> "Kick Members"
+     *
+     * @param input The input string to convert
+     * @return The title-cased string
+     */
+    public static String toTitleCase(String input) {
+        if (input == null || input.isBlank())
+            return input;
+
+        return Arrays.stream(input.toLowerCase().split("[_\\s]+"))
+                .map(word -> word.isEmpty() ? word :
+                        Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                .collect(Collectors.joining(" "));
     }
 }
