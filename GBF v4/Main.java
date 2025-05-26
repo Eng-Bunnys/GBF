@@ -14,7 +14,9 @@ public class Main {
                 .IgnoreEvents(false)
                 .CommandsFolder("org.bunnys.commands")
                 .Intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))
-              //  .developers(List.of(UserSnowflake.fromId("333644367539470337")))
+                .Prefix("!!")
+                .Retries(5)
+                .TimeoutSeconds(30)
                 .Build();
 
         @SuppressWarnings("unused")

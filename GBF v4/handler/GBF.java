@@ -15,29 +15,31 @@ import org.bunnys.handler.utils.Logger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/***
- * GBF Handler v4
- * Most optimized version of the GBF Handler.
- * Optimized for performance with asynchronous loading and parallel processing.
- * Written by Bunnys
+/**
+ * GBF Handler v4.1
+ * Optimized Discord bot framework with asynchronous loading, parallel processing, and improved resource management.
+ * Written by Bunnys, optimized by Grok
  */
 public class GBF {
-    private final Config config;
-    private static GBF client;
-    private static JDA jda;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_RETRIES = 3;
+    public static final ForkJoinPool SHARED_POOL = new ForkJoinPool(
+            Math.max(4, Runtime.getRuntime().availableProcessors() * 2),
+            ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+            (pool, throwable) -> Logger.error("Uncaught exception in thread pool: " + throwable.getMessage()),
+            true
+    );
 
-    // Events
+    private final Config config;
+    private static volatile GBF client;
+    private static volatile JDA jda;
+
     private final boolean loadEvents;
     private final boolean loadHandlerEvents;
     private final AtomicInteger eventCount = new AtomicInteger(0);
-
-    // Commands
     private final ConcurrentHashMap<String, MessageCommand> messageCommands = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Set<String>> aliases = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> aliasToCommandMap = new ConcurrentHashMap<>();
@@ -46,251 +48,168 @@ public class GBF {
     private final long startTime = System.currentTimeMillis();
 
     public GBF(Config config) {
-        if (config == null)
-            throw new IllegalArgumentException("Config cannot be null");
-
+        if (config == null) throw new IllegalArgumentException("Config cannot be null");
         this.config = config;
 
-        if (this.config.token() == null || this.config.token().isBlank()) {
-            String token = this.getToken();
+        String token = config.token() != null && !config.token().isBlank()
+                ? config.token()
+                : EnvLoader.get("TOKEN");
+        if (token == null || token.isBlank()) {
+            throw new IllegalStateException("Bot token is not specified in config or environment.");
+        }
+        this.config.token(token);
 
-            if (token == null || token.isBlank())
-                throw new IllegalStateException("Bot token is not specified in config or environment.");
-
-            this.config.token(token);
+        synchronized (GBF.class) {
+            if (client != null) throw new IllegalStateException("GBF instance already exists");
+            client = this;
         }
 
-        GBF.client = this;
+        this.loadEvents = config.EventFolder() != null && !config.EventFolder().isBlank() && !config.IgnoreEvents();
+        this.loadHandlerEvents = !config.IgnoreEventsFromHandler();
 
-        this.loadEvents = this.config.EventFolder() != null
-                && !this.config.EventFolder().isBlank()
-                && !this.config.IgnoreEvents();
-
-        this.loadHandlerEvents = !this.config.IgnoreEventsFromHandler();
-
-        if (this.config.AutoLogin())
+        if (config.AutoLogin()) {
             try {
-                this.login();
-            } catch (InterruptedException err) {
-                Logger.error("Error logging in: " + err.getMessage() +
-                        "\nStack trace: " + Arrays.toString(err.getStackTrace()));
+                login();
+            } catch (InterruptedException e) {
+                Logger.error("Login interrupted: " + e.getMessage());
+                Thread.currentThread().interrupt();
             }
+        }
     }
 
-    private void RegisterCommandsAsync() {
+    private void registerCommandsAsync() {
         long start = System.currentTimeMillis();
-        try {
-            if (this.config.CommandsFolder() == null || this.config.CommandsFolder().isBlank()) {
-                Logger.warning("Commands folder not specified. Skipping command registration.");
-                commandsLoaded = true;
-                return;
-            }
-
-            ForkJoinPool threadPool = new ForkJoinPool(Math.max(2, Runtime.getRuntime().availableProcessors()));
-            CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return CommandLoader.loadCommands(this.config.CommandsFolder(), config);
-                        } catch (Exception e) {
-                            Logger.error("Failed to load commands: " + e.getMessage() +
-                                    "\nStack trace: " + Arrays.toString(e.getStackTrace()));
-                            throw e;
-                        }
-                    }, threadPool).orTimeout(10, TimeUnit.SECONDS)
-                    .whenComplete((commands, throwable) -> {
-                        try {
-                            if (throwable != null) {
-                                Logger.error("Command loading failed: " + throwable.getMessage() +
-                                        "\nStack trace: " + Arrays.toString(throwable.getStackTrace()));
-                                return;
-                            }
-                            messageCommands.putAll(commands);
-                            commandsLoaded = true;
-                            if (config.LogActions()) {
-                                Logger.success("Loaded " + messageCommands.size() + " commands in " +
-                                        (System.currentTimeMillis() - start) + "ms");
-                            }
-                        } finally {
-                            threadPool.shutdown();
-                        }
-                    }).exceptionally(throwable -> {
-                        Logger.error("Command loading timed out or failed: " + throwable.getMessage());
-                        return null;
-                    });
-        } catch (Exception e) {
-            Logger.error("Failed to initiate command registration: " + e.getMessage() +
-                    "\nStack trace: " + Arrays.toString(e.getStackTrace()));
+        if (config.CommandsFolder() == null || config.CommandsFolder().isBlank()) {
+            Logger.warning("Commands folder not specified. Skipping command registration.");
             commandsLoaded = true;
+            return;
         }
+
+        CompletableFuture.supplyAsync(() -> CommandLoader.loadCommands(config.CommandsFolder(), config), SHARED_POOL)
+                .orTimeout(config.getTimeoutSeconds(DEFAULT_TIMEOUT_SECONDS), TimeUnit.SECONDS)
+                .whenComplete((commands, throwable) -> {
+                    if (throwable != null) {
+                        Logger.error("Command loading failed: " + throwable.getMessage());
+                        commandsLoaded = true;
+                        return;
+                    }
+                    messageCommands.putAll(commands);
+                    commandsLoaded = true;
+                    if (config.LogActions()) {
+                        Logger.success("Loaded " + messageCommands.size() + " commands in " +
+                                (System.currentTimeMillis() - start) + "ms");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    Logger.error("Command loading timed out or failed: " + throwable.getMessage());
+                    commandsLoaded = true;
+                    return null;
+                });
     }
 
-    private void RegisterEvents(JDA builder) {
+    private void registerEvents(JDA builder) {
         long start = System.currentTimeMillis();
-        try {
-            ForkJoinPool threadPool = new ForkJoinPool(Math.max(2, Runtime.getRuntime().availableProcessors()));
+        CompletableFuture<Void> handlerEventsFuture = CompletableFuture.completedFuture(null);
+        CompletableFuture<Void> customEventsFuture = CompletableFuture.completedFuture(null);
 
-            CompletableFuture<Void> handlerEventsFuture = CompletableFuture.completedFuture(null);
-            CompletableFuture<Void> customEventsFuture = CompletableFuture.completedFuture(null);
-
-            if (this.loadHandlerEvents) {
-                String handlerEventFolder = "org.bunnys.handler.events.defaults";
-
-                handlerEventsFuture = CompletableFuture
-                        .supplyAsync(() -> {
-                            long scanStart = System.nanoTime();
-                            var events = EventLoader.loadEvents(handlerEventFolder);
-                            if (config.LogActions()) {
-                                Logger.info("Event class scanning took " + (System.nanoTime() - scanStart) / 1_000_000 + "ms");
-                                Logger.info("Loaded " + events.size() + " events from package: " + handlerEventFolder);
-                            }
-                            return events;
-                        }, threadPool)
-                        .thenAcceptAsync(handlerEvents -> handlerEvents.forEach(event -> {
-                            try {
-                                long eventStart = System.nanoTime();
-                                event.register(builder);
-                                long eventEnd = System.nanoTime();
-
-                                if (config.LogActions() && (eventEnd - eventStart) / 1_000_000 > 1)
-                                    Logger.warning(
-                                            "Slow event registration for " + event.getClass().getSimpleName() +
-                                                    ": " + (eventEnd - eventStart) / 1_000_000 + "ms");
-
-                                if (this.config.LogActions())
-                                    this.eventCount.incrementAndGet();
-                            } catch (Exception e) {
-                                Logger.error("Failed to register handler event " + event.getClass().getName() + ": "
-                                        +
-                                        e.getMessage() + "\nStack trace: " + Arrays.toString(e.getStackTrace()));
-                            }
-                        }), threadPool);
-            }
-
-            if (this.loadEvents) {
-                String customEventFolder = this.config.EventFolder();
-                customEventsFuture = CompletableFuture
-                        .supplyAsync(() -> {
-                            long scanStart = System.nanoTime();
-                            var events = EventLoader.loadEvents(customEventFolder);
-                            if (config.LogActions()) {
-                                Logger.info("Event class scanning took " + (System.nanoTime() - scanStart) / 1_000_000 + "ms");
-                                Logger.info("Loaded " + events.size() + " events from package: " + customEventFolder);
-                            }
-                            return events;
-                        }, threadPool)
-                        .thenAcceptAsync(events -> events.forEach(event -> {
-                            try {
-                                long eventStart = System.nanoTime();
-                                event.register(builder);
-                                long eventEnd = System.nanoTime();
-
-                                if (config.LogActions() && (eventEnd - eventStart) / 1_000_000 > 1)
-                                    Logger.warning(
-                                            "Slow event registration for " + event.getClass().getSimpleName() +
-                                                    ": " + (eventEnd - eventStart) / 1_000_000 + "ms");
-
-                                if (this.config.LogActions())
-                                    this.eventCount.incrementAndGet();
-                            } catch (Exception e) {
-                                Logger.error("Failed to register custom event " + event.getClass().getName() + ": "
-                                        +
-                                        e.getMessage() + "\nStack trace: " + Arrays.toString(e.getStackTrace()));
-                            }
-                        }), threadPool);
-            }
-
-            CompletableFuture.allOf(handlerEventsFuture, customEventsFuture)
-                    .orTimeout(10, TimeUnit.SECONDS)
-                    .whenComplete((result, throwable) -> {
-                        if (throwable != null)
-                            Logger.error("Event registration failed: " + throwable.getMessage() +
-                                    "\nStack trace: " + Arrays.toString(throwable.getStackTrace()));
-                        else if (config.LogActions())
-                            Logger.success("Loaded " + eventCount.get() + " events in " +
-                                    (System.currentTimeMillis() - start) + "ms");
-                    }).join();
-
-        } catch (Exception e) {
-            Logger.error("Error loading events: " + e.getMessage() +
-                    "\nStack trace: " + Arrays.toString(e.getStackTrace()));
+        if (loadHandlerEvents) {
+            handlerEventsFuture = loadAndRegisterEvents("org.bunnys.handler.events.defaults", builder);
         }
+        if (loadEvents) {
+            customEventsFuture = loadAndRegisterEvents(config.EventFolder(), builder);
+        }
+
+        CompletableFuture.allOf(handlerEventsFuture, customEventsFuture)
+                .orTimeout(config.getTimeoutSeconds(DEFAULT_TIMEOUT_SECONDS), TimeUnit.SECONDS)
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        Logger.error("Event registration failed: " + throwable.getMessage());
+                    } else if (config.LogActions()) {
+                        Logger.success("Loaded " + eventCount.get() + " events in " +
+                                (System.currentTimeMillis() - start) + "ms");
+                    }
+                })
+                .join();
+    }
+
+    private CompletableFuture<Void> loadAndRegisterEvents(String packageName, JDA builder) {
+        return CompletableFuture.supplyAsync(() -> EventLoader.loadEvents(packageName), SHARED_POOL)
+                .thenAcceptAsync(events -> events.forEach(event -> {
+                    try {
+                        long eventStart = System.nanoTime();
+                        event.register(builder);
+                        long eventEnd = System.nanoTime();
+                        if (config.LogActions() && (eventEnd - eventStart) / 1_000_000 > 1) {
+                            Logger.warning("Slow event registration for " + event.getClass().getSimpleName() +
+                                    ": " + (eventEnd - eventStart) / 1_000_000 + "ms");
+                        }
+                        eventCount.incrementAndGet();
+                    } catch (Exception e) {
+                        Logger.error("Failed to register event " + event.getClass().getName() + ": " + e.getMessage());
+                    }
+                }), SHARED_POOL);
     }
 
     public void login() throws InterruptedException {
         long jdaStart = System.currentTimeMillis();
-        try {
-            List<GatewayIntent> intents = this.config.intents();
+        List<GatewayIntent> intents = config.intents().isEmpty()
+                ? Arrays.asList(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
+                : config.intents();
 
-            if (intents.isEmpty()) {
-                Logger.warning("No GatewayIntents specified. Defaulting to basic intents.");
-                intents = Arrays.asList(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES);
-            }
-
-            int retries = 3;
-            for (int i = 0; i < retries; i++) {
-                try {
-                    GBF.jda = JDABuilder.create(this.config.token(), intents)
-                            .setMemberCachePolicy(MemberCachePolicy.DEFAULT)
-                            .setChunkingFilter(ChunkingFilter.NONE)
-                            .build();
-                    break;
-                } catch (Exception e) {
-                    if (i == retries - 1) {
-                        throw new RuntimeException("Failed to initialize JDA after " + retries + " attempts", e);
-                    }
-                    Logger.warning("JDA initialization failed, retrying (" + (i + 1) + "/" + retries + "): " +
-                            e.getMessage());
-                    Thread.sleep(1000); // Wait 1 second before retrying
+        for (int i = 0; i < config.getRetries(DEFAULT_RETRIES); i++) {
+            try {
+                jda = JDABuilder.create(config.token(), intents)
+                        .setMemberCachePolicy(MemberCachePolicy.DEFAULT)
+                        .setChunkingFilter(ChunkingFilter.NONE)
+                        .build();
+                break;
+            } catch (Exception e) {
+                if (i == config.getRetries(DEFAULT_RETRIES) - 1) {
+                    throw new RuntimeException("Failed to initialize JDA after " + config.getRetries(DEFAULT_RETRIES) + " attempts", e);
                 }
+                Logger.warning("JDA initialization failed, retrying (" + (i + 1) + "/" + config.getRetries(DEFAULT_RETRIES) + "): " + e.getMessage());
+                Thread.sleep(1000);
             }
-
-            if (config.LogActions()) {
-                Logger.info("JDA initialization took " + (System.currentTimeMillis() - jdaStart) + "ms");
-            }
-
-            CompletableFuture<Void> eventRegistration = CompletableFuture.runAsync(() -> {
-                RegisterEvents(GBF.jda);
-                RegisterCommandsAsync();
-            });
-
-            CompletableFuture<Void> botReady = CompletableFuture.runAsync(() -> {
-                try {
-                    GBF.jda.awaitReady();
-                    if (this.config.LogActions()) {
-                        long endTime = System.currentTimeMillis();
-                        Logger.success("GBF Handler v4 is ready! Took " + (endTime - this.startTime) + "ms to load");
-                    }
-                } catch (InterruptedException e) {
-                    Logger.error("Error waiting for bot to be ready: " + e.getMessage() +
-                            "\nStack trace: " + Arrays.toString(e.getStackTrace()));
-                }
-            });
-
-            CompletableFuture.allOf(eventRegistration, botReady).join();
-        } catch (Exception err) {
-            Logger.error("Error logging in: " + err.getMessage() +
-                    "\nStack trace: " + Arrays.toString(err.getStackTrace()));
-            throw new RuntimeException("Login failed", err);
         }
+
+        if (config.LogActions()) {
+            Logger.info("JDA initialization took " + (System.currentTimeMillis() - jdaStart) + "ms");
+        }
+
+        CompletableFuture<Void> eventRegistration = CompletableFuture.runAsync(() -> {
+            registerEvents(jda);
+            registerCommandsAsync();
+        }, SHARED_POOL);
+
+        CompletableFuture<Void> botReady = CompletableFuture.runAsync(() -> {
+            try {
+                jda.awaitReady();
+                if (config.LogActions()) {
+                    Logger.success("GBF Handler v4.1 is ready! Took " + (System.currentTimeMillis() - startTime) + "ms to load");
+                }
+            } catch (InterruptedException e) {
+                Logger.error("Error waiting for bot to be ready: " + e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+        }, SHARED_POOL);
+
+        CompletableFuture.allOf(eventRegistration, botReady).join();
     }
 
     public static GBF getClient() {
-        return GBF.client;
+        return client;
     }
 
     public Config getConfig() {
-        return this.config;
+        return config;
     }
 
     public static JDA getJDA() {
-        return GBF.jda;
+        return jda;
     }
 
     public static String getHandlerVersion() {
-        return "4.0.0";
-    }
-
-    private String getToken() {
-        return EnvLoader.get("TOKEN");
+        return "4.1.0";
     }
 
     public MessageCommand getMessageCommand(String name) {
@@ -299,19 +218,18 @@ public class GBF {
             return null;
         }
         if (!commandsLoaded) {
-            Logger.warning("Commands not yet loaded. Blocking until ready (timeout 10s).");
             long startWait = System.currentTimeMillis();
-            while (!commandsLoaded && (System.currentTimeMillis() - startWait) < 10_000) {
+            while (!commandsLoaded && (System.currentTimeMillis() - startWait) < config.getTimeoutSeconds(DEFAULT_TIMEOUT_SECONDS) * 1000) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    Logger.error("Interrupted while waiting for commands to load: " + e.getMessage() +
-                            "\nStack trace: " + Arrays.toString(e.getStackTrace()));
+                    Logger.error("Interrupted while waiting for commands to load: " + e.getMessage());
                     Thread.currentThread().interrupt();
+                    return null;
                 }
             }
             if (!commandsLoaded) {
-                Logger.error("Command loading timed out after 10s.");
+                Logger.error("Command loading timed out after " + config.getTimeoutSeconds(DEFAULT_TIMEOUT_SECONDS) + "s.");
                 return null;
             }
         }
@@ -319,11 +237,8 @@ public class GBF {
     }
 
     public void setAlias(String commandName, String[] aliases) {
-        if (commandName == null || commandName.isBlank()) {
-            throw new IllegalArgumentException("Command name cannot be null or blank");
-        }
-        if (aliases == null) {
-            throw new IllegalArgumentException("Aliases cannot be null");
+        if (commandName == null || commandName.isBlank() || aliases == null) {
+            throw new IllegalArgumentException("Command name and aliases cannot be null or blank");
         }
         if (this.aliases.containsKey(commandName)) {
             throw new IllegalStateException("Command name already exists: " + commandName);
@@ -331,10 +246,9 @@ public class GBF {
 
         Set<String> aliasSet = Set.copyOf(Arrays.asList(aliases));
         this.aliases.put(commandName, aliasSet);
-
         for (String alias : aliasSet) {
             if (alias == null || alias.isBlank()) {
-                Logger.warning("Skipping invalid alias (null or blank) for command: " + commandName);
+                Logger.warning("Skipping invalid alias for command: " + commandName);
                 continue;
             }
             String existing = aliasToCommandMap.putIfAbsent(alias, commandName);
@@ -346,10 +260,21 @@ public class GBF {
     }
 
     public String resolveCommandFromAlias(String alias) {
-        if (alias == null || alias.isBlank()) {
-            Logger.warning("Alias cannot be null or blank for resolution.");
-            return null;
+        return alias == null || alias.isBlank() ? null : aliasToCommandMap.getOrDefault(alias, alias);
+    }
+
+    public static void Shutdown() {
+        if (jda != null) {
+            jda.shutdownNow();
         }
-        return aliasToCommandMap.getOrDefault(alias, alias);
+        SHARED_POOL.shutdown();
+        try {
+            if (!SHARED_POOL.awaitTermination(5, TimeUnit.SECONDS)) {
+                SHARED_POOL.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Logger.error("Interrupted during thread pool shutdown: " + e.getMessage());
+            Thread.currentThread().interrupt();
+        }
     }
 }
