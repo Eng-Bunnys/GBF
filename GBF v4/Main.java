@@ -10,7 +10,7 @@ public class Main {
         Config config = new Config.Builder()
                 .Version("1.0.0")
                 .AutoLogin(true)
-                .LogActions(false)
+                .LogActions(true)
                 .IgnoreEvents(false)
                 .CommandsFolder("org.bunnys.commands")
                 .Intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))

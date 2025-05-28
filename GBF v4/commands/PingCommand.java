@@ -17,8 +17,8 @@ public class PingCommand extends MessageCommand {
                 .setAliases("p", "latency")
                 .setDeveloperOnly(false)
                 .setCooldown(5)
-                .setUserPermissions(Permission.ADMINISTRATOR)
-                .setBotPermissions(Permission.ADMINISTRATOR)
+               // .setUserPermissions(Permission.ADMINISTRATOR)
+               // .setBotPermissions(Permission.ADMINISTRATOR)
                 .setNSFW(false);
     }
 

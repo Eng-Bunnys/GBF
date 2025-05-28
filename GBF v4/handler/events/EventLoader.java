@@ -9,10 +9,10 @@ import org.bunnys.handler.utils.Logger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 
 public class EventLoader {
-    private static final ForkJoinPool SHARED_POOL = GBF.SHARED_POOL;
+    private static final Executor SHARED_POOL = GBF.SHARED_POOL;
 
     public static List<Event> loadEvents(String packageName) {
         if (packageName == null || packageName.isBlank()) {

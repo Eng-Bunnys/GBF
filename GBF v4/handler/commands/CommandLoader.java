@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 
 public class CommandLoader {
-    private static final ForkJoinPool SHARED_POOL = GBF.SHARED_POOL;
+    private static final Executor SHARED_POOL = GBF.SHARED_POOL;
 
     public static ConcurrentHashMap<String, MessageCommand> loadCommands(String packageName, Config config) {
         if (packageName == null || packageName.isBlank()) {
