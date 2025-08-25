@@ -19,6 +19,7 @@
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
         <classgraph.version>4.8.177</classgraph.version>
+        <figlet.version>0.0.9</figlet.version>
     </properties>
 
     <dependencies>
@@ -67,6 +68,12 @@
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
             <version>${classgraph.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.lalyos</groupId>
+            <artifactId>jfiglet</artifactId>
+            <version>${figlet.version}</version>
         </dependency>
 
     </dependencies>

@@ -1,16 +1,20 @@
 package org.bunnys.handler;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.bunnys.handler.events.defaults.DefaultEvents;
 import org.bunnys.handler.utils.EnvLoader;
 import org.bunnys.handler.utils.Logger;
 
 import java.util.EnumSet;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class Config {
-
     /** The bot's version */
     private final String version;
+
+    /** Whether to automatically login on JBF init */
+    private final boolean autoLogin;
 
     /** Show debug logs or not */
     private final boolean debug;
@@ -20,6 +24,9 @@ public class Config {
 
     /** Package to scan for Event handlers (e.g., "org.bunnys.events") */
     private final String eventsPackage;
+
+    /** The DefaultEvents to disable */
+    private final EnumSet<DefaultEvents> disabledDefaults;
 
     /** The GatewayIntents/Intents to enable */
     private final EnumSet<GatewayIntent> intents;
@@ -31,8 +38,12 @@ public class Config {
         this.token = this.resolveToken(builder.token);
         this.version = Objects.requireNonNull(builder.version, "Version must not be null");
         this.eventsPackage = builder.eventsPackage;
+        this.disabledDefaults = builder.disabledDefaultEvents != null
+                ? EnumSet.copyOf(builder.disabledDefaultEvents)
+                : EnumSet.noneOf(DefaultEvents.class);
         this.shardCount = builder.shardCount;
         this.debug = builder.debug;
+        this.autoLogin = builder.autoLogin;
         this.intents = builder.intents != null
                 ? EnumSet.copyOf(builder.intents)
                 : EnumSet.noneOf(GatewayIntent.class);
@@ -59,10 +70,20 @@ public class Config {
         return this.eventsPackage;
     }
 
+    public EnumSet<DefaultEvents> disabledDefaults() {
+        return this.disabledDefaults != null
+                ? EnumSet.copyOf(this.disabledDefaults)
+                : EnumSet.noneOf(DefaultEvents.class);
+    }
+
     public EnumSet<GatewayIntent> intents() {
         return intents.isEmpty()
                 ? EnumSet.noneOf(GatewayIntent.class)
                 : EnumSet.copyOf(intents);
+    }
+
+    public boolean autoLogin() {
+        return this.autoLogin;
     }
 
     /** Package-private: only JBF should call this at runtime */
@@ -77,12 +98,14 @@ public class Config {
     private String resolveToken(String token) {
         // Manual token
         if (token != null && !token.isBlank()) {
-            Logger.info("Using manually provided bot token");
+            if (this.debug)
+               Logger.info("Using manually provided bot token");
             return token;
         }
 
         // Else, try .env
-        Logger.info("No manual token provided, attempting to load from .env under \"TOKEN\"");
+        if (this.debug)
+           Logger.info("No manual token provided, attempting to load from .env under \"TOKEN\"");
         String envToken = EnvLoader.get("TOKEN");
 
         if (envToken != null && !envToken.isBlank()) {
@@ -99,12 +122,15 @@ public class Config {
     }
 
     // ---- Builder ----
+    @SuppressWarnings("unused")
     public static final class Builder {
         private String token;
         private String version;
-        private boolean debug;
+        private boolean autoLogin = true;
+        private boolean debug = false;
         private int shardCount = 0; // 0 = auto-sharding
         private String eventsPackage;
+        private EnumSet<DefaultEvents> disabledDefaultEvents = EnumSet.noneOf(DefaultEvents.class);
         private EnumSet<GatewayIntent> intents = EnumSet.noneOf(GatewayIntent.class);
 
         public Builder version(String version) {
@@ -119,6 +145,11 @@ public class Config {
             return this;
         }
 
+        public Builder autoLogin(boolean autoLogin) {
+            this.autoLogin = autoLogin;
+            return this;
+        }
+
         public Builder token(String token) {
             this.token = token; // fallback handled
             return this;
@@ -127,6 +158,13 @@ public class Config {
         /** Example: "org.bunnys.events" */
         public Builder eventsPackage(String eventsPackage) {
             this.eventsPackage = eventsPackage;
+            return this;
+        }
+
+        public Builder disableDefaultEvents(EnumSet<DefaultEvents> events) {
+            this.disabledDefaultEvents = events != null
+                    ? EnumSet.copyOf(events)
+                    : EnumSet.noneOf(DefaultEvents.class);
             return this;
         }
 
