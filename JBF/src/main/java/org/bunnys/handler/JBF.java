@@ -51,7 +51,7 @@ public class JBF {
             Logger.debug("Initializing ShardManager...");
 
             DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(token);
-            configureShards(builder);
+            this.configureShards(builder);
 
             this.shardManager = builder.build();
 
@@ -70,11 +70,16 @@ public class JBF {
     }
 
     private void configureShards(DefaultShardManagerBuilder builder) {
-        if (config.shardCount() > 0) {
-            builder.setShardsTotal(config.shardCount());
-            Logger.debug("Using manual shard count: " + config.shardCount());
+        if (this.config.shardCount() > 0) {
+            builder.setShardsTotal(this.config.shardCount());
+            Logger.debug("Using manual shard count: " + this.config.shardCount());
         } else
             Logger.debug("Using auto-sharding (JDA determines shard count)");
+
+        if (!this.config.intents().isEmpty())
+            builder.enableIntents(this.config.intents());
+
+        Logger.debug("Enabled " + config.intents().size() + " gateway intents.");
 
         // place for gateway intents, member caching, session controllers, etc.
         // e.g. builder.enableIntents(GatewayIntent.GUILD_MESSAGES, ...);

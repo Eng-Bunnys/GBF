@@ -1,8 +1,12 @@
 package org.bunnys.handler;
 
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.bunnys.handler.utils.EnvLoader;
 import org.bunnys.handler.utils.Logger;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 
 public class Config {
@@ -19,6 +23,9 @@ public class Config {
     /** Package to scan for Event handlers (e.g., "org.bunnys.events") */
     private final String eventsPackage;
 
+    /** The GatewayIntents/Intents to enable */
+    private final EnumSet<GatewayIntent> intents;
+
     /** The bot token, resolved from .env or provided manually */
     private volatile String token;
 
@@ -28,14 +35,35 @@ public class Config {
         this.eventsPackage = builder.eventsPackage;
         this.shardCount = builder.shardCount;
         this.debug = builder.debug;
+        this.intents = builder.intents != null
+                ? EnumSet.copyOf(builder.intents)
+                : EnumSet.noneOf(GatewayIntent.class);
     }
 
     // Getters
-    public String version()      { return this.version; }
-    public boolean debug()       { return this.debug; }
-    public int shardCount()      { return this.shardCount; }
-    public String token()        { return this.token; }
-    public String eventsPackage(){ return this.eventsPackage; }
+    public String version() {
+        return this.version;
+    }
+
+    public boolean debug() {
+        return this.debug;
+    }
+
+    public int shardCount() {
+        return this.shardCount;
+    }
+
+    public String token() {
+        return this.token;
+    }
+
+    public String eventsPackage() {
+        return this.eventsPackage;
+    }
+
+    public EnumSet<GatewayIntent> intents() {
+        return this.intents;
+    }
 
     /** Package-private: only JBF should call this at runtime */
     void token(String token) {
@@ -66,7 +94,9 @@ public class Config {
         throw new IllegalStateException("No bot token provided and .env does not contain a valid TOKEN key");
     }
 
-    public static Builder builder() { return new Builder(); }
+    public static Builder builder() {
+        return new Builder();
+    }
 
     // ---- Builder ----
     public static final class Builder {
@@ -75,6 +105,7 @@ public class Config {
         private boolean debug;
         private int shardCount = 0; // 0 = auto-sharding
         private String eventsPackage;
+        private EnumSet<GatewayIntent> intents = EnumSet.noneOf(GatewayIntent.class);
 
         public Builder version(String version) {
             if (version == null || version.isBlank())
@@ -106,7 +137,16 @@ public class Config {
             return this;
         }
 
-        public Config build() { return new Config(this); }
+        public Builder intents(EnumSet<GatewayIntent> intents) {
+            this.intents = intents != null
+                    ? EnumSet.copyOf(intents)
+                    : EnumSet.noneOf(GatewayIntent.class);
+            return this;
+        }
+
+        public Config build() {
+            return new Config(this);
+        }
     }
 
     @Override
