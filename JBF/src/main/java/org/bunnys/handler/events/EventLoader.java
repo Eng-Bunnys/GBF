@@ -2,14 +2,20 @@
 package org.bunnys.handler.events;
 
 import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.Logger;
-
-import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+
+/*
+* Bunny Comment:
+* CopyOnWriteArrayList copies on every write, great for read-heavy, write-rare, terrible for bulk adds lol
+* event count will be small; just stream and collect also parallelStream() rarely helps here and can hurt
+* warmup
+* You also gain determinism (sorted by simple name), which makes debugging reproducible
+* */
 
 /**
  * Dynamically loads event classes from a given package,
@@ -26,41 +32,34 @@ public final class EventLoader {
     }
 
     public List<Event> loadEvents() {
-        Logger.debug("[EventLoader] Scanning package: " + eventPackage);
-
-        // Thread-safe for parallel stream writes
-        CopyOnWriteArrayList<Event> loadedEvents = new CopyOnWriteArrayList<>();
+        Logger.debug(() -> "[EventLoader] Scanning package: " + eventPackage);
 
         try (ScanResult scanResult = new ClassGraph()
                 .enableClassInfo()
                 .acceptPackages(eventPackage)
                 .scan()) {
 
-            // Parallelize discovery + construction
-            scanResult.getClassesImplementing(Event.class.getName())
-                    .parallelStream()
-                    .forEach(classInfo -> {
+            var loaded = scanResult.getClassesImplementing(Event.class.getName())
+                    .stream() // sequential: predictable, cheaper
+                    .sorted(java.util.Comparator.comparing(ClassInfo::getSimpleName))
+                    .map(ci -> {
                         try {
-                            Class<?> clazz = classInfo.loadClass();
-
-                            // STRICT: require public ctor(JBF)
-                            Constructor<?> ctor = clazz.getConstructor(JBF.class);
-                            Event event = (Event) ctor.newInstance(client);
-
-                            loadedEvents.add(event);
-                            Logger.debug("[EventLoader] Loaded event: " + clazz.getSimpleName());
+                            Class<?> clazz = ci.loadClass();
+                            var ctor = clazz.getDeclaredConstructor(JBF.class); // require public(JBF)
+                            return (Event) ctor.newInstance(client);
                         } catch (NoSuchMethodException e) {
-                            Logger.error("[EventLoader] Missing required constructor (JBF) in "
-                                            + classInfo.getName(),
-                                    e);
+                            Logger.error("[EventLoader] Missing ctor(JBF) in " + ci.getName(), e);
+                            return null;
                         } catch (Exception e) {
-                            Logger.error("[EventLoader] Failed to load event: "
-                                    + classInfo.getName(), e);
+                            Logger.error("[EventLoader] Failed to load " + ci.getName(), e);
+                            return null;
                         }
-                    });
-        }
+                    })
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
 
-        Logger.debug("[EventLoader] Total events loaded: " + loadedEvents.size());
-        return List.copyOf(loadedEvents); // immutable snapshot
+            Logger.debug(() -> "[EventLoader] Total events loaded: " + loaded.size());
+            return loaded;
+        }
     }
 }

@@ -42,9 +42,12 @@ public class Logger {
     }
 
     // --- Debug only (JBF internal logs) ---
-    public static void debug(String message) {
+    // Old function paid the concat cost even if it won't print, supplier overload was added,
+    // and it can be used for anything non-trivial
+    // this removes a bunch of tiny heap churn on hot paths
+    public static void debug(java.util.function.Supplier<String> msg) {
         if (debugDisabled()) return;
-        System.out.println(ConsoleColors.PURPLE + "[DEBUG] " + message + ConsoleColors.RESET);
+        System.out.println(ConsoleColors.PURPLE + "[DEBUG] " + msg.get() + ConsoleColors.RESET);
     }
 
     public static void debugStackTrace(String message) {

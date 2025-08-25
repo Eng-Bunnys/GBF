@@ -4,9 +4,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.bunnys.handler.utils.EnvLoader;
 import org.bunnys.handler.utils.Logger;
 
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Objects;
 
 public class Config {
@@ -62,7 +60,9 @@ public class Config {
     }
 
     public EnumSet<GatewayIntent> intents() {
-        return this.intents;
+        return intents.isEmpty()
+                ? EnumSet.noneOf(GatewayIntent.class)
+                : EnumSet.copyOf(intents);
     }
 
     /** Package-private: only JBF should call this at runtime */

@@ -8,6 +8,7 @@ import org.bunnys.handler.utils.Logger;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class EventRegistry {
     private final ConcurrentHashMap<String, Event> events = new ConcurrentHashMap<>();
     private final Config config;
+    private final Set<String> globalListeners = ConcurrentHashMap.newKeySet();
 
     public EventRegistry(JBF client) {
         this.config = client.getConfig();
@@ -27,8 +29,8 @@ public final class EventRegistry {
         Event previous = this.events.put(eventName, event);
         if (previous != null)
             Logger.warning("[EventRegistry] Overriding existing event: " + eventName);
-         else
-            Logger.debug("[EventRegistry] Added event: " + eventName);
+        else
+            Logger.debug(() -> "[EventRegistry] Added event: " + eventName);
     }
 
     public boolean isEmpty() {
@@ -43,51 +45,59 @@ public final class EventRegistry {
         return List.copyOf(this.events.values());
     }
 
+    /*
+     * Bunny Comment:
+     * Registering listeners is cheap; fork-join overhead + log interleaving isn't,
+     * so I did it sequentially unless
+     * you have many shards and many non-listener events
+     * If you later measure a benefit, add a threshold to switch to parallel when
+     * shards.size() * size() is huge
+     */
+
     /**
      * Registers all events on the provided ShardManager
      * - If an event is also a JDA EventListener, register globally once
      * - Otherwise, call event.register(...) per shard (parallelized)
      */
     public void registerAll(ShardManager shardManager) {
-        int shardCount = shardManager.getShards().size();
-        if (this.config.debug())
-          Logger.info("[EventRegistry] Registering "
-                + size() + " event" + (size() > 1 ? "s" : "")
-                + " across " + shardCount + " shard" + (shardCount > 1 ? "s" : "")
-                + "...");
+        final var shards = List.copyOf(shardManager.getShards());
+        final boolean dbg = config.debug();
 
-        // Parallelize event-level work
-        snapshot().parallelStream().forEach(event -> {
+        if (dbg) {
+            Logger.info("[EventRegistry] Registering " + size() + " event"
+                    + (size() > 1 ? "s" : "") + " across " + shards.size() + " shard"
+                    + (shards.size() > 1 ? "s" : "") + "...");
+        }
+
+        for (Event event : snapshot()) {
             try {
                 if (event instanceof net.dv8tion.jda.api.hooks.EventListener listener) {
-                    // Global listener applies to current + future shards
-                    shardManager.addEventListener(listener);
-                    if (this.config.debug())
-                        Logger.info("[EventRegistry] Registered globally: " + event.getClass().getName());
+                    if (this.globalListeners.add(event.getClass().getName())) {
+                        shardManager.addEventListener(listener);
+                        if (dbg)
+                            Logger.info("[EventRegistry] Registered globally: " + event.getClass().getName());
+                    }
                 } else {
-                    // Register per shard in parallel to avoid bottlenecks on large shard counts
-                    shardManager.getShards().parallelStream().forEach(jda -> {
+                    for (var jda : shards) {
                         try {
                             event.register(jda);
-                           if (this.config.debug())
-                            Logger.debug("[EventRegistry] Registered " + event.getClass().getName()
-                                    + " on shard " + jda.getShardInfo());
+                            if (dbg)
+                                Logger.debug(() -> "[EventRegistry] Registered " + event.getClass().getName()
+                                        + " on shard " + jda.getShardInfo());
                         } catch (Exception e) {
-                            if (this.config.debug())
-                               Logger.error("[EventRegistry] Failed to register "
-                                       + event.getClass().getName()
-                                    + " on shard " + jda.getShardInfo(), e);
+                            if (dbg)
+                                Logger.error("[EventRegistry] Failed to register "
+                                        + event.getClass().getName() + " on shard " + jda.getShardInfo(), e);
                         }
-                    });
+                    }
                 }
             } catch (Exception e) {
                 Logger.error("[EventRegistry] Registration error for " + event.getClass().getName(), e);
             }
-        });
+        }
 
-        if (this.config.debug())
-           Logger.success("[EventRegistry] Registration complete");
-
-        Logger.debug("[EventRegistry] Final event count: " + size());
+        if (dbg)
+            Logger.success("[EventRegistry] Registration complete");
+        Logger.debug(() -> "[EventRegistry] Final event count: " + size());
     }
 }

@@ -1,12 +1,17 @@
 package org.bunnys.handler;
 
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.ChunkingFilter;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.bunnys.handler.events.EventLoader;
 import org.bunnys.handler.events.EventRegistry;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.Logger;
 
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -40,15 +45,14 @@ public class JBF {
     }
 
     private void logStartupInfo() {
-        Logger.debug("JBF Handler is starting...");
-        Logger.debug("Shard Mode: " + (config.shardCount() > 0
+        Logger.debug(() -> "JBF Handler is starting... Shard Mode: " + (config.shardCount() > 0
                 ? "Manual (" + config.shardCount() + (config.shardCount() > 1 ? " shards)" : " shard)")
                 : "Auto-sharding"));
     }
 
     private void initShardManager(String token) {
         try {
-            Logger.debug("Initializing ShardManager...");
+            Logger.debug(() -> "Initializing ShardManager...");
 
             DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(token);
             this.configureShards(builder);
@@ -72,17 +76,50 @@ public class JBF {
     private void configureShards(DefaultShardManagerBuilder builder) {
         if (this.config.shardCount() > 0) {
             builder.setShardsTotal(this.config.shardCount());
-            Logger.debug("Using manual shard count: " + this.config.shardCount());
-        } else
-            Logger.debug("Using auto-sharding (JDA determines shard count)");
+            Logger.debug(() -> "Using manual shard count: " + this.config.shardCount());
+        } else {
+            Logger.debug(() -> "Using auto-sharding (JDA determines shard count)");
+        }
 
-        if (!this.config.intents().isEmpty())
+        // Intents
+        if (!this.config.intents().isEmpty()) {
             builder.enableIntents(this.config.intents());
+            Logger.debug(() -> "Enabled " + this.config.intents().size() + " gateway intents: " + this.config.intents());
+        }
 
-        Logger.debug("Enabled " + config.intents().size() + " gateway intents.");
+        // Skip chunking & member cache unless GUILD_MEMBERS is enabled
+        if (!this.config.intents().contains(GatewayIntent.GUILD_MEMBERS)) {
+            builder.setChunkingFilter(ChunkingFilter.NONE);
+            builder.setMemberCachePolicy(MemberCachePolicy.NONE);
+            Logger.debug(() -> "GUILD_MEMBERS intent not enabled. Disabling chunking and member cache.");
+        }
 
-        // place for gateway intents, member caching, session controllers, etc.
-        // e.g. builder.enableIntents(GatewayIntent.GUILD_MESSAGES, ...);
+        // Disable unnecessary heavy caches
+        EnumSet<CacheFlag> toDisable = EnumSet.of(CacheFlag.EMOJI,
+                CacheFlag.STICKER,
+                CacheFlag.SCHEDULED_EVENTS);
+
+        Logger.debug(() -> "Initializing caches to disable: " + toDisable);
+
+        if (!this.config.intents().contains(GatewayIntent.GUILD_PRESENCES)) {
+            toDisable.add(CacheFlag.ACTIVITY);
+            Logger.debug(() -> "GUILD_PRESENCES intent not enabled. Adding ACTIVITY to caches to disable.");
+        }
+
+        if (!this.config.intents().contains(GatewayIntent.GUILD_VOICE_STATES)) {
+            toDisable.add(CacheFlag.VOICE_STATE);
+            Logger.debug(() -> "GUILD_VOICE_STATES intent not enabled. Adding VOICE_STATE to caches to disable.");
+        }
+
+        if (!toDisable.isEmpty()) {
+            builder.disableCache(toDisable);
+            Logger.debug(() -> "Final caches to disable: " + toDisable);
+        }
+
+        builder.setEventManagerProvider(shardId -> {
+            Logger.debug(() -> "Setting up InterfacedEventManager for shard " + shardId + ".");
+            return new net.dv8tion.jda.api.hooks.InterfacedEventManager();
+        });
     }
 
     private void loadAndRegisterEvents(String basePackage) {
@@ -101,7 +138,7 @@ public class JBF {
         events.forEach(registry::add);
 
         registry.registerAll(this.shardManager);
-        Logger.debug("[JBF] Loaded " + registry.size() + " event(s).");
+        Logger.debug(() -> "[JBF] Loaded " + registry.size() + " event" + (registry.size() == 1 ? "" : "s") + ".");
     }
 
     /* -------------------- Public API -------------------- */
@@ -115,6 +152,11 @@ public class JBF {
         this.loadAndRegisterEvents(this.config.eventsPackage());
     }
 
+    /**
+     * Gracefully shuts down the ShardManager and releases resources
+     * After calling this method, the JBF instance should not be used again
+     * If you reconnect too quickly, shards may overlap
+     */
     public void shutdown() {
         this.shutdownShardManager("ShardManager shutdown complete.");
     }
@@ -131,7 +173,7 @@ public class JBF {
                 this.shardManager = null;
             }
         } else
-            Logger.debug("Shutdown requested but ShardManager was null.");
+            Logger.debug(() -> "Shutdown requested but ShardManager was null.");
     }
 
     /* -------------------- Getters -------------------- */

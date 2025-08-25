@@ -21,7 +21,7 @@ public class IntentHandler {
      * Wrap an existing EnumSet (or Collection) of GatewayIntents
      * This allows passing things like GatewayIntent.ALL_INTENTS directly
      */
-    public static EnumSet<GatewayIntent> fromRaw(Collection<GatewayIntent> intents) {
+    public static EnumSet<GatewayIntent> fromRaw(java.util.Collection<GatewayIntent> intents) {
         return intents.isEmpty() ? EnumSet.noneOf(GatewayIntent.class) : EnumSet.copyOf(intents);
     }
 
