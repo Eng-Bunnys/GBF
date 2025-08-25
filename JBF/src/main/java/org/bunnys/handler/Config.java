@@ -11,7 +11,7 @@ public class Config {
     private final String version;
 
     /** Show debug logs or not */
-    private final boolean debug = false;
+    private final boolean debug;
 
     /** The number of shards to use (0 = auto-sharding) */
     private final int shardCount;
@@ -27,6 +27,7 @@ public class Config {
         this.version = Objects.requireNonNull(builder.version, "Version must not be null");
         this.eventsPackage = builder.eventsPackage;
         this.shardCount = builder.shardCount;
+        this.debug = builder.debug;
     }
 
     // Getters
