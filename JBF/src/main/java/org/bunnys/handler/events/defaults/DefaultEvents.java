@@ -8,7 +8,9 @@ import java.util.function.Function;
 public enum DefaultEvents {
     CLIENT_READY(ClientReady::new),
 
-    ALL(client -> { throw new UnsupportedOperationException("ALL is not instantiable"); });
+    ALL(client -> {
+        throw new UnsupportedOperationException("ALL is not instantiable");
+    });
 
     private final Function<JBF, Event> factory;
 

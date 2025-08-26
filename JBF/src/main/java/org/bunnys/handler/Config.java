@@ -28,6 +28,9 @@ public class Config {
     /** The DefaultEvents to disable */
     private final EnumSet<DefaultEvents> disabledDefaults;
 
+    /** Package to scan for Commands (e.g., "org.bunnys.commands") */
+    private final String commandsPackage;
+
     /** The GatewayIntents/Intents to enable */
     private final EnumSet<GatewayIntent> intents;
 
@@ -38,6 +41,7 @@ public class Config {
         this.token = this.resolveToken(builder.token);
         this.version = Objects.requireNonNull(builder.version, "Version must not be null");
         this.eventsPackage = builder.eventsPackage;
+        this.commandsPackage = builder.commandsPackage;
         this.disabledDefaults = builder.disabledDefaultEvents != null
                 ? EnumSet.copyOf(builder.disabledDefaultEvents)
                 : EnumSet.noneOf(DefaultEvents.class);
@@ -70,6 +74,10 @@ public class Config {
         return this.eventsPackage;
     }
 
+    public String commandsPackage() {
+        return this.commandsPackage;
+    }
+
     public EnumSet<DefaultEvents> disabledDefaults() {
         return this.disabledDefaults != null
                 ? EnumSet.copyOf(this.disabledDefaults)
@@ -99,13 +107,13 @@ public class Config {
         // Manual token
         if (token != null && !token.isBlank()) {
             if (this.debug)
-               Logger.info("Using manually provided bot token");
+                Logger.info("Using manually provided bot token");
             return token;
         }
 
         // Else, try .env
         if (this.debug)
-           Logger.info("No manual token provided, attempting to load from .env under \"TOKEN\"");
+            Logger.info("No manual token provided, attempting to load from .env under \"TOKEN\"");
         String envToken = EnvLoader.get("TOKEN");
 
         if (envToken != null && !envToken.isBlank()) {
@@ -130,6 +138,7 @@ public class Config {
         private boolean debug = false;
         private int shardCount = 0; // 0 = auto-sharding
         private String eventsPackage;
+        private String commandsPackage;
         private EnumSet<DefaultEvents> disabledDefaultEvents = EnumSet.noneOf(DefaultEvents.class);
         private EnumSet<GatewayIntent> intents = EnumSet.noneOf(GatewayIntent.class);
 
@@ -158,6 +167,12 @@ public class Config {
         /** Example: "org.bunnys.events" */
         public Builder eventsPackage(String eventsPackage) {
             this.eventsPackage = eventsPackage;
+            return this;
+        }
+
+        /** Example: "org.bunnys.commands" */
+        public Builder commandsPackage(String commandsPackage) {
+            this.commandsPackage = commandsPackage;
             return this;
         }
 

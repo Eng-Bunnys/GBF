@@ -13,9 +13,9 @@ public class Main {
         Config config = Config.builder()
                 .version("2.0.0")
                 .debug(true)
-                .disableDefaultEvents(EnumSet.of(DefaultEvents.CLIENT_READY))
                 .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))
                 .eventsPackage("org.bunnys.events")
+                .commandsPackage("org.bunnys.commands.impl")
                 .build();
 
         JBF client = new JBF(config);

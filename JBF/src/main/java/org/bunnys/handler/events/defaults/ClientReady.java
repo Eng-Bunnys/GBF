@@ -48,7 +48,8 @@ public class ClientReady extends ListenerAdapter implements Event {
         try {
             return FigletFont.convertOneLine(text);
         } catch (IOException e) {
-            Logger.warning("[ClientReady] Failed to render ASCII art. Falling back to plain text\nError: " + e.getMessage());
+            Logger.warning(
+                    "[ClientReady] Failed to render ASCII art. Falling back to plain text\nError: " + e.getMessage());
             return text;
         }
     }

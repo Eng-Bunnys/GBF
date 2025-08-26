@@ -6,10 +6,14 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import org.bunnys.handler.commands.CommandLoader;
+import org.bunnys.handler.commands.CommandRegistry;
+import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.events.EventLoader;
 import org.bunnys.handler.events.EventRegistry;
 import org.bunnys.handler.events.defaults.DefaultEvents;
 import org.bunnys.handler.spi.Event;
+import org.bunnys.handler.spi.MessageCommand;
 import org.bunnys.handler.utils.Logger;
 
 import java.util.EnumSet;
@@ -17,9 +21,13 @@ import java.util.EnumSet;
 /**
  * JBF bootstrap/lifecycle manager
  */
+@SuppressWarnings("unused")
 public class JBF {
     private final Config config;
     private volatile ShardManager shardManager;
+
+    // Registries
+    private final CommandRegistry commandRegistry = new CommandRegistry();
 
     public JBF(Config config) {
         if (config == null)
@@ -38,12 +46,14 @@ public class JBF {
      * - logStartupInfo()
      * - initShardManager()
      * - loadAndRegisterEvents()
+     * - loadAndRegisterCommands()
      */
     private void login() {
         this.attachLogger();
         this.logStartupInfo();
         this.initShardManager(this.config.token());
         this.loadAndRegisterEvents(this.config.eventsPackage());
+        this.loadAndRegisterCommands(this.config.commandsPackage());
     }
 
     /* -------------------- Lifecycle helpers -------------------- */
@@ -101,9 +111,7 @@ public class JBF {
         }
 
         // Disable unnecessary heavy caches
-        EnumSet<CacheFlag> toDisable = EnumSet.of(CacheFlag.EMOJI,
-                CacheFlag.STICKER,
-                CacheFlag.SCHEDULED_EVENTS);
+        EnumSet<CacheFlag> toDisable = EnumSet.noneOf(CacheFlag.class);
 
         if (!this.config.intents().contains(GatewayIntent.GUILD_PRESENCES))
             toDisable.add(CacheFlag.ACTIVITY);
@@ -114,9 +122,7 @@ public class JBF {
         if (!toDisable.isEmpty())
             builder.disableCache(toDisable);
 
-        builder.setEventManagerProvider(shardId -> {
-            return new net.dv8tion.jda.api.hooks.InterfacedEventManager();
-        });
+        builder.setEventManagerProvider(shardId -> new net.dv8tion.jda.api.hooks.InterfacedEventManager());
     }
 
     private void loadAndRegisterEvents(String basePackage) {
@@ -165,6 +171,31 @@ public class JBF {
                 + (registry.size() == 1 ? "" : "s") + ".");
     }
 
+    private void loadAndRegisterCommands(String basePackage) {
+        if (basePackage == null || basePackage.isBlank())
+            return;
+
+        CommandLoader loader = new CommandLoader(basePackage, this);
+        var commands = loader.loadMessageCommands();
+
+        if (commands.isEmpty()) {
+            Logger.debug(() -> "[JBF] No message commands were loaded/found");
+            return;
+        }
+
+        for (MessageCommand cmd : commands) {
+            try {
+                MessageCommandConfig cfg = cmd.initAndGetConfig();
+                this.commandRegistry.registerMessageCommand(cmd, cfg);
+            } catch (Exception error) {
+                Logger.error("[JBF] Failed to register message command: " + cmd.getClass().getName(), error);
+            }
+        }
+
+        Logger.debug(() -> "[JBF] Loaded " + commands.size()
+                + " message command" + (commands.size() == 1 ? "" : "s") + ".");
+    }
+
     /* -------------------- Public API -------------------- */
 
     public void reconnect(String newToken) {
@@ -203,5 +234,9 @@ public class JBF {
 
     public Config getConfig() {
         return config;
+    }
+
+    public CommandRegistry commandRegistry() {
+        return commandRegistry;
     }
 }

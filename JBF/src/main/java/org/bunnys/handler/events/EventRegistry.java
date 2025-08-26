@@ -45,15 +45,6 @@ public final class EventRegistry {
         return List.copyOf(this.events.values());
     }
 
-    /*
-     * Bunny Comment:
-     * Registering listeners is cheap; fork-join overhead + log interleaving isn't,
-     * so I did it sequentially unless
-     * you have many shards and many non-listener events
-     * If you later measure a benefit, add a threshold to switch to parallel when
-     * shards.size() * size() is huge
-     */
-
     /**
      * Registers all events on the provided ShardManager
      * - If an event is also a JDA EventListener, register globally once

@@ -1,4 +1,5 @@
 package org.bunnys.handler.utils;
+
 import org.bunnys.handler.Config;
 
 /**
@@ -38,20 +39,24 @@ public class Logger {
 
     public static void error(String message, Throwable t) {
         System.out.println(ConsoleColors.RED + message + ConsoleColors.RESET);
-        if (t != null) t.printStackTrace(System.out);
+        if (t != null)
+            t.printStackTrace(System.out);
     }
 
     // --- Debug only (JBF internal logs) ---
-    // Old function paid the concat cost even if it won't print, supplier overload was added,
+    // Old function paid the concat cost even if it won't print, supplier overload
+    // was added,
     // and it can be used for anything non-trivial
     // this removes a bunch of tiny heap churn on hot paths
     public static void debug(java.util.function.Supplier<String> msg) {
-        if (debugDisabled()) return;
+        if (debugDisabled())
+            return;
         System.out.println(ConsoleColors.PURPLE + "[DEBUG] " + msg.get() + ConsoleColors.RESET);
     }
 
     public static void debugStackTrace(String message) {
-        if (debugDisabled()) return;
+        if (debugDisabled())
+            return;
         System.out.println(ConsoleColors.PURPLE + "[DEBUG] " + message + ConsoleColors.RESET);
         new Throwable().printStackTrace(System.out);
     }

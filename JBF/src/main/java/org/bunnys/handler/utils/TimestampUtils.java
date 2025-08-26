@@ -5,13 +5,13 @@ public class TimestampUtils {
      * Enum representing Discord UNIX timestamp format types
      */
     public enum UnixFormat {
-        d,  // Short date (e.g., "2025-07-17")
-        D,  // Long date (e.g., "July 17, 2025")
-        t,  // Short time (e.g., "12:00 AM")
-        T,  // Long time (e.g., "12:00:00 AM")
-        f,  // Short date and time (e.g., "Jul 17, 2025 12:00 AM")
-        F,  // Long date and time (e.g., "July 17, 2025 12:00:00 AM")
-        R   // Relative time (e.g., "5 minutes ago")
+        d, // Short date (e.g., "2025-07-17")
+        D, // Long date (e.g., "July 17, 2025")
+        t, // Short time (e.g., "12:00 AM")
+        T, // Long time (e.g., "12:00:00 AM")
+        f, // Short date and time (e.g., "Jul 17, 2025 12:00 AM")
+        F, // Long date and time (e.g., "July 17, 2025 12:00:00 AM")
+        R // Relative time (e.g., "5 minutes ago")
     }
 
     /**
@@ -19,16 +19,17 @@ public class TimestampUtils {
      *
      * @param date The date to be converted
      * @param type The format type for the UNIX timestamp
-     * @return The formatted Discord UNIX timestamp string (e.g., "<t:1234567890:R>"), or null if the type is invalid
-     * <p>
-     * Format types:
-     * - d: Short date (e.g., "2026-05-26")
-     * - D: Long date (e.g., "May 26, 2026")
-     * - t: Short time (e.g., "12:00 AM")
-     * - T: Long time (e.g., "12:00:00 AM")
-     * - f: Short date and time (e.g., "Jan 30, 2025 12:00 AM")
-     * - F: Long date and time (e.g., "January 30, 2025 12:00:00 AM")
-     * - R: Relative time (e.g., "5 minutes ago")
+     * @return The formatted Discord UNIX timestamp string (e.g.,
+     *         "<t:1234567890:R>"), or null if the type is invalid
+     *         <p>
+     *         Format types:
+     *         - d: Short date (e.g., "2026-05-26")
+     *         - D: Long date (e.g., "May 26, 2026")
+     *         - t: Short time (e.g., "12:00 AM")
+     *         - T: Long time (e.g., "12:00:00 AM")
+     *         - f: Short date and time (e.g., "Jan 30, 2025 12:00 AM")
+     *         - F: Long date and time (e.g., "January 30, 2025 12:00:00 AM")
+     *         - R: Relative time (e.g., "5 minutes ago")
      */
     public static String getTimestamp(java.util.Date date, UnixFormat type) {
         long unixTimestamp = date.getTime() / 1000;
