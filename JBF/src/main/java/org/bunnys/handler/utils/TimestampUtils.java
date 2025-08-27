@@ -1,5 +1,6 @@
 package org.bunnys.handler.utils;
 
+@SuppressWarnings("unused")
 public class TimestampUtils {
     /**
      * Enum representing Discord UNIX timestamp format types

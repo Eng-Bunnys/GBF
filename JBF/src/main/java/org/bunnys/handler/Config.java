@@ -13,6 +13,12 @@ public class Config {
     /** The bot's version */
     private final String version;
 
+    /** Command prefix (Default: !) */
+    private final String prefix;
+
+    /** The bot's developer IDs */
+    private final String[] developers;
+
     /** Whether to automatically login on JBF init */
     private final boolean autoLogin;
 
@@ -40,6 +46,8 @@ public class Config {
     private Config(Builder builder) {
         this.token = this.resolveToken(builder.token);
         this.version = Objects.requireNonNull(builder.version, "Version must not be null");
+        this.developers = builder.developers != null ? builder.developers.clone() : new String[0];
+        this.prefix = builder.prefix;
         this.eventsPackage = builder.eventsPackage;
         this.commandsPackage = builder.commandsPackage;
         this.disabledDefaults = builder.disabledDefaultEvents != null
@@ -56,6 +64,10 @@ public class Config {
     // Getters
     public String version() {
         return this.version;
+    }
+
+    public String prefix() {
+        return this.prefix;
     }
 
     public boolean debug() {
@@ -76,6 +88,10 @@ public class Config {
 
     public String commandsPackage() {
         return this.commandsPackage;
+    }
+
+    public String[] developers() {
+        return this.developers != null ? this.developers.clone() : new String[0];
     }
 
     public EnumSet<DefaultEvents> disabledDefaults() {
@@ -134,6 +150,8 @@ public class Config {
     public static final class Builder {
         private String token;
         private String version;
+        private String[] developers = new String[0];
+        private String prefix = "!"; // default
         private boolean autoLogin = true;
         private boolean debug = false;
         private int shardCount = 0; // 0 = auto-sharding
@@ -146,6 +164,27 @@ public class Config {
             if (version == null || version.isBlank())
                 throw new IllegalStateException("Config.version must be a valid string");
             this.version = version;
+            return this;
+        }
+
+        public Builder prefix(String prefix) {
+            if (prefix == null || prefix.isBlank())
+                throw new IllegalArgumentException("Prefix must be a valid string");
+            this.prefix = prefix;
+            return this;
+        }
+
+        public Builder developers(String... developers) {
+            if (developers == null || developers.length == 0) {
+                this.developers = new String[0];
+                return this;
+            }
+            for (int i = 0; i < developers.length; i++) {
+                if (developers[i] == null || developers[i].isBlank())
+                    throw new IllegalArgumentException("Developer IDs must be valid strings");
+                developers[i] = developers[i].trim();
+            }
+            this.developers = developers;
             return this;
         }
 
