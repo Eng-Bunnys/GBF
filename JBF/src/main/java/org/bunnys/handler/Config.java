@@ -1,9 +1,9 @@
 package org.bunnys.handler;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import org.bunnys.handler.events.defaults.DefaultEvents;
-import org.bunnys.handler.utils.EnvLoader;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.events.DefaultEvents;
+import org.bunnys.handler.utils.handler.EnvLoader;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.EnumSet;
 import java.util.Objects;

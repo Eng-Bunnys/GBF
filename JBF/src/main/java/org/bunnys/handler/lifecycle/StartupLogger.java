@@ -1,7 +1,7 @@
 package org.bunnys.handler.lifecycle;
 
 import org.bunnys.handler.Config;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 public class StartupLogger {
     public static void logStartupInfo(Config config) {

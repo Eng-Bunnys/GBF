@@ -6,8 +6,8 @@ import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.spi.Event;
-import org.bunnys.handler.utils.ConsoleColors;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.colors.ConsoleColors;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.io.IOException;
 import java.util.Arrays;

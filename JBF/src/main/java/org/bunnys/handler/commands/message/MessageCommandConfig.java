@@ -7,17 +7,21 @@ import java.util.*;
 public final class MessageCommandConfig {
     private final String commandName;
     private final String commandDescription;
+    private final String category;
     private final String commandUsage;
     private final List<String> aliases;
     private final EnumSet<Permission> userPermissions;
     private final EnumSet<Permission> botPermissions;
     private final boolean devOnly;
     private final long cooldownMS;
+    private final boolean NSFW;
 
     private MessageCommandConfig(Builder builder) {
         this.commandName = Objects.requireNonNull(builder.commandName, "Command name is required");
         this.commandDescription = builder.commandDescription;
+        this.category = builder.category;
         this.commandUsage = builder.commandUsage;
+        this.NSFW = builder.NSFW;
         this.aliases = List.copyOf(builder.aliases);
         this.userPermissions = EnumSet.copyOf(builder.userPermissions);
         this.botPermissions = EnumSet.copyOf(builder.botPermissions);
@@ -33,6 +37,10 @@ public final class MessageCommandConfig {
         return this.commandDescription;
     }
 
+    public String category() {
+        return this.category;
+    }
+
     public String usage() {
         return this.commandUsage;
     }
@@ -40,6 +48,8 @@ public final class MessageCommandConfig {
     public List<String> aliases() {
         return List.copyOf(this.aliases);
     }
+
+    public boolean NSFW() { return this.NSFW; }
 
     public EnumSet<Permission> userPermissions() {
         return EnumSet.copyOf(this.userPermissions);
@@ -66,11 +76,13 @@ public final class MessageCommandConfig {
         private String commandName;
         private String commandDescription = "No description provided";
         private String commandUsage = "No usage provided";
+        private String category = "General";
         private List<String> aliases = List.of();
         private EnumSet<Permission> userPermissions = EnumSet.noneOf(Permission.class);
         private EnumSet<Permission> botPermissions = EnumSet.noneOf(Permission.class);
         private boolean devOnly = false;
         private long cooldownMS = 0; // No cooldown by default
+        private boolean NSFW = false;
 
         public Builder name(String commandName) {
             if (commandName == null || commandName.isBlank())
@@ -84,8 +96,18 @@ public final class MessageCommandConfig {
             return this;
         }
 
+        public Builder category(String category) {
+            this.category = category == null ? "General" : category;
+            return this;
+        }
+
         public Builder usage(String commandUsage) {
             this.commandUsage = commandUsage == null ? "No usage provided" : commandUsage;
+            return this;
+        }
+
+        public Builder NSFW(boolean NSFW) {
+            this.NSFW = NSFW;
             return this;
         }
 

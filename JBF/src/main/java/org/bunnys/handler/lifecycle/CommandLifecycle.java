@@ -6,7 +6,7 @@ import org.bunnys.handler.commands.CommandLoader;
 import org.bunnys.handler.commands.CommandRegistry;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.spi.MessageCommand;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,7 +3,7 @@ package org.bunnys;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.bunnys.handler.Config;
 import org.bunnys.handler.JBF;
-import org.bunnys.handler.utils.IntentHandler;
+import org.bunnys.handler.utils.handler.IntentHandler;
 
 @SuppressWarnings("unused")
 public class Main {

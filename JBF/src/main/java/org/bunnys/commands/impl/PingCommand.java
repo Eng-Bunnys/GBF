@@ -14,9 +14,10 @@ public class PingCommand extends MessageCommand {
                 .usage("ping")
                 .aliases("p", "latency")
                 .devOnly(true)
-                .cooldown(20)
-              .botPermissions(Permission.ADMINISTRATOR);
-              //  .userPermissions(Permission.BAN_MEMBERS, Permission.MANAGE_PERMISSIONS);
+                .NSFW(true);
+        // .cooldown(20);
+        // .botPermissions(Permission.ADMINISTRATOR);
+        // .userPermissions(Permission.BAN_MEMBERS, Permission.MANAGE_PERMISSIONS);
     }
 
     @Override

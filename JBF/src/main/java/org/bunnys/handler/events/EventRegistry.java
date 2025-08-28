@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 import org.bunnys.handler.Config;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.spi.Event;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.Collection;
 import java.util.List;

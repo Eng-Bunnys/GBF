@@ -6,7 +6,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.spi.Event;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 import java.util.List;
 
 /*

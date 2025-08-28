@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.bunnys.handler.Config;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.EnumSet;
 

@@ -5,9 +5,9 @@ import org.bunnys.handler.Config;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.events.EventLoader;
 import org.bunnys.handler.events.EventRegistry;
-import org.bunnys.handler.events.defaults.DefaultEvents;
+import org.bunnys.handler.events.DefaultEvents;
 import org.bunnys.handler.spi.Event;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 public class EventLifecycle {
     public static void loadAndRegisterEvents(Config config, JBF jbf, ShardManager shardManager) {

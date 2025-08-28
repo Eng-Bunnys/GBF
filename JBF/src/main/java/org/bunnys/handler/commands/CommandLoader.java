@@ -5,7 +5,7 @@ import io.github.classgraph.ScanResult;
 import org.bunnys.handler.Config;
 import org.bunnys.handler.JBF;
 import org.bunnys.handler.spi.MessageCommand;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;

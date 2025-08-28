@@ -1,7 +1,7 @@
 package org.bunnys.handler.lifecycle;
 
 import org.bunnys.handler.JBF;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 public class ShardManagerLifecycle {
     public static void reconnect(JBF jbf, String newToken) {

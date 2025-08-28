@@ -2,7 +2,7 @@ package org.bunnys.handler.commands;
 
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.spi.MessageCommand;
-import org.bunnys.handler.utils.Logger;
+import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
