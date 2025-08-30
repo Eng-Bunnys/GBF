@@ -2,7 +2,7 @@ package org.bunnys;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.bunnys.handler.Config;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.utils.handler.IntentHandler;
 
 @SuppressWarnings("unused")
@@ -15,9 +15,9 @@ public class Main {
                 .prefix("!!")
                 .developers("333644367539470337", "776580152163303445")
                 .eventsPackage("org.bunnys.events")
-                .commandsPackage("org.bunnys.commands.impl")
+                .commandsPackage("org.bunnys.commands")
                 .build();
 
-        JBF client = new JBF(config);
+        BunnyNexus client = new BunnyNexus(config);
     }
 }

@@ -1,6 +1,6 @@
 package org.bunnys.handler.events;
 
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.events.defaults.ClientReady;
 import org.bunnys.handler.events.defaults.MessageCreate;
 import org.bunnys.handler.spi.Event;
@@ -15,13 +15,13 @@ public enum DefaultEvents {
         throw new UnsupportedOperationException("ALL is not instantiable");
     });
 
-    private final Function<JBF, Event> factory;
+    private final Function<BunnyNexus, Event> factory;
 
-    DefaultEvents(Function<JBF, Event> factory) {
+    DefaultEvents(Function<BunnyNexus, Event> factory) {
         this.factory = factory;
     }
 
-    public Event create(JBF client) {
+    public Event create(BunnyNexus client) {
         if (this == ALL)
             throw new UnsupportedOperationException("Cannot create event for ALL");
         return this.factory.apply(client);

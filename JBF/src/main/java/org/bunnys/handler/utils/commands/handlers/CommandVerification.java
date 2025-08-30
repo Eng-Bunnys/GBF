@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.utils.handler.colors.ColorCodes;
 import org.bunnys.handler.utils.handler.Emojis;
@@ -65,8 +65,8 @@ public final class CommandVerification {
      *         details
      * @throws IllegalArgumentException if any parameter is null
      */
-    public static ValidationResult validateExecution(JBF client, MessageReceivedEvent event,
-            MessageCommandConfig config) {
+    public static ValidationResult validateExecution(BunnyNexus client, MessageReceivedEvent event,
+                                                     MessageCommandConfig config) {
         Objects.requireNonNull(client, "Client cannot be null");
         Objects.requireNonNull(event, "Event object cannot be null");
         Objects.requireNonNull(config, "Config cannot be null");
@@ -132,7 +132,7 @@ public final class CommandVerification {
      * @param config The command configuration
      * @return {@code true} if validation passed, {@code false} otherwise
      */
-    public static boolean canExecute(JBF client, MessageReceivedEvent event, MessageCommandConfig config) {
+    public static boolean canExecute(BunnyNexus client, MessageReceivedEvent event, MessageCommandConfig config) {
         ValidationResult result = validateExecution(client, event, config);
 
         if (result.hasFailed()) {
@@ -145,7 +145,7 @@ public final class CommandVerification {
 
     // --- Private validation methods ---
 
-    private static boolean isDeveloper(JBF client, User user) {
+    private static boolean isDeveloper(BunnyNexus client, User user) {
         String[] developers = client.getConfig().developers();
         if (developers == null)
             return false;

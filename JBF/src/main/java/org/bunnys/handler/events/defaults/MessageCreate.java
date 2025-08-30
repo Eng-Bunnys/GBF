@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.commands.handlers.CommandVerification;
@@ -31,11 +31,11 @@ public class MessageCreate extends ListenerAdapter implements Event {
     private static final int COMMAND_TIMEOUT_SECONDS = 30;
     private static final int ERROR_DELETE_SECONDS = 8; // how long error notices stay visible
 
-    private final JBF client;
+    private final BunnyNexus client;
     private final ExecutorService commandExecutor;
     private final CommandMetrics metrics;
 
-    public MessageCreate(JBF client) {
+    public MessageCreate(BunnyNexus client) {
         this.client = client;
         this.commandExecutor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "MessageCommand-" + tId());

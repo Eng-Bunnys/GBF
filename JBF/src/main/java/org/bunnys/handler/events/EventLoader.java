@@ -4,7 +4,7 @@ package org.bunnys.handler.events;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.handler.logging.Logger;
 import java.util.List;
@@ -19,14 +19,14 @@ import java.util.List;
 
 /**
  * Dynamically loads event classes from a given package,
- * requiring a constructor that accepts the JBF client
+ * requiring a constructor that accepts the BunnyNexus client
  * Optimized for sharded/multithreaded environments
  */
 public final class EventLoader {
     private final String eventPackage;
-    private final JBF client;
+    private final BunnyNexus client;
 
-    public EventLoader(String eventPackage, JBF client) {
+    public EventLoader(String eventPackage, BunnyNexus client) {
         this.eventPackage = eventPackage;
         this.client = client;
     }
@@ -45,10 +45,10 @@ public final class EventLoader {
                     .map(ci -> {
                         try {
                             Class<?> clazz = ci.loadClass();
-                            var ctor = clazz.getDeclaredConstructor(JBF.class); // require public(JBF)
+                            var ctor = clazz.getDeclaredConstructor(BunnyNexus.class); // require public(BunnyNexus)
                             return (Event) ctor.newInstance(client);
                         } catch (NoSuchMethodException e) {
-                            Logger.error("[EventLoader] Missing ctor(JBF) in " + ci.getName(), e);
+                            Logger.error("[EventLoader] Missing ctor(BunnyNexus) in " + ci.getName(), e);
                             return null;
                         } catch (Exception e) {
                             Logger.error("[EventLoader] Failed to load " + ci.getName(), e);

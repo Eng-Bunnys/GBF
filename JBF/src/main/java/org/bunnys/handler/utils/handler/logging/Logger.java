@@ -4,7 +4,7 @@ import org.bunnys.handler.Config;
 import org.bunnys.handler.utils.handler.colors.ConsoleColors;
 
 /**
- * Logger utility for JBF Handler
+ * Logger utility for BunnyNexus Handler
  * Provides methods to log messages with different severity levels
  * Uses ANSI escape codes for colored console output
  * Supports debug mode for internal handler diagnostics
@@ -12,7 +12,7 @@ import org.bunnys.handler.utils.handler.colors.ConsoleColors;
 public class Logger {
     private static Config config;
 
-    /** JBF calls this once at startup */
+    /** BunnyNexus calls this once at startup */
     public static void attachConfig(Config cfg) {
         config = cfg;
     }
@@ -44,7 +44,7 @@ public class Logger {
             t.printStackTrace(System.out);
     }
 
-    // --- Debug only (JBF internal logs) ---
+    // --- Debug only (BunnyNexus internal logs) ---
     // Old function paid the concat cost even if it won't print, supplier overload
     // was added,
     // and it can be used for anything non-trivial

@@ -1,46 +1,77 @@
 package org.bunnys.handler.lifecycle;
 
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.bunnys.handler.Config;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.CommandLoader;
 import org.bunnys.handler.commands.CommandRegistry;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
+import org.bunnys.handler.commands.slash.SlashCommandConfig;
 import org.bunnys.handler.spi.MessageCommand;
+import org.bunnys.handler.spi.SlashCommand;
 import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CommandLifecycle {
-    public static void loadAndRegisterCommands(Config config, JBF jbf, CommandRegistry registry) {
+    public static void loadAndRegisterCommands(Config config, BunnyNexus bunnyNexus, CommandRegistry registry) {
         if (config.commandsPackage() == null || config.commandsPackage().isBlank())
             return;
 
-        CommandLoader loader = new CommandLoader(config.commandsPackage(), jbf);
-        List<MessageCommand> commands = new ArrayList<>(loader.loadMessageCommands());
+        CommandLoader loader = new CommandLoader(config.commandsPackage(), bunnyNexus);
 
-        if (commands.isEmpty()) {
-            Logger.debug(() -> "[JBF] No message commands were loaded/found");
-            return;
-        }
+        // --- Load message commands ---
+        List<MessageCommand> messageCommands = new ArrayList<>(loader.loadMessageCommands());
 
-        int success = 0;
-        int failed = 0;
-
-        for (MessageCommand cmd : commands) {
+        int successMsg = 0, failedMsg = 0;
+        for (MessageCommand cmd : messageCommands) {
             try {
                 MessageCommandConfig cfg = cmd.initAndGetConfig();
                 registry.registerMessageCommand(cmd, cfg);
-                success++;
+                successMsg++;
             } catch (Throwable t) {
-                failed++;
-                Logger.error("[JBF] Failed to register message command: " + cmd.getClass().getName(), t);
+                failedMsg++;
+                Logger.error("[BunnyNexus] Failed to register message command: " + cmd.getClass().getName(), t);
             }
         }
+        int finalSuccessMsg = successMsg;
+        int finalFailedMsg = failedMsg;
+        Logger.debug(() -> String.format("[BunnyNexus] Loaded %d message command(s), %d failed to register.",
+                finalSuccessMsg, finalFailedMsg));
 
-        int finalSuccess = success;
-        int finalFailed = failed;
-        Logger.debug(() -> String.format("[JBF] Loaded %d message command(s), %d failed to register.", finalSuccess,
-                finalFailed));
+
+        // --- Load slash commands ---
+        List<SlashCommand> slashCommands = new ArrayList<>(loader.loadSlashCommands());
+        int successSlash = 0, failedSlash = 0;
+
+        for (SlashCommand cmd : slashCommands) {
+            try {
+                SlashCommandConfig cfg = cmd.initAndGetConfig();
+                registry.registerSlashCommand(cmd, cfg);
+
+                // Register into Discord via JDA
+                bunnyNexus.getShardManager().getGuilds().forEach(guild -> {
+                    System.out.println(guild.getName());
+                });
+
+                bunnyNexus.getShardManager().getShards().forEach(jda ->
+                        jda.updateCommands()
+                                .addCommands(Commands.slash(cfg.name(), cfg.description())
+                                        .addOptions(cfg.options())
+                                )
+                                .queue()
+                );
+
+                successSlash++;
+            } catch (Throwable t) {
+                failedSlash++;
+                Logger.error("[BunnyNexus] Failed to register slash command: " + cmd.getClass().getName(), t);
+            }
+        }
+        int finalSuccessSlash = successSlash;
+        int finalFailedSlash = failedSlash;
+        Logger.debug(() -> String.format("[BunnyNexus] Loaded %d slash command(s), %d failed to register.",
+                finalSuccessSlash, finalFailedSlash));
     }
 }

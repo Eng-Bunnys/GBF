@@ -2,7 +2,7 @@ package org.bunnys.handler.events;
 
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.bunnys.handler.Config;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.handler.logging.Logger;
 
@@ -13,14 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Thread-safe registry for loaded events
- * Knows the client (JBF) for potential DI, metrics, or contextual logs
+ * Knows the client (BunnyNexus) for potential DI, metrics, or contextual logs
  */
 public final class EventRegistry {
     private final ConcurrentHashMap<String, Event> events = new ConcurrentHashMap<>();
     private final Config config;
     private final Set<String> globalListeners = ConcurrentHashMap.newKeySet();
 
-    public EventRegistry(JBF client) {
+    public EventRegistry(BunnyNexus client) {
         this.config = client.getConfig();
     }
 

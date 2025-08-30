@@ -4,7 +4,7 @@ import com.github.lalyos.jfiglet.FigletFont;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.spi.Event;
 import org.bunnys.handler.utils.handler.colors.ConsoleColors;
 import org.bunnys.handler.utils.handler.logging.Logger;
@@ -13,9 +13,9 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class ClientReady extends ListenerAdapter implements Event {
-    private final JBF client;
+    private final BunnyNexus client;
 
-    public ClientReady(JBF client) {
+    public ClientReady(BunnyNexus client) {
         this.client = client;
     }
 

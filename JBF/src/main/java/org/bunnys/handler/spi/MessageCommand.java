@@ -1,7 +1,7 @@
 package org.bunnys.handler.spi;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 
 /**
@@ -23,12 +23,12 @@ public abstract class MessageCommand {
      * non-blocking
      * Offload heavy work to the executor
      *
-     * @param client  JBF Client instance (access to config, shardManager, etc.)
+     * @param client  BunnyNexus Client instance (access to config, shardManager, etc.)
      * @param message The MessageReceivedEvent that triggered the command
      * @param args    The command args split by whitespace, no advanced parsing,
      *                prefix and command name removed
      */
-    public abstract void execute(JBF client, MessageReceivedEvent message, String[] args);
+    public abstract void execute(BunnyNexus client, MessageReceivedEvent message, String[] args);
 
     /**
      * Called by the loader (or first-time user code) to initialize and return the

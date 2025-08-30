@@ -2,7 +2,7 @@ package org.bunnys.handler.utils.commands.handlers;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.bunnys.handler.JBF;
+import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.CommandRegistry;
 import org.bunnys.handler.commands.message.MessageCommandConfig;
 import org.bunnys.handler.spi.MessageCommand;
@@ -55,7 +55,7 @@ public class MessageCommandParser {
         }
     }
 
-    public static ParseResult parse(JBF client, MessageReceivedEvent event) {
+    public static ParseResult parse(BunnyNexus client, MessageReceivedEvent event) {
         if (!shouldProcessMessage(event))
             return null;
 
@@ -69,7 +69,7 @@ public class MessageCommandParser {
         return !(author.isBot() || event.isWebhookMessage() || author.isSystem());
     }
 
-    private static ParseResult parseCommandStructure(JBF client, MessageReceivedEvent event) {
+    private static ParseResult parseCommandStructure(BunnyNexus client, MessageReceivedEvent event) {
         try {
             String prefix = client.getConfig().prefix();
             String rawContent = event.getMessage().getContentRaw();

@@ -1,7 +1,9 @@
 package org.bunnys.handler.commands;
 
 import org.bunnys.handler.commands.message.MessageCommandConfig;
+import org.bunnys.handler.commands.slash.SlashCommandConfig;
 import org.bunnys.handler.spi.MessageCommand;
+import org.bunnys.handler.spi.SlashCommand;
 import org.bunnys.handler.utils.handler.logging.Logger;
 
 import java.util.*;
@@ -16,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CommandRegistry {
     private final ConcurrentHashMap<String, CommandEntry> merged = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, MessageCommand> messageCommands = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, SlashCommand> slashCommands = new ConcurrentHashMap<>();
 
     private static String canonical(String name) {
         if (name == null)
@@ -57,7 +60,7 @@ public class CommandRegistry {
             // Check conflicts
             List<String> conflicts = new ArrayList<>();
             for (String key : keysToInsert)
-                if (this.merged.containsKey(key))
+                if (this.messageCommands.containsKey(key))
                     conflicts.add(key);
 
             if (!conflicts.isEmpty()) {
@@ -84,6 +87,30 @@ public class CommandRegistry {
                 + (cfg.aliases().isEmpty() ? "" : " with aliases: " + String.join(", ", cfg.aliases())));
     }
 
+    public void registerSlashCommand(SlashCommand cmd, SlashCommandConfig cfg) {
+        Objects.requireNonNull(cmd, "cmd");
+        Objects.requireNonNull(cfg, "cfg");
+
+        String canonicalName = canonical(cfg.name());
+
+        if (canonicalName.isBlank())
+            throw new IllegalArgumentException("Slash Command name cannot be blank");
+
+        CommandEntry entry = CommandEntry.forSlash(cmd, cfg);
+
+        synchronized (this) {
+            if (this.slashCommands.containsKey(canonicalName)) {
+                //TODO: Handle dupes
+                throw new IllegalStateException("Duped slash command " + canonicalName);
+            }
+
+            this.slashCommands.put(canonicalName, cmd);
+            this.merged.put(canonicalName, entry);
+        }
+
+        Logger.debug(() -> "[CommandRegistry] Registered Slash Commands: " + cfg.name());
+    }
+
     public CommandEntry findMerged(String token) {
         if (token == null || token.isBlank())
             return null;
@@ -101,45 +128,36 @@ public class CommandRegistry {
         return entry;
     }
 
+    //TODO: Find slash fn
+
     // Views
     public Map<String, MessageCommand> messageView() {
         return Collections.unmodifiableMap(this.messageCommands);
+    }
+
+    public Map<String, SlashCommand> slashView() {
+        return Collections.unmodifiableMap(this.slashCommands);
     }
 
     public Map<String, CommandEntry> mergedView() {
         return Collections.unmodifiableMap(this.merged);
     }
 
-    /** Descriptor for merged lookup */
-    public static final class CommandEntry {
-        public enum CommandType {
-            MESSAGE, SLASH
-        }
-
-        private final CommandType type;
-        private final MessageCommand messageCommand;
-        private final MessageCommandConfig messageMetaData;
-
-        private CommandEntry(CommandType type, MessageCommand messageCommand, MessageCommandConfig messageMetaData) {
-            this.type = type;
-            this.messageCommand = messageCommand;
-            this.messageMetaData = messageMetaData;
-        }
+    /**
+     * Descriptor for merged lookup
+     */
+        public record CommandEntry(CommandType type, MessageCommand messageCommand, MessageCommandConfig messageMetaData,
+                                   SlashCommand slashCommand, SlashCommandConfig slashMetaData) {
+            public enum CommandType {
+                MESSAGE, SLASH
+            }
 
         public static CommandEntry forMessage(MessageCommand cmd, MessageCommandConfig meta) {
-            return new CommandEntry(CommandType.MESSAGE, cmd, meta);
-        }
+                return new CommandEntry(CommandType.MESSAGE, cmd, meta, null, null);
+            }
 
-        public CommandType type() {
-            return this.type;
+            public static CommandEntry forSlash(SlashCommand cmd, SlashCommandConfig meta) {
+                return new CommandEntry(CommandType.SLASH, null, null, cmd, meta);
+            }
         }
-
-        public MessageCommand messageCommand() {
-            return this.messageCommand;
-        }
-
-        public MessageCommandConfig messageMetaData() {
-            return this.messageMetaData;
-        }
-    }
 }

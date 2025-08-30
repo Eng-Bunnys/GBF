@@ -19,7 +19,7 @@ public class Config {
     /** The bot's developer IDs */
     private final String[] developers;
 
-    /** Whether to automatically login on JBF init */
+    /** Whether to automatically login on BunnyNexus init */
     private final boolean autoLogin;
 
     /** Show debug logs or not */
@@ -110,7 +110,7 @@ public class Config {
         return this.autoLogin;
     }
 
-    /** Package-private: only JBF should call this at runtime */
+    /** Package-private: only BunnyNexus should call this at runtime */
     void token(String token) {
         if (token == null || token.isBlank())
             throw new IllegalArgumentException("Token must be a valid string");
