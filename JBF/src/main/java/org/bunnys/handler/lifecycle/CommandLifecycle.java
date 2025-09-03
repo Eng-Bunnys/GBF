@@ -1,6 +1,5 @@
 package org.bunnys.handler.lifecycle;
 
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.bunnys.handler.Config;
 import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.CommandLoader;
@@ -92,13 +91,6 @@ public final class CommandLifecycle {
             try {
                 SlashCommandConfig cfg = cmd.initAndGetConfig();
                 registry.registerSlashCommand(cmd, cfg);
-
-                // Register into Discord via JDA
-                bunnyNexus.getShardManager().getShards().forEach(jda -> jda.updateCommands()
-                        .addCommands(Commands.slash(cfg.name(), cfg.description())
-                                .addOptions(cfg.options()))
-                        .queue());
-
                 successSlash++;
             } catch (Throwable t) {
                 failedSlash++;

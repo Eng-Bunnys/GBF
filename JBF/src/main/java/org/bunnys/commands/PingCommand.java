@@ -9,12 +9,11 @@ import org.bunnys.handler.commands.message.MessageCommandConfig;
 public class PingCommand extends MessageCommand {
     @Override
     protected void commandOptions(MessageCommandConfig.Builder options) {
-        MessageCommandConfig.Builder builder = options.name("ping")
+        options.name("ping")
                 .description("Replies with Pong and gateway latency")
                 .usage("ping")
                 .aliases("p", "latency")
-                .devOnly(true)
-                .NSFW(true);
+                .devOnly(true);
     }
 
     @Override

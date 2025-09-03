@@ -14,6 +14,7 @@ public class Main {
                 .intents(IntentHandler.fromRaw(GatewayIntent.ALL_INTENTS))
                 .prefix("!!")
                 .developers("333644367539470337", "776580152163303445")
+                .testServers("1187559385359200316")
                 .eventsPackage("org.bunnys.events")
                 .commandsPackage("org.bunnys.commands")
                 .build();

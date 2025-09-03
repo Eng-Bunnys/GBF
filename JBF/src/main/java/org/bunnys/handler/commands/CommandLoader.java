@@ -242,8 +242,29 @@ public final class CommandLoader {
         }
 
         exec.shutdownNow();
-        Logger.debug(() -> "[CommandLoader] Instantiated " + results.size() + " slash command(s)");
-        return Collections.unmodifiableList(results);
+
+        Map<String, SlashCommand> deduped = new LinkedHashMap<>();
+        for (SlashCommand cmd : results) {
+            try {
+                String canonical = CommandRegistry.canonical(cmd.initAndGetConfig().name());
+                Logger.debug(() -> "[CommandLoader] Preparing to register: "
+                        + cmd.getClass().getName() + " as '" + canonical + "'");
+                if (deduped.containsKey(canonical)) {
+                    Logger.error("[CommandLoader] Duplicate slash command name detected in loader: "
+                            + canonical + " (first: " + deduped.get(canonical).getClass().getName()
+                            + ", second: " + cmd.getClass().getName() + ")");
+                    continue;
+                }
+                deduped.put(canonical, cmd);
+            } catch (Exception e) {
+                Logger.error("[CommandLoader] Failed to read config for command: " + cmd.getClass().getName(), e);
+            }
+        }
+
+        Logger.debug(() -> "[CommandLoader] Instantiated " + deduped.size() + " unique slash command"
+                + (deduped.size() == 1 ? "" : "s"));
+
+        return List.copyOf(deduped.values());
     }
 
     /**

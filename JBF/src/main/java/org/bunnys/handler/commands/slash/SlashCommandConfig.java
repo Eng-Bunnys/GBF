@@ -1,6 +1,9 @@
 package org.bunnys.handler.commands.slash;
 
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
+
 import java.util.*;
 
 /**
@@ -27,7 +30,12 @@ import java.util.*;
 public final class SlashCommandConfig {
     private final String commandName;
     private final String commandDescription;
+    private final boolean testOnly;
     private final List<OptionData> commandOptions;
+
+    // Subcommands
+    private final List<SubcommandData> subcommands;
+    private final List<SubcommandGroupData> subcommandGroups;
 
     /**
      * Private constructor to enforce the use of the Builder
@@ -39,7 +47,10 @@ public final class SlashCommandConfig {
         this.commandName = Objects.requireNonNull(builder.commandName, "Slash Command name is required.");
         this.commandDescription = Objects.requireNonNull(builder.commandDescription,
                 "Slash Command description is required.");
+        this.testOnly = builder.testOnly;
         this.commandOptions = List.copyOf(builder.options);
+        this.subcommands = List.copyOf(builder.subcommands);
+        this.subcommandGroups = List.copyOf(builder.subcommandGroups);
     }
 
     /**
@@ -61,12 +72,29 @@ public final class SlashCommandConfig {
     }
 
     /**
+     * Whether the command will be registered in test servers or not
+     *
+     * @return testOnly as a {@code boolean}
+     */
+    public boolean testOnly() {
+        return this.testOnly;
+    }
+
+    /**
      * Gets an immutable list of the command's options
      *
      * @return An unmodifiable {@code List<OptionData>} of the command's options
      */
     public List<OptionData> options() {
         return this.commandOptions;
+    }
+
+    public List<SubcommandData> subcommands() {
+        return this.subcommands;
+    }
+
+    public List<SubcommandGroupData> subcommandGroups() {
+        return this.subcommandGroups;
     }
 
     // --------------------- Builder --------------------//
@@ -85,7 +113,10 @@ public final class SlashCommandConfig {
     public static final class Builder {
         private String commandName;
         private String commandDescription;
+        private boolean testOnly = false;
         private final List<OptionData> options = new ArrayList<>();
+        private final List<SubcommandData> subcommands = new ArrayList<>();
+        private final List<SubcommandGroupData> subcommandGroups = new ArrayList<>();
 
         /**
          * Sets the name of the slash command
@@ -116,6 +147,17 @@ public final class SlashCommandConfig {
         }
 
         /**
+         * Sets the testOnly boolean of the slash command
+         *
+         * @param testOnly The boolean value to set
+         * @return The current {@code Builder} instance
+         */
+        public Builder testOnly(boolean testOnly) {
+            this.testOnly = testOnly;
+            return this;
+        }
+
+        /**
          * Adds a single option to the command
          *
          * @param option The {@link OptionData} to add. Must be non-null
@@ -139,6 +181,32 @@ public final class SlashCommandConfig {
         public Builder addOptions(List<OptionData> optionList) {
             if (optionList != null)
                 optionList.forEach(this::addOption);
+            return this;
+        }
+
+        public Builder addSubcommand(SubcommandData subcommand) {
+            if (subcommand == null)
+                throw new IllegalArgumentException("Subcommand Data cannot be null");
+            this.subcommands.add(subcommand);
+            return this;
+        }
+
+        public Builder addSubcommands(List<SubcommandData> subcommandList) {
+            if (subcommandList != null)
+                subcommandList.forEach(this::addSubcommand);
+            return this;
+        }
+
+        public Builder addSubcommandGroup(SubcommandGroupData group) {
+            if (group == null)
+                throw new IllegalArgumentException("Subcommand group cannot be null");
+            this.subcommandGroups.add(group);
+            return this;
+        }
+
+        public Builder addSubcommandGroups(List<SubcommandGroupData> groupList) {
+            if (groupList != null)
+                groupList.forEach(this::addSubcommandGroup);
             return this;
         }
 
