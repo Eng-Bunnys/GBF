@@ -15,6 +15,7 @@ import {
   checkRank,
   convertSeasonLevel,
   hoursRequired,
+  rankUpEmoji,
   rpRequired,
   xpRequired,
 } from "./LevelEngine";
@@ -501,7 +502,9 @@ export class Timers {
     const rpToNextLevel = rpRequired(timerStats.getAccountLevel() + 1);
 
     if (this.timerData.currentSemester.semesterName) {
-      levelDetails += `• Semester Level: ${timerStats.getSemesterLevel()}\n`;
+      levelDetails += `${rankUpEmoji(
+        timerStats.getSemesterLevel()
+      )} Semester Level: ${timerStats.getSemesterLevel()}\n`;
 
       levelDetails += `• XP to reach level ${
         timerStats.getSemesterLevel() + 1
@@ -520,7 +523,9 @@ export class Timers {
         timerStats.getSemesterLevel() + 1
       }: ${msToTime(timerStats.getMsToNextLevel())}\n`;
 
-      levelDetails += `• Account Level: ${timerStats.getAccountLevel()}\n`;
+      levelDetails += `${rankUpEmoji(
+        timerStats.getAccountLevel()
+      )} Account Level: ${timerStats.getAccountLevel()}\n`;
 
       levelDetails += `• RP to reach level ${
         timerStats.getAccountLevel() + 1

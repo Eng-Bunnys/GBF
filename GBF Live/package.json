@@ -17,18 +17,18 @@
   },
   "homepage": "https://github.com/Eng-Bunnys/Discord-Bot-Commands-and-Handler#readme",
   "dependencies": {
+    "axios": "^1.7.9",
     "chalk": "^4.1.0",
-    "discord-rpc": "^4.0.1",
-    "discord.js": "^14.16.3",
+    "discord.js": "^14.21.0",
     "dotenv": "^16.3.1",
     "figlet": "^1.7.0",
     "mongoose": "^8.5.1",
     "nekos.life": "^3.0.0",
+    "nodemon": "^3.1.9",
     "ts-node-dev": "^2.0.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/discord-rpc": "^4.0.8",
     "typescript": "^5.0.4"
   }
 }

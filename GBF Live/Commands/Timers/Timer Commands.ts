@@ -3,6 +3,7 @@ import {
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
+  ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
   ComponentType,
   EmbedBuilder,
@@ -63,7 +64,7 @@ export class GBFTimers extends SlashCommand {
           async execute({ client, interaction }) {
             const ephemeral =
               (
-                interaction.options as CommandInteractionOptionResolver
+                (interaction).options as CommandInteractionOptionResolver
               ).getBoolean("ephemeral") ?? false;
 
             const statsEmbed = new EmbedBuilder();

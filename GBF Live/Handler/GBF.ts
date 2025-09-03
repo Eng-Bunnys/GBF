@@ -76,6 +76,9 @@ export class ColorCodes {
 }
 
 export class GBF extends Client implements IGBF {
+
+  private startTime?: number;
+
   public readonly VerifyEmoji?: Snowflake | string;
   public readonly ErrorEmoji?: Snowflake | string;
   public readonly DefaultColor?: ColorResolvable;
@@ -427,6 +430,8 @@ export class GBF extends Client implements IGBF {
     ProvidedToken?: string,
     ProvidedMongoURI?: string
   ): Promise<string> {
+    this.startTime = performance.now();
+    
     const BotToken = ProvidedToken ?? this.BotConfig.TOKEN;
     const MongoURI = ProvidedMongoURI ?? this.BotConfig.MongoURI;
     try {

@@ -3,6 +3,7 @@ import {
   ApplicationCommandType,
   AutocompleteInteraction,
   BitFieldResolvable,
+  ChatInputCommandInteraction,
   ColorResolvable,
   CommandInteraction,
   GatewayIntentBits,
@@ -278,9 +279,9 @@ export interface SlashExecute {
   client: GBF;
   /**
    * The interaction object
-   * @type {CommandInteraction}
+   * @type {CommandInteraction | ChatInputCommandInteraction}
    */
-  interaction: CommandInteraction;
+  interaction: ChatInputCommandInteraction;
 }
 
 export interface ContextExecute {

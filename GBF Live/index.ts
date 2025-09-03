@@ -3,13 +3,7 @@ import { GBF } from "./Handler";
 import path from "path";
 
 export const client = new GBF({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildPresences,
-  ],
+  intents: [GatewayIntentBits.Guilds],
   Version: "3.0.0",
   CommandsFolder: path.join(__dirname, "./Commands"),
   EventsFolder: path.join(__dirname, "./Events"),

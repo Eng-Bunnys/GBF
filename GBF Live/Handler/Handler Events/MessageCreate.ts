@@ -11,6 +11,7 @@ import {
 import { HandlerChecks } from "../Utils/Handler Features";
 import { SendAndDelete } from "../../Utils/Utils";
 import { redBright } from "chalk";
+
 export function GBFMessageCreate(client: GBF) {
   client.on(Events.MessageCreate, async (message: Message) => {
     if (message.author.bot) return;

@@ -135,9 +135,9 @@ export class TimerStats {
   } */
 
   public getAverageStudyTimePerSubject(): number {
-    return this.timerData.currentSemester.semesterSubjects.length > 0
+    return this.getTotalTimesStudied() > 0
       ? (this.timerData.currentSemester.semesterTime /
-          this.timerData.currentSemester.semesterSubjects.length) *
+          this.getTotalTimesStudied()) *
           1000
       : 0;
   }
