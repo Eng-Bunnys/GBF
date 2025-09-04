@@ -8,6 +8,7 @@ import java.util.function.Function;
 public enum DefaultEvents {
     CLIENT_READY(ClientReady::new),
     MESSAGE_CREATE(MessageCreate::new),
+    INTERACTION_CREATE(InteractionCreate::new),
 
     ALL(client -> {
         throw new UnsupportedOperationException("ALL is not instantiable");

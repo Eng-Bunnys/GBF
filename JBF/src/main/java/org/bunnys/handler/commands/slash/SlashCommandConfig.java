@@ -1,5 +1,6 @@
 package org.bunnys.handler.commands.slash;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
@@ -30,7 +31,14 @@ import java.util.*;
 public final class SlashCommandConfig {
     private final String commandName;
     private final String commandDescription;
+    private final String category;
+    private final String commandUsage;
     private final boolean testOnly;
+    private final boolean devOnly;
+    private final boolean NSFW;
+    private final long cooldownMS;
+    private final EnumSet<Permission> userPermissions;
+    private final EnumSet<Permission> botPermissions;
     private final List<OptionData> commandOptions;
 
     // Subcommands
@@ -47,7 +55,14 @@ public final class SlashCommandConfig {
         this.commandName = Objects.requireNonNull(builder.commandName, "Slash Command name is required.");
         this.commandDescription = Objects.requireNonNull(builder.commandDescription,
                 "Slash Command description is required.");
+        this.category = builder.category;
+        this.commandUsage = builder.commandUsage;
         this.testOnly = builder.testOnly;
+        this.devOnly = builder.devOnly;
+        this.NSFW = builder.NSFW;
+        this.cooldownMS = builder.cooldownMS;
+        this.userPermissions = EnumSet.copyOf(builder.userPermissions);
+        this.botPermissions = EnumSet.copyOf(builder.botPermissions);
         this.commandOptions = List.copyOf(builder.options);
         this.subcommands = List.copyOf(builder.subcommands);
         this.subcommandGroups = List.copyOf(builder.subcommandGroups);
@@ -89,6 +104,34 @@ public final class SlashCommandConfig {
         return this.commandOptions;
     }
 
+    public String category() {
+        return this.category;
+    }
+
+    public String usage() {
+        return this.commandUsage;
+    }
+
+    public EnumSet<Permission> userPermissions() {
+        return EnumSet.copyOf(this.userPermissions);
+    }
+
+    public EnumSet<Permission> botPermissions() {
+        return EnumSet.copyOf(this.botPermissions);
+    }
+
+    public boolean devOnly() {
+        return this.devOnly;
+    }
+
+    public boolean NSFW() {
+        return this.NSFW;
+    }
+
+    public long cooldown() {
+        return this.cooldownMS;
+    }
+
     public List<SubcommandData> subcommands() {
         return this.subcommands;
     }
@@ -114,6 +157,13 @@ public final class SlashCommandConfig {
         private String commandName;
         private String commandDescription;
         private boolean testOnly = false;
+        private String category = "General";
+        private String commandUsage = "No usage provided";
+        private boolean devOnly = false;
+        private boolean NSFW = false;
+        private long cooldownMS = 0;
+        private EnumSet<Permission> userPermissions = EnumSet.noneOf(Permission.class);
+        private EnumSet<Permission> botPermissions = EnumSet.noneOf(Permission.class);
         private final List<OptionData> options = new ArrayList<>();
         private final List<SubcommandData> subcommands = new ArrayList<>();
         private final List<SubcommandGroupData> subcommandGroups = new ArrayList<>();
@@ -168,6 +218,47 @@ public final class SlashCommandConfig {
             if (option == null)
                 throw new IllegalArgumentException("Slash Command Option data cannot be null");
             this.options.add(option);
+            return this;
+        }
+
+        public Builder category(String category) {
+            this.category = category == null ? "General" : category;
+            return this;
+        }
+
+        public Builder usage(String usage) {
+            this.commandUsage = usage == null ? "/" + commandName : usage;
+            return this;
+        }
+
+        public Builder userPermissions(Permission... permissions) {
+            this.userPermissions = permissions == null
+                    ? EnumSet.noneOf(Permission.class)
+                    : EnumSet.copyOf(Arrays.asList(permissions));
+            return this;
+        }
+
+        public Builder botPermissions(Permission... permissions) {
+            this.botPermissions = permissions == null
+                    ? EnumSet.noneOf(Permission.class)
+                    : EnumSet.copyOf(Arrays.asList(permissions));
+            return this;
+        }
+
+        public Builder devOnly(boolean devOnly) {
+            this.devOnly = devOnly;
+            return this;
+        }
+
+        public Builder NSFW(boolean NSFW) {
+            this.NSFW = NSFW;
+            return this;
+        }
+
+        public Builder cooldown(long seconds) {
+            if (seconds < 0)
+                throw new IllegalArgumentException("Cooldown cannot be negative");
+            this.cooldownMS = seconds * 1000;
             return this;
         }
 

@@ -1,8 +1,8 @@
 package org.bunnys.commands;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import org.bunnys.handler.BunnyNexus;
@@ -15,12 +15,12 @@ public class PingSlash extends SlashCommand {
     protected void commandOptions(SlashCommandConfig.Builder options) {
         options.name("ping")
                 .description("Replies with Pong and gateway latency [Slash Test]")
-                .testOnly(true)
-                .addSubcommand(new SubcommandData("add", "Ban a user")
-                        .addOption(OptionType.USER, "target", "User to ban", true))
-                .addSubcommand(new SubcommandData("remove", "Unban a user")
-                        .addOption(OptionType.USER, "target", "User to unban", true));
-                //.addOption(new OptionData(OptionType.STRING, "message", "Custom message", false));
+                .devOnly(true)
+                .cooldown(20)
+                .botPermissions(Permission.ADMINISTRATOR)
+                .userPermissions(Permission.ADMINISTRATOR)
+                .NSFW(true)
+                .testOnly(true);
     }
 
     @Override

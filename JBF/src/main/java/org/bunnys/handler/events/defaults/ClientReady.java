@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -66,12 +67,7 @@ public class ClientReady extends ListenerAdapter implements Event {
         List<SlashCommandData> globalCommands = registry.slashView().values().stream()
                 .map(cmd -> {
                     SlashCommandConfig cfg = cmd.initAndGetConfig();
-                    if (cfg.testOnly())
-                        return null;
-                    return Commands.slash(cfg.name(), cfg.description())
-                            .addOptions(cfg.options())
-                            .addSubcommands(cfg.subcommands())
-                            .addSubcommandGroups(cfg.subcommandGroups());
+                    return cfg.testOnly() ? null : buildSlash(cfg);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -79,10 +75,7 @@ public class ClientReady extends ListenerAdapter implements Event {
         List<SlashCommandData> testOnlyCommands = registry.slashView().values().stream()
                 .map(cmd -> {
                     SlashCommandConfig cfg = cmd.initAndGetConfig();
-                    if (!cfg.testOnly())
-                        return null;
-                    return Commands.slash(cfg.name(), cfg.description())
-                            .addOptions(cfg.options());
+                    return cfg.testOnly() ? buildSlash(cfg) : null;
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -118,5 +111,39 @@ public class ClientReady extends ListenerAdapter implements Event {
                     "[ClientReady] Failed to render ASCII art. Falling back to plain text\nError: " + e.getMessage());
             return text;
         }
+    }
+
+    /**
+     * Constructs a {@link SlashCommandData} instance based on the provided
+     * {@link SlashCommandConfig}
+     * <p>
+     * This method initializes a new slash command with its name and description,
+     * and attaches any defined options, subcommands, and subcommand groups as
+     * specified
+     * in the configuration
+     * It is intended to standardize the creation of slash commands
+     * for deployment to Discord via JDA
+     * </p>
+     *
+     * @param cfg the {@link SlashCommandConfig} containing metadata and structure
+     *            for the slash command;
+     *            must not be {@code null}
+     * @return a fully constructed {@link SlashCommandData} representing the slash
+     *         command
+     */
+    private SlashCommandData buildSlash(SlashCommandConfig cfg) {
+        SlashCommandData data = Commands.slash(cfg.name(), cfg.description())
+                .addOptions(cfg.options())
+                .addSubcommands(cfg.subcommands())
+                .addSubcommandGroups(cfg.subcommandGroups());
+
+        // Apply NSFW restriction
+        data.setNSFW(cfg.NSFW());
+
+        // Apply default permissions (null = everyone can see it)
+        if (!cfg.userPermissions().isEmpty())
+            data.setDefaultPermissions(DefaultMemberPermissions.enabledFor(cfg.userPermissions()));
+
+        return data;
     }
 }
