@@ -201,18 +201,12 @@ public class MessageCommandParser {
             if (parts.length == 0)
                 return null;
 
-            String commandName = parts[0].toLowerCase();
+            String commandName = parts[0];
             String canonicalName = CommandRegistry.canonical(commandName);
-
-            System.out.println(canonicalName);
 
             String[] args = parts.length > 1 ? java.util.Arrays.copyOfRange(parts, 1, parts.length) : new String[0];
 
-            System.out.println(CommandRegistry.canonical("ping"));
-
             CommandRegistry.CommandEntry entry = client.commandRegistry().findMessage(canonicalName);
-
-            System.out.println(entry);
 
             if (entry == null)
                 return null;
@@ -231,7 +225,7 @@ public class MessageCommandParser {
 
             return new ParseResult(
                     entry.messageCommand(),
-                    commandName,
+                    canonicalName,
                     args,
                     entry.messageMetaData());
 
