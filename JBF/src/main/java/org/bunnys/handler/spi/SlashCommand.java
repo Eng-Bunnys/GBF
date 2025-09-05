@@ -1,5 +1,6 @@
 package org.bunnys.handler.spi;
 
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.bunnys.handler.BunnyNexus;
 import org.bunnys.handler.commands.slash.SlashCommandConfig;
@@ -91,4 +92,6 @@ public abstract class SlashCommand {
             return built;
         }
     }
+
+    public void onAutoComplete(BunnyNexus client, CommandAutoCompleteInteractionEvent event) {}
 }

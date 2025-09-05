@@ -636,6 +636,7 @@ public final class CommandVerification {
         INSUFFICIENT_USER_PERMISSIONS,
         INSUFFICIENT_BOT_PERMISSIONS,
         COOLDOWN_ACTIVE,
-        NSFW_REQUIRED
+        NSFW_REQUIRED,
+        EXECUTION_FAILURE
     }
 }

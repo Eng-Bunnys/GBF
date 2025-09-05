@@ -93,7 +93,7 @@ public class ClientReady extends ListenerAdapter implements Event {
                     merged.addAll(globalCommands);
                     merged.addAll(testOnlyCommands);
 
-                    guild.updateCommands().addCommands(merged).queue();
+                    guild.updateCommands().addCommands(testOnlyCommands).queue();
                 }
             }
         }
