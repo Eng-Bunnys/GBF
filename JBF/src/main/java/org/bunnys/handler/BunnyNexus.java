@@ -2,6 +2,8 @@ package org.bunnys.handler;
 
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.bunnys.handler.commands.CommandRegistry;
+import org.bunnys.handler.database.DatabaseLifecycle;
+import org.bunnys.handler.database.connectors.MongoConnector;
 import org.bunnys.handler.lifecycle.*;
 
 @SuppressWarnings("unused")
@@ -9,8 +11,9 @@ public class BunnyNexus {
     private final Config config;
     private volatile ShardManager shardManager;
 
-    // Registries
+    // Registries & Lifecycle Handlers
     private final CommandRegistry commandRegistry = new CommandRegistry();
+    private final DatabaseLifecycle databaseLifecycle = new DatabaseLifecycle();
 
     public BunnyNexus(Config config) {
         if (config == null)
@@ -33,6 +36,11 @@ public class BunnyNexus {
 
         EventLifecycle.loadAndRegisterEvents(config, this, shardManager);
         CommandLifecycle.loadAndRegisterCommands(config, this, commandRegistry);
+
+        //TODO: Cleanup later
+        String mongoURI = "TODO: GET FROM .ENV";
+        databaseLifecycle.register(new MongoConnector(mongoURI));
+        databaseLifecycle.connectAll();
     }
 
     /* -------------------- Public API -------------------- */
