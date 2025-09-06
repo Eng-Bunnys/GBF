@@ -151,16 +151,16 @@ public final class AutocompleteEngine {
      * specifying a custom maximum number of choices to return, up to Discord's
      * limit
      *
-     * @param event      the Discord autocomplete interaction event to respond to.
-     *                   Must not be null.
+     * @param event      the Discord autocomplete interaction event to respond to
+     *                   Must not be null
      * @param input      the user's current input string to filter suggestions
-     *                   against.
-     *                   Can be null or empty (treated as matching all values).
-     * @param values     the list of possible values to suggest from.
-     *                   Can be null or empty (results in no suggestions).
+     *                   against
+     *                   Can be null or empty (treated as matching all values)
+     * @param values     the list of possible values to suggest from
+     *                   Can be null or empty (results in no suggestions)
      * @param maxChoices the maximum number of choices to return.
      *                   Must be between 1 and {@value #MAX_DISCORD_CHOICES}
-     *                   inclusive.
+     *                   inclusive
      *
      * @throws IllegalArgumentException if the event is null or maxChoices is out of
      *                                  valid range

@@ -5,6 +5,15 @@
         </encoder>
     </appender>
 
+    <!-- Reduce MongoDB driver logs -->
+    <logger name="org.mongodb.driver" level="WARN"/>
+    <logger name="org.mongodb.driver.cluster" level="ERROR"/>
+    <logger name="org.mongodb.driver.connection" level="ERROR"/>
+    <logger name="org.mongodb.driver.client" level="ERROR"/>
+
+    <!-- App logs -->
+    <logger name="org.bunnys" level="DEBUG"/>
+
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
